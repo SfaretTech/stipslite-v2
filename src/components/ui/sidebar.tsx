@@ -712,10 +712,11 @@ const SidebarMenuSubButton = React.forwardRef<
     isActive?: boolean;
   }
 >(({ size = "md", isActive, className, children, ...props }, ref) => {
-  const { asChild: _discardedAsChild, ...anchorProps } = props;
+  // Defensively remove asChild from props if it exists, even if types say it shouldn't.
+  const { asChild, ...anchorProps } = props as any;
 
   return (
-    <a
+    <a // Always render 'a'
       ref={ref}
       data-sidebar="menu-sub-button"
       data-size={size}
@@ -728,7 +729,7 @@ const SidebarMenuSubButton = React.forwardRef<
         "group-data-[collapsible=icon]:hidden",
         className
       )}
-      {...anchorProps}
+      {...anchorProps} // Spread the cleaned props
     >
       {children}
     </a>
