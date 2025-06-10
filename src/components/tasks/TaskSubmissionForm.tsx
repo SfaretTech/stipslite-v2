@@ -13,11 +13,13 @@ import { format } from "date-fns";
 import { Calendar as CalendarIcon, UploadCloud, DollarSign } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation"; // Added useRouter
 
 export function TaskSubmissionForm() {
   const [submissionDate, setSubmissionDate] = useState<Date | undefined>(new Date());
   const [deadline, setDeadline] = useState<Date | undefined>();
   const { toast } = useToast();
+  const router = useRouter(); // Initialized router
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -28,6 +30,7 @@ export function TaskSubmissionForm() {
       variant: "default",
     });
     // Reset form or redirect
+    router.push('/dashboard/tasks'); // Redirect to My Tasks page
   };
 
   return (
