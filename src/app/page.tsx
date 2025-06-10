@@ -44,7 +44,7 @@ export default function LandingPage() {
             </div>
             <div className="mt-12 lg:mt-0 flex justify-center lg:justify-end">
               <Image
-                src="https://placehold.co/800x400.png"
+                src="https://images.unsplash.com/photo-1531482615713-2afd69097998?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxN3x8ZWR1Y2F0aW9uJTIwfGVufDB8fHx8MTc0OTU0ODEyMnww&ixlib=rb-4.1.0&q=80&w=1080"
                 alt="STIPS Lite Platform Showcase"
                 width={800}
                 height={400}
