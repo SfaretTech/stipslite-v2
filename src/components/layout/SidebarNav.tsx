@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -85,7 +86,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
             <SidebarMenuSub>
               {item.subItems.map((subItem) => (
                 <SidebarMenuSubItem key={subItem.href}>
-                  <Link href={subItem.href} legacyBehavior passHref>
+                  <Link href={subItem.href} asChild>
                     <SidebarMenuSubButton
                       isActive={pathname === subItem.href}
                       className="justify-start"
@@ -101,7 +102,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
           </SidebarMenuItem>
         ) : (
           <SidebarMenuItem key={item.href}>
-            <Link href={item.href} legacyBehavior passHref>
+            <Link href={item.href}>
               <SidebarMenuButton
                 isActive={pathname === item.href}
                 className="justify-start"
@@ -120,7 +121,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
           <Separator className="my-4" />
           {accountNavItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} legacyBehavior passHref>
+              <Link href={item.href}>
                 <SidebarMenuButton
                   isActive={pathname === item.href}
                   className="justify-start"
@@ -137,7 +138,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
       
       <Separator className="my-4" />
       <SidebarMenuItem>
-         <Link href="/auth/login" legacyBehavior passHref>
+         <Link href="/auth/login">
             <SidebarMenuButton className="justify-start text-red-500 hover:bg-red-100 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900 dark:hover:text-red-300" tooltip="Logout">
                 <LogOut className="h-5 w-5" />
                 <span className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200")}>Logout</span>
