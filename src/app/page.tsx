@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Briefcase, Users, Printer, ArrowRight } from "lucide-react";
@@ -22,23 +23,34 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-grow">
-        <section className="py-20 text-center bg-gradient-to-b from-background to-blue-50">
-          <div className="container mx-auto">
-            <h1 className="text-5xl font-bold font-headline mb-6 text-primary">Welcome to STIPS Lite</h1>
-            <p className="text-xl text-foreground/80 mb-10 max-w-2xl mx-auto">
-              Your all-in-one platform for managing academic tasks, finding print centers, and earning rewards.
-            </p>
-            <Button size="lg" asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
-              <Link href="/auth/register">Get Started <ArrowRight className="ml-2 h-5 w-5" /></Link>
-            </Button>
-            <div className="mt-16">
-              <Image 
-                src="https://placehold.co/800x400.png" 
-                alt="STIPS Lite Platform Showcase" 
-                width={800} 
-                height={400} 
-                className="rounded-lg shadow-xl mx-auto"
+        <section className="py-20 lg:py-32 bg-gradient-to-br from-primary/5 via-background to-secondary/10">
+          <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
+            <div className="text-center lg:text-left">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-headline mb-6 text-primary">
+                Welcome to STIPS Lite
+              </h1>
+              <p className="text-lg sm:text-xl text-foreground/80 mb-10 max-w-xl mx-auto lg:mx-0">
+                Your all-in-one platform for managing academic tasks, finding print centers, and earning rewards.
+              </p>
+              <Button 
+                size="lg" 
+                asChild 
+                className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg transform hover:scale-105 transition-transform duration-300"
+              >
+                <Link href="/auth/register">
+                  Get Started <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+            </div>
+            <div className="mt-12 lg:mt-0 flex justify-center lg:justify-end">
+              <Image
+                src="https://placehold.co/800x400.png"
+                alt="STIPS Lite Platform Showcase"
+                width={800}
+                height={400}
+                className="rounded-xl shadow-2xl max-w-full h-auto"
                 data-ai-hint="education platform interface"
+                priority
               />
             </div>
           </div>
