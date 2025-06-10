@@ -707,16 +707,16 @@ SidebarMenuSubItem.displayName = "SidebarMenuSubItem"
 
 const SidebarMenuSubButton = React.forwardRef<
   HTMLAnchorElement,
-  React.ComponentProps<"a"> & {
-    asChild?: boolean
-    size?: "sm" | "md"
-    isActive?: boolean
+  Omit<React.ComponentProps<"a">, "asChild"> & { // Omit asChild from its direct props.
+    size?: "sm" | "md";
+    isActive?: boolean;
   }
->(({ asChild = false, size = "md", isActive, className, ...props }, ref) => {
-  const Comp = asChild ? Slot : "a"
+>(({ size = "md", isActive, className, children, ...props }, ref) => {
+  // Destructure asChild from ...props if Link is forwarding it, but don't use it.
+  const { asChild: _discardedAsChild, ...anchorProps } = props;
 
   return (
-    <Comp
+    <a // Always render 'a'
       ref={ref}
       data-sidebar="menu-sub-button"
       data-size={size}
@@ -729,10 +729,12 @@ const SidebarMenuSubButton = React.forwardRef<
         "group-data-[collapsible=icon]:hidden",
         className
       )}
-      {...props}
-    />
-  )
-})
+      {...anchorProps} // Spread the rest of the props (href, onClick, etc.)
+    >
+      {children}
+    </a>
+  );
+});
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
 
 export {
