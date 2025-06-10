@@ -1,0 +1,176 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon, UploadCloud, DollarSign } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+
+export function TaskSubmissionForm() {
+  const [submissionDate, setSubmissionDate] = useState<Date | undefined>(new Date());
+  const [deadline, setDeadline] = useState<Date | undefined>();
+  const { toast } = useToast();
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    // UI-only: Simulate task submission
+    toast({
+      title: "Task Submitted Successfully!",
+      description: "Your task is now pending review and approval. Payment will be requested upon approval.",
+      variant: "default",
+    });
+    // Reset form or redirect
+  };
+
+  return (
+    <Card className="w-full max-w-2xl mx-auto shadow-xl">
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">Submit New Task</CardTitle>
+        <CardDescription>Fill in the details below to submit your task for processing.</CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="taskType">Task Type</Label>
+              <Select required>
+                <SelectTrigger id="taskType">
+                  <SelectValue placeholder="Select task type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="essay">Essay</SelectItem>
+                  <SelectItem value="report">Report</SelectItem>
+                  <SelectItem value="presentation">Presentation</SelectItem>
+                  <SelectItem value="research">Research Paper</SelectItem>
+                  <SelectItem value="coding">Coding Assignment</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="taskTitle">Task Title</Label>
+              <Input id="taskTitle" placeholder="e.g., Q1 Marketing Report" required />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="taskDescription">Task Description</Label>
+            <Textarea id="taskDescription" placeholder="Provide a detailed description of the task requirements..." rows={4} required />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="pages">Number of Pages/Slides</Label>
+              <Input id="pages" type="number" placeholder="e.g., 10" min="1" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="duration">Estimated Duration (Days)</Label>
+              <Input id="duration" type="number" placeholder="e.g., 3" min="1" required />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="submissionDate">Submission Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !submissionDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {submissionDate ? format(submissionDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={submissionDate}
+                    onSelect={setSubmissionDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="deadline">Preferred Deadline</Label>
+               <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !deadline && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {deadline ? format(deadline, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={deadline}
+                    onSelect={setDeadline}
+                    disabled={(date) =>
+                      date < new Date() || (submissionDate && date < submissionDate)
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="attachments">Attachments (Optional)</Label>
+            <div className="flex items-center justify-center w-full">
+                <Label 
+                  htmlFor="dropzone-file" 
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/80 transition-colors"
+                >
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                        <p className="mb-1 text-sm text-muted-foreground">
+                          <span className="font-semibold">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-muted-foreground">PDF, DOCX, PPTX, ZIP (MAX. 10MB)</p>
+                    </div>
+                    <Input id="dropzone-file" type="file" className="hidden" multiple />
+                </Label>
+            </div> 
+          </div>
+
+          <div className="p-4 bg-primary/10 rounded-md border border-primary/20">
+            <div className="flex items-center">
+              <DollarSign className="h-6 w-6 mr-3 text-primary" />
+              <div>
+                <h4 className="font-semibold text-primary">Payment Information</h4>
+                <p className="text-sm text-muted-foreground">
+                  An estimated cost will be provided upon task approval. Payment will be required to start processing.
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </CardContent>
+        <CardFooter className="pt-6">
+          <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+            Submit Task for Approval
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
