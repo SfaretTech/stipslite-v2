@@ -1,4 +1,5 @@
 
+import Link from "next/link"; // Added import
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListChecks } from "lucide-react";
@@ -39,7 +40,7 @@ export default function ActivityPage() {
                     <p className="text-xs text-muted-foreground whitespace-nowrap pl-4">{item.timestamp}</p>
                   </div>
                   {item.detailsLink && (
-                    <a href={item.detailsLink} className="text-xs text-accent hover:underline mt-1 inline-block">View Details</a>
+                    <Link href={item.detailsLink} className="text-xs text-accent hover:underline mt-1 inline-block">View Details</Link>
                   )}
                 </li>
               ))}
