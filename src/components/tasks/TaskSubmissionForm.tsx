@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -13,13 +14,13 @@ import { format } from "date-fns";
 import { Calendar as CalendarIcon, UploadCloud, DollarSign } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation"; // Added useRouter
+import { useRouter } from "next/navigation";
 
 export function TaskSubmissionForm() {
   const [submissionDate, setSubmissionDate] = useState<Date | undefined>(new Date());
   const [deadline, setDeadline] = useState<Date | undefined>();
   const { toast } = useToast();
-  const router = useRouter(); // Initialized router
+  const router = useRouter();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -30,7 +31,7 @@ export function TaskSubmissionForm() {
       variant: "default",
     });
     // Reset form or redirect
-    router.push('/dashboard/tasks'); // Redirect to My Tasks page
+    router.push('/dashboard/tasks');
   };
 
   return (
@@ -80,6 +81,11 @@ export function TaskSubmissionForm() {
             </div>
           </div>
           
+          <div className="space-y-2">
+            <Label htmlFor="durationHours">Time Duration (Hours)</Label>
+            <Input id="durationHours" type="number" placeholder="e.g., 5 (total hours needed)" min="1" />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="submissionDate">Submission Date</Label>
