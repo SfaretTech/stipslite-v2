@@ -6,7 +6,7 @@ import { VaSearch } from "@/components/va-directory/VaSearch";
 import { VaList, type VirtualAssistant as VaListVirtualAssistant } from "@/components/va-directory/VaList";
 import { Users } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation"; // Added usePathname
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -35,13 +35,22 @@ export default function FindVaPage() {
     let toastTitle = "";
     let toastDescription = "";
 
-    if (planActivated === 'expert_va') {
-      toastTitle = "Expert VA Plan Activated!";
-      toastDescription = "You can now search for and request specific Virtual Assistants.";
-    } else if (planActivated === 'business_org_va') {
-      toastTitle = "Professional Business VA Plan Activated!";
-      toastDescription = "Your business VA profile features are now active. (Further navigation/management TBD)";
+    if (planActivated) {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('stipsLiteVaPlanActive', 'true');
+            // Also store which specific plan was activated, if needed for more granular logic later
+            localStorage.setItem('stipsLiteActivePlanType', planActivated); 
+        }
+
+        if (planActivated === 'expert_va') {
+            toastTitle = "Expert VA Plan Activated!";
+            toastDescription = "You can now search for and request specific Virtual Assistants.";
+        } else if (planActivated === 'business_org_va') {
+            toastTitle = "Professional Business VA Plan Activated!";
+            toastDescription = "Your business VA profile features are now active. (Further navigation/management TBD)";
+        }
     }
+
 
     if (toastTitle) {
       toast({
@@ -51,7 +60,8 @@ export default function FindVaPage() {
         duration: 5000,
       });
       // Remove the query parameter from the URL without reloading or adding to history
-      router.replace(pathname, { scroll: false });
+      const newPath = pathname; // Keep current pathname
+      router.replace(newPath, { scroll: false });
     }
   }, [searchParams, router, toast, pathname]);
 
@@ -83,3 +93,4 @@ export default function FindVaPage() {
     </div>
   );
 }
+

@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 const initialPlans = [ 
   {
     id: "expert_va", 
-    name: "Expert VA", 
+    name: "Expert VA Plan", 
     priceMonthly: "₦500", 
     priceYearly: "₦2000",
     features: [
@@ -29,7 +29,7 @@ const initialPlans = [
   },
   {
     id: "business_org_va",
-    name: "Professional Business VA",
+    name: "Professional Business VA Plan",
     priceMonthly: "₦1000", 
     priceYearly: "₦5000",
     features: [
@@ -54,6 +54,20 @@ export default function SubscriptionPage() {
   const router = useRouter(); 
   const [plans, setPlans] = useState(initialPlans.map(p => ({...p}))); 
 
+  // Effect to check localStorage for current plan status
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const activePlanId = localStorage.getItem('stipsLiteActivePlanId');
+      const activePlanCycle = localStorage.getItem('stipsLiteActivePlanCycle') as "monthly" | "yearly" | null;
+      if (activePlanId) {
+        setPlans(prevPlans => prevPlans.map(p => 
+          p.id === activePlanId ? { ...p, isCurrent: true, billingCycle: activePlanCycle || billingCycle } : { ...p, isCurrent: false }
+        ));
+      }
+    }
+  }, [billingCycle]);
+
+
   const handleChoosePlan = (planId: string, cycle: "monthly" | "yearly") => {
     const chosenPlan = plans.find(p => p.id === planId);
     if (!chosenPlan) return;
@@ -61,13 +75,18 @@ export default function SubscriptionPage() {
     setPlans(prevPlans => prevPlans.map(p => 
         p.id === planId ? { ...p, isCurrent: true, billingCycle: cycle } : { ...p, isCurrent: false }
     ));
+    
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('stipsLiteVaPlanActive', 'true'); // For sidebar unlock
+        localStorage.setItem('stipsLiteActivePlanId', planId);
+        localStorage.setItem('stipsLiteActivePlanCycle', cycle);
+    }
 
     toast({
-      title: `Processing ${chosenPlan.name} Plan (${cycle})...`,
+      title: `Processing ${chosenPlan.name} (${cycle})...`,
       description: "Your subscription selection is being updated.",
     });
     
-    // Simulate redirection after a delay
     setTimeout(() => {
       router.push(`/dashboard/find-va?plan_activated=${planId}`);
     }, 1500); 
@@ -87,21 +106,41 @@ export default function SubscriptionPage() {
         description: `Processing payment for ${planToActivate.name} (${billingCycle})... (simulation)`
     });
     
-    // Simulate payment success and redirection
     setTimeout(() => {
         setPlans(prevPlans => prevPlans.map(p => 
             p.id === planIdToActivate ? { ...p, isCurrent: true, billingCycle: billingCycle } : { ...p, isCurrent: false }
         ));
-        // The toast for successful *activation* will be shown on the /dashboard/find-va page
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('stipsLiteVaPlanActive', 'true'); // For sidebar unlock
+            localStorage.setItem('stipsLiteActivePlanId', planIdToActivate);
+            localStorage.setItem('stipsLiteActivePlanCycle', billingCycle);
+        }
         router.push(`/dashboard/find-va?plan_activated=${planIdToActivate}`);
     }, 2500); 
   };
+
+  const handleCancelSubscription = () => {
+    // Simulate canceling subscription
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('stipsLiteVaPlanActive');
+      localStorage.removeItem('stipsLiteActivePlanId');
+      localStorage.removeItem('stipsLiteActivePlanCycle');
+    }
+    setPlans(prevPlans => prevPlans.map(p => ({ ...p, isCurrent: false })));
+    toast({
+      title: "Subscription Cancelled",
+      description: "Your subscription has been cancelled (simulation).",
+    });
+    // Optionally, navigate away or refresh to reflect changes in sidebar
+    // router.push('/dashboard/subscription'); or router.refresh();
+  };
+
 
   return (
     <div className="space-y-8">
       <PageHeader 
         title="Manage Your Subscription"
-        description="Students: Activate the 'Expert VA' plan to find specific VAs. VA Businesses: Subscribe to the 'Professional Business VA' plan to list your services."
+        description="Students: Activate the 'Expert VA Plan' to find specific VAs. VA Businesses: Subscribe to the 'Professional Business VA Plan' to list your services."
         icon={CreditCard}
       />
 
@@ -135,7 +174,7 @@ export default function SubscriptionPage() {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center p-4 bg-muted/50 rounded-md">
               <div>
-                <p className="text-lg font-semibold">{currentPlan.name} Plan ({currentPlan.billingCycle || billingCycle})</p>
+                <p className="text-lg font-semibold">{currentPlan.name} ({currentPlan.billingCycle || billingCycle})</p>
                 <p className="text-sm text-muted-foreground">
                   Price: {(currentPlan.billingCycle || billingCycle) === 'yearly' ? currentPlan.priceYearly : currentPlan.priceMonthly} / {(currentPlan.billingCycle || billingCycle) === 'yearly' ? 'year' : 'month'}
                 </p>
@@ -172,7 +211,7 @@ export default function SubscriptionPage() {
             </div>
           </CardContent>
           <CardFooter className="border-t pt-4 flex justify-end">
-            <Button variant="destructive" className="bg-red-600 hover:bg-red-700">Cancel Subscription</Button>
+            <Button variant="destructive" className="bg-red-600 hover:bg-red-700" onClick={handleCancelSubscription}>Cancel Subscription</Button>
           </CardFooter>
         </Card>
       )}
@@ -185,7 +224,7 @@ export default function SubscriptionPage() {
             <CardContent className="space-y-4 text-center">
                  <p className="text-muted-foreground">
                     The "Choose Plan" buttons on the cards above now simulate the subscription and payment process for the respective plan.
-                    If you were to have a direct payment button for a specific default plan (e.g. the "Expert VA" plan), it would look like this:
+                    If you were to have a direct payment button for a specific default plan (e.g. the "Expert VA Plan"), it would look like this:
                 </p>
                 <Button 
                     size="lg" 

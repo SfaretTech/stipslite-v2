@@ -32,7 +32,7 @@ import {
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipContent } from "@/components/ui/tooltip"; // Removed TooltipTrigger as it's implicitly used by SidebarMenuButton
+import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 
 
@@ -49,11 +49,11 @@ const studentNavItemsBase = [
   { href: "/dashboard/print-centers", label: "Print Centers", icon: Printer },
   { href: "/dashboard/referrals", label: "Referrals", icon: Users },
   {
-    href: "/dashboard/subscription", // Default link if locked
-    activeHref: "/dashboard/find-va", // Link if unlocked
+    href: "/dashboard/subscription", 
+    activeHref: "/dashboard/find-va", 
     label: "VA Plus",
     icon: Star,
-    status: "locked" as "locked" | "active", // Initial status is locked
+    status: "locked" as "locked" | "active",
   },
 ];
 
@@ -80,30 +80,48 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
 
   const [studentNavItems, setStudentNavItems] = useState(studentNavItemsBase);
   const [hasMounted, setHasMounted] = useState(false);
+  const [isSubscribedToVaPlan, setIsSubscribedToVaPlan] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
+    if (typeof window !== 'undefined') {
+      const storedPlanStatus = localStorage.getItem('stipsLiteVaPlanActive');
+      if (storedPlanStatus === 'true') {
+        setIsSubscribedToVaPlan(true);
+      }
+    }
   }, []);
 
   useEffect(() => {
     if (!hasMounted) {
-      // During SSR and initial client render, studentNavItems will be studentNavItemsBase.
-      // This ensures the "VA Plus" item status is consistently "locked" as defined in studentNavItemsBase.
       return;
     }
 
     const planActivatedQuery = searchParams.get('plan_activated');
-    // Determine if the VA Plus feature should be considered active based on URL or query params
-    const isVaPlanActive = planActivatedQuery === 'expert_va' ||
-                           planActivatedQuery === 'business_org_va' || // business_org_va also implies access to VA features for themselves
-                           pathname.startsWith('/dashboard/find-va');
+    
+    // Determine if the VA Plus feature should be considered active
+    // based on query params (just subscribed), current path, or localStorage (persisted subscription)
+    const isVaPlanCurrentlyActive = 
+      planActivatedQuery === 'expert_va' ||
+      planActivatedQuery === 'business_org_va' ||
+      pathname.startsWith('/dashboard/find-va') ||
+      isSubscribedToVaPlan;
+
+    if (planActivatedQuery === 'expert_va' || planActivatedQuery === 'business_org_va') {
+        // If just activated via query param, ensure local state and localStorage are set
+        if (!isSubscribedToVaPlan) setIsSubscribedToVaPlan(true);
+        if (typeof window !== 'undefined' && localStorage.getItem('stipsLiteVaPlanActive') !== 'true') {
+            localStorage.setItem('stipsLiteVaPlanActive', 'true');
+        }
+    }
+
 
     setStudentNavItems(prevItems =>
       prevItems.map(item =>
-        item.label === "VA Plus" ? { ...item, status: isVaPlanActive ? "active" : "locked" } : item
+        item.label === "VA Plus" ? { ...item, status: isVaPlanCurrentlyActive ? "active" : "locked" } : item
       )
     );
-  }, [pathname, searchParams.get('plan_activated'), hasMounted]); // Depend on the specific query param value and pathname
+  }, [pathname, searchParams, hasMounted, isSubscribedToVaPlan]);
 
 
   const navItemsToRender = role === "admin" ? adminNavItems : studentNavItems;
@@ -112,8 +130,6 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
     <SidebarMenu className="flex-1">
       {navItemsToRender.map((item) => {
         const isVaPlusItem = item.label === "VA Plus";
-        // item.status is now reliably from studentNavItems state which is consistent for initial render
-        // and updated post-mount.
         const isVaPlusLocked = isVaPlusItem && item.status === "locked";
         const currentHref = isVaPlusItem ? (isVaPlusLocked ? item.href : (item as any).activeHref) : item.href;
 
@@ -164,7 +180,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
             <SidebarMenuItem key={item.label}>
               <Link href={currentHref!}>
                 <SidebarMenuButton
-                  isActive={pathname === currentHref && !(isVaPlusItem && isVaPlusLocked)} // Active only if not VA Plus and locked
+                  isActive={pathname === currentHref && !(isVaPlusItem && isVaPlusLocked)} 
                   className={cn(
                     "justify-start w-full",
                     isVaPlusItem && isVaPlusLocked && "opacity-70 hover:bg-sidebar-accent/70"
@@ -217,3 +233,4 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
     </SidebarMenu>
   );
 }
+
