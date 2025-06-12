@@ -95,6 +95,7 @@ export default function DashboardPage() {
         </Card>
       </div>
       
+      {/* Subscription Status Card Removed
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="font-headline">Subscription Status</CardTitle>
@@ -114,6 +115,7 @@ export default function DashboardPage() {
             </Button>
         </CardFooter>
       </Card>
+      */}
 
     </div>
   );
