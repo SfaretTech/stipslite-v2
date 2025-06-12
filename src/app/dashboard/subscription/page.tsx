@@ -93,7 +93,7 @@ export default function SubscriptionPage() {
         <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as "monthly" | "yearly")} className="w-auto">
           <TabsList>
             <TabsTrigger value="monthly">Monthly (₦500)</TabsTrigger>
-            <TabsTrigger value="yearly">Yearly (₦2000 - Save ₦400)</TabsTrigger>
+            <TabsTrigger value="yearly">Yearly (₦2000 - Save ₦8000)</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
