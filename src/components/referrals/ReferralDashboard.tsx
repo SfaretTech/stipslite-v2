@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Copy, DollarSign, Users, Gift, ExternalLink, Smartphone } from "lucide-react";
+import { Copy, DollarSign, Users, Gift, Smartphone, Send } from "lucide-react"; // Added Send icon
 import { StatCard } from "@/components/shared/StatCard";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -40,6 +40,34 @@ export function ReferralDashboard() {
     navigator.clipboard.writeText(referralLink);
     toast({ title: "Referral Link Copied!", description: "Your referral link has been copied to the clipboard." });
   };
+
+  const handleSaveWalletDetails = () => {
+    // UI-only: Simulate saving details
+    toast({
+      title: "Wallet Details Saved!",
+      description: "Your mobile money wallet information has been updated (simulation).",
+    });
+  };
+
+  const handleWithdrawFunds = () => {
+    // UI-only: Simulate withdrawal request
+    const withdrawalAmount = "$10.00"; // Assuming this is the balance or a fixed amount
+    toast({
+      title: "Withdrawal Request Submitted",
+      description: `Your request to withdraw ${withdrawalAmount} is pending admin approval.`,
+      variant: "default",
+    });
+    
+    // Simulate admin notification (for dev/demo purposes)
+    toast({
+        title: "Admin Notification (Simulated)",
+        description: `Admin would be notified of a withdrawal request for ${withdrawalAmount}.`,
+        variant: "default",
+        duration: 5000, 
+    });
+    console.log(`SIMULATION: Admin notified for withdrawal of ${withdrawalAmount}. User: [Current User], Wallet Details: [Details from form]`);
+  };
+
 
   return (
     <div className="space-y-8">
@@ -133,12 +161,18 @@ export function ReferralDashboard() {
                 Ensure your mobile number and name are correct to avoid withdrawal issues. Minimum withdrawal amount is $10.00.
             </p>
         </CardContent>
-        <CardFooter>
-            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
+        <CardFooter className="flex flex-wrap gap-2 justify-between"> {/* Added flex-wrap and gap */}
+            <Button 
+              onClick={handleSaveWalletDetails}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+            >
                 <Smartphone className="mr-2 h-4 w-4" /> Save Wallet Details
             </Button>
-             <Button variant="outline" className="ml-auto" disabled>
-                Withdraw Funds (Balance: $10.00)
+             <Button 
+               onClick={handleWithdrawFunds}
+               variant="outline"
+             >
+                <DollarSign className="mr-2 h-4 w-4" /> Withdraw Funds (Balance: $10.00)
             </Button>
         </CardFooter>
       </Card>
