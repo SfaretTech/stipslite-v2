@@ -20,6 +20,7 @@ import {
   Bell,
   Star, 
   Lock, 
+  Search, // Added Search for consistency, though might not be used directly in this iteration
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -47,20 +48,20 @@ const studentNavItems = [
   },
   { href: "/dashboard/print-centers", label: "Print Centers", icon: Printer },
   { href: "/dashboard/referrals", label: "Referrals", icon: Users },
-  { href: "/dashboard/subscription", label: "Subscription", icon: CreditCard },
+  // { href: "/dashboard/subscription", label: "Subscription", icon: CreditCard }, // Moved to accountNavItems
   {
-    href: "/dashboard/subscription", // Links to subscription page if locked
+    href: "/dashboard/subscription", 
     label: "Professional VA",
     icon: Star,
-    status: "locked" as "locked" | "active", // "active" would link to /dashboard/find-va
-    // If status were 'active', href would be '/dashboard/find-va'
+    status: "locked" as "locked" | "active", 
+    activeHref: "/dashboard/find-va", // Store the target href for when it's active
   },
-  // Removed: { href: "/dashboard/find-va", label: "Find a VA", icon: Search }, 
 ];
 
 const accountNavItems = [
   { href: "/dashboard/profile", label: "Profile", icon: UserCircle },
   { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
+  { href: "/dashboard/subscription", label: "Subscription", icon: CreditCard }, // Added here
   { href: "/dashboard/support", label: "Support Chat", icon: MessageSquare },
 ];
 
@@ -84,10 +85,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
       {navItems.map((item) => {
         
         const isProVALocked = item.label === "Professional VA" && item.status === "locked";
-        // Conceptually, if item.status === 'active' for "Professional VA", its href would be '/dashboard/find-va'
-        const proVaTargetHref = item.label === "Professional VA" && item.status === "active" 
-                                ? "/dashboard/find-va" 
-                                : item.href;
+        const currentHref = isProVALocked ? item.href : (item.label === "Professional VA" ? item.activeHref : item.href);
 
         if (item.subItems) {
           return (
@@ -129,16 +127,16 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
           let tooltipText = item.label;
           if (isProVALocked) {
             tooltipText = `${item.label} (Activate via Subscription)`;
-          } else if (item.label === "Professional VA" && item.status === "active") {
+          } else if (item.label === "Professional VA" && item.status === "active") { // Conceptually active
             tooltipText = "Find a Virtual Assistant";
           }
 
 
           return (
             <SidebarMenuItem key={item.label}> 
-              <Link href={proVaTargetHref}>
+              <Link href={currentHref}>
                 <SidebarMenuButton
-                  isActive={pathname === proVaTargetHref && !isProVALocked}
+                  isActive={pathname === currentHref && !isProVALocked}
                   className={cn(
                     "justify-start w-full",
                     isProVALocked && "opacity-70 hover:bg-sidebar-accent/70"
@@ -191,4 +189,3 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
     </SidebarMenu>
   );
 }
-
