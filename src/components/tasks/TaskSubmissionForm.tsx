@@ -16,6 +16,24 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
+const durationOptions = [
+  { value: "1_hour", label: "1 Hour" },
+  { value: "2_hours", label: "2 Hours" },
+  { value: "3_hours", label: "3 Hours" },
+  { value: "4_hours", label: "4 Hours" },
+  { value: "6_hours", label: "6 Hours" },
+  { value: "8_hours", label: "8 Hours (1 Work Day)" },
+  { value: "1_day", label: "1 Day" },
+  { value: "2_days", label: "2 Days" },
+  { value: "3_days", label: "3 Days" },
+  { value: "4_days", label: "4 Days" },
+  { value: "5_days", label: "5 Days" },
+  { value: "1_week", label: "1 Week" },
+  { value: "2_weeks", label: "2 Weeks" },
+  { value: "3_weeks", label: "3 Weeks" },
+  { value: "1_month", label: "1 Month" },
+];
+
 export function TaskSubmissionForm() {
   const [submissionDate, setSubmissionDate] = useState<Date | undefined>(new Date());
   const [deadline, setDeadline] = useState<Date | undefined>();
@@ -45,7 +63,7 @@ export function TaskSubmissionForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="taskType">Task Type</Label>
-              <Select required>
+              <Select name="taskType" required>
                 <SelectTrigger id="taskType">
                   <SelectValue placeholder="Select task type" />
                 </SelectTrigger>
@@ -61,31 +79,37 @@ export function TaskSubmissionForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="taskTitle">Task Title</Label>
-              <Input id="taskTitle" placeholder="e.g., Q1 Marketing Report" required />
+              <Input id="taskTitle" name="taskTitle" placeholder="e.g., Q1 Marketing Report" required />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="taskDescription">Task Description</Label>
-            <Textarea id="taskDescription" placeholder="Provide a detailed description of the task requirements..." rows={4} required />
+            <Textarea id="taskDescription" name="taskDescription" placeholder="Provide a detailed description of the task requirements..." rows={4} required />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="pages">Number of Pages/Slides</Label>
-              <Input id="pages" type="number" placeholder="e.g., 10" min="1" required />
+              <Input id="pages" name="pages" type="number" placeholder="e.g., 10" min="1" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="duration">Estimated Duration (Days)</Label>
-              <Input id="duration" type="number" placeholder="e.g., 3" min="1" required />
+              <Label htmlFor="estimatedDuration">Estimated Duration</Label>
+              <Select name="estimatedDuration" required>
+                <SelectTrigger id="estimatedDuration">
+                  <SelectValue placeholder="Select estimated duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  {durationOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="durationHours">Time Duration (Hours)</Label>
-            <Input id="durationHours" type="number" placeholder="e.g., 5 (total hours needed)" min="1" />
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="submissionDate">Submission Date</Label>
@@ -133,7 +157,7 @@ export function TaskSubmissionForm() {
                     selected={deadline}
                     onSelect={setDeadline}
                     disabled={(date) =>
-                      date < new Date() || (submissionDate && date < submissionDate)
+                      date < new Date(new Date().setHours(0,0,0,0)) || (submissionDate && date < new Date(new Date(submissionDate).setHours(0,0,0,0)))
                     }
                     initialFocus
                   />
@@ -156,7 +180,7 @@ export function TaskSubmissionForm() {
                         </p>
                         <p className="text-xs text-muted-foreground">PDF, DOCX, PPTX, ZIP (MAX. 10MB)</p>
                     </div>
-                    <Input id="dropzone-file" type="file" className="hidden" multiple />
+                    <Input id="dropzone-file" type="file" className="hidden" multiple name="attachments"/>
                 </Label>
             </div> 
           </div>
