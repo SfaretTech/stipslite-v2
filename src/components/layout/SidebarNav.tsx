@@ -49,11 +49,11 @@ const studentNavItems = [
   { href: "/dashboard/print-centers", label: "Print Centers", icon: Printer },
   { href: "/dashboard/referrals", label: "Referrals", icon: Users },
   {
-    href: "/dashboard/subscription", 
-    label: "Expert VA", // Changed from "Professional VA"
+    href: "/dashboard/subscription", // Link to subscription page if locked
+    label: "Expert VA", 
     icon: Star,
-    status: "locked" as "locked" | "active", 
-    activeHref: "/dashboard/find-va", 
+    status: "locked" as "locked" | "active", // Simulate 'locked' status for now
+    activeHref: "/dashboard/find-va", // Actual link if 'active'
   },
 ];
 
@@ -83,8 +83,8 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
     <SidebarMenu className="flex-1">
       {navItems.map((item) => {
         
-        const isExpertVALocked = item.label === "Expert VA" && item.status === "locked"; // Changed from "Professional VA"
-        const currentHref = isExpertVALocked ? item.href : (item.label === "Expert VA" ? item.activeHref : item.href); // Changed from "Professional VA"
+        const isExpertVALocked = item.label === "Expert VA" && item.status === "locked";
+        const currentHref = isExpertVALocked ? item.href : (item.label === "Expert VA" ? item.activeHref : item.href);
 
         if (item.subItems) {
           return (
@@ -125,15 +125,15 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
 
           let tooltipText = item.label;
           if (isExpertVALocked) {
-            tooltipText = `${item.label} (Activate via Subscription)`;
-          } else if (item.label === "Expert VA" && item.status === "active") { // Changed from "Professional VA"
-            tooltipText = "Find a Virtual Assistant";
+            tooltipText = `Subscribe to Expert VA plan to find specific VAs`;
+          } else if (item.label === "Expert VA" && item.status === "active") {
+            tooltipText = "Find an Expert VA";
           }
 
 
           return (
             <SidebarMenuItem key={item.label}> 
-              <Link href={currentHref}>
+              <Link href={currentHref!}>
                 <SidebarMenuButton
                   isActive={pathname === currentHref && !isExpertVALocked}
                   className={cn(

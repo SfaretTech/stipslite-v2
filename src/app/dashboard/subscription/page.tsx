@@ -13,10 +13,10 @@ import { useToast } from "@/hooks/use-toast";
 
 const initialPlans = [ 
   {
-    id: "expert_va", // Kept ID, changed name
-    name: "Expert VA", // Changed from Professional VA
+    id: "expert_va", 
+    name: "Expert VA", 
     priceMonthly: "₦500", 
-    priceYearly: "₦2000",
+    priceYearly: "₦2000", // 500*12 = 6000. 6000-2000 = 4000 savings
     features: [
       "Request specific Virtual Assistants by name", 
       "Priority in random VA assignment pool", 
@@ -25,21 +25,23 @@ const initialPlans = [
     ],
     isCurrent: false, 
     isPopular: true, 
+    description: "Ideal for students seeking to hire specific VAs for their tasks."
   },
   {
     id: "business_org_va",
     name: "Business/Organisation VA",
     priceMonthly: "₦1000", 
-    priceYearly: "₦5000",
+    priceYearly: "₦5000", // 1000*12 = 12000. 12000-5000 = 7000 savings
     features: [
       "List your VA services or agency profile",
-      "Enhanced visibility to businesses seeking VAs",
+      "Enhanced visibility to students/businesses seeking VAs",
       "Tools for managing client tasks & communication (coming soon)",
       "Featured profile in VA directory (optional add-on)",
       "Analytics on your service/profile views"
     ],
     isCurrent: false,
     isPopular: false,
+    description: "Ideal for VAs or Agencies wanting to list their services and reach more clients."
   },
 ];
 
@@ -57,14 +59,14 @@ export default function SubscriptionPage() {
     ));
 
     toast({
-      title: `Switched to ${chosenPlan?.name} (${cycle})!`,
+      title: `Switched to ${chosenPlan?.name} Plan (${cycle})!`,
       description: "Your subscription has been updated.",
     });
     
-    if (chosenPlan?.id === "expert_va") { // Changed from "professional_va"
+    if (chosenPlan?.id === "expert_va") { 
         setTimeout(() => {
              toast({
-                title: "Subscription Active!",
+                title: "Expert VA Plan Active!",
                 description: "Redirecting to find a Virtual Assistant...",
                 variant: "default",
                 duration: 3000,
@@ -74,7 +76,7 @@ export default function SubscriptionPage() {
     } else if (chosenPlan?.id === "business_org_va") {
          setTimeout(() => {
              toast({
-                title: "Business Plan Active!",
+                title: "Business/Organisation VA Plan Active!",
                 description: "You can now manage your VA services. (Further navigation TBD)",
                 variant: "default",
                 duration: 3000,
@@ -104,12 +106,12 @@ export default function SubscriptionPage() {
         ));
         toast({
             title: "Payment Successful!",
-            description: `Subscribed to ${planToActivate.name} (${billingCycle}).`,
+            description: `Subscribed to ${planToActivate.name} Plan (${billingCycle}).`,
             variant: "default",
             duration: 4000,
         });
 
-        if (planIdToActivate === "expert_va") { // Changed from "professional_va"
+        if (planIdToActivate === "expert_va") { 
             router.push('/dashboard/find-va');
         } else if (planIdToActivate === "business_org_va") {
             // router.push('/dashboard/manage-va-profile'); // Example redirect
@@ -121,7 +123,7 @@ export default function SubscriptionPage() {
     <div className="space-y-8">
       <PageHeader 
         title="Manage Your Subscription"
-        description="Subscribe to unlock premium features for students or list your VA services as an organization."
+        description="Students can activate the Expert VA plan to find and request specific VAs. VAs/Agencies can subscribe to the Business/Organisation plan to list their services."
         icon={CreditCard}
       />
 
@@ -160,9 +162,9 @@ export default function SubscriptionPage() {
                   Price: {(currentPlan.billingCycle || billingCycle) === 'yearly' ? currentPlan.priceYearly : currentPlan.priceMonthly} / {(currentPlan.billingCycle || billingCycle) === 'yearly' ? 'year' : 'month'}
                 </p>
               </div>
-               {currentPlan.id === "expert_va" && ( // Changed from "professional_va"
+               {currentPlan.id === "expert_va" && ( 
                  <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/find-va')}>
-                    Find a VA
+                    Find an Expert VA
                   </Button>
                )}
                 {currentPlan.id === "business_org_va" && (
@@ -200,21 +202,21 @@ export default function SubscriptionPage() {
        <Card className="shadow-lg max-w-2xl mx-auto">
             <CardHeader>
                 <CardTitle className="font-headline">Flutterwave Payment</CardTitle>
-                <CardDescription>Simulated payment section. In a real app, this would integrate Flutterwave. Choose a plan above and click its "Choose Plan" button to simulate payment.</CardDescription>
+                <CardDescription>Simulated payment section. In a real app, this would integrate Flutterwave. Choose a plan above and click its "Choose Plan" button to simulate payment for that plan.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-center">
                  <p className="text-muted-foreground">
                     The "Choose Plan" buttons on the cards above now simulate the subscription and payment process for the respective plan.
-                    Alternatively, if direct Flutterwave payment was needed here for a *specific default plan*:
+                    If you were to have a direct payment button for a specific default plan (e.g. the "Expert VA" plan), it would look like this:
                 </p>
                 <Button 
                     size="lg" 
                     className="bg-orange-500 hover:bg-orange-600 text-white"
-                    onClick={() => handleFlutterwavePayment("expert_va")} // Example: defaults to expert VA
-                    disabled={plans.some(p => p.isCurrent)} 
+                    onClick={() => handleFlutterwavePayment("expert_va")} 
+                    disabled={plans.some(p => p.isCurrent && p.id === "expert_va")} 
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 108 29" role="img"><path fill="currentColor" d="M22.68 28.46H16.9L13.14 17.9H7.38V28.46H1.6V.5h11.1c2.58 0 4.8.36 6.66 1.08 1.92.72 3.42 1.86 4.5 3.42.96 1.5.96 3.3.96 5.46V10.5c0 2.76-.6 4.92-1.86 6.42-1.2.ಾಗ1.5-2.88 2.46-5.04 2.88l7.56 8.64h-.36ZM7.38 13.02h5.22c1.98 0 3.42-.36 4.32-1.02.9-.72 1.32-1.86 1.32-3.42V6.42c0-1.38-.42-2.46-1.26-3.18-.78-.72-2.1-.96-3.9-.96H7.38v10.74Zm18.9 15.44h10.62V.5H26.28v27.96Zm14.16 0h10.62V.5H40.44v27.96Zm27.42-13.8L58.26 28.46h-6.3L60.36.5h5.82l-3.78 13.8 3.78 14.16h5.58L76.02.5h5.82l-8.4 27.96h-6.06l4.02-13.74Zm14.46 13.8h5.76V.5h-5.76v27.96Zm14.76 0h5.76V.5h-5.76v27.96Z"></path></svg>
-                    Pay with Flutterwave (Expert VA)
+                    Pay with Flutterwave (Expert VA Plan)
                 </Button>
                 <p className="text-xs text-muted-foreground">This button is for UI demonstration only.</p>
             </CardContent>
