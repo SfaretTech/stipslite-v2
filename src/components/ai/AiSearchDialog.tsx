@@ -17,16 +17,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea }           from "@/components/ui/scroll-area";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Loader2, Search, Sparkles, AlertTriangle, Copy } from "lucide-react";
-import { taskSearch, TaskSearchInput, TaskSearchOutput } from "@/ai/flows/task-search";
+import { internetSearch, InternetSearchInput, InternetSearchOutput } from "@/ai/flows/internet-search-flow"; // Updated import
 import { printLocationSearch, PrintLocationSearchInput, PrintLocationSearchOutput } from "@/ai/flows/print-location-search";
 import { useToast } from "@/hooks/use-toast";
 
-type SearchResult = { id: string; title: string; description: string; type: 'task' | 'print-location' };
+type SearchResult = { id: string; title: string; description: string; type: 'internet-search' | 'print-location' }; // Updated type
 
 export function AiSearchDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"tasks" | "print-locations">("tasks");
+  const [activeTab, setActiveTab] = useState<'internet-search' | 'print-locations'>("internet-search"); // Updated activeTab state and default
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -39,23 +39,21 @@ export function AiSearchDialog() {
 
     startTransition(async () => {
       try {
-        if (activeTab === "tasks") {
-          const input: TaskSearchInput = { query };
-          const output: TaskSearchOutput = await taskSearch(input);
-          // Mock result details as the flow only returns IDs
-          const taskResults: SearchResult[] = output.results.map((id, index) => ({
-            id,
-            title: `Task Result ${index + 1}: ${id}`,
-            description: `This is a mock description for task ID ${id} based on your query: "${query}". This content is focused on educational materials.`,
-            type: 'task',
-          }));
-          setResults(taskResults);
-        } else {
+        if (activeTab === "internet-search") { // Updated tab check
+          const input: InternetSearchInput = { query };
+          const output: InternetSearchOutput = await internetSearch(input);
+          const searchResults: SearchResult[] = [{
+            id: 'internet-search-result-1',
+            title: `AI Search Result for: "${query}"`,
+            description: output.answer, // Use the AI's direct answer
+            type: 'internet-search',
+          }];
+          setResults(searchResults);
+        } else { // print-locations tab
           const input: PrintLocationSearchInput = { query };
           const output: PrintLocationSearchOutput = await printLocationSearch(input);
-          // Mock result details as the flow only returns names
           const locationResults: SearchResult[] = output.results.map((name, index) => ({
-            id: name.toLowerCase().replace(/\s+/g, '-'), // generate an ID
+            id: `${name.toLowerCase().replace(/\s+/g, '-')}-${index}`, 
             title: `Print Location: ${name}`,
             description: `Details for print location "${name}" found through AI search for query: "${query}".`,
             type: 'print-location',
@@ -102,14 +100,14 @@ export function AiSearchDialog() {
             AI Powered Search
           </DialogTitle>
           <DialogDescription>
-            Find tasks or print locations using natural language. Task search focuses on educational content.
+            Use AI to search the internet or find print locations. Internet search can provide information on a wide range of topics.
           </DialogDescription>
         </DialogHeader>
         
         <div className="flex gap-2 my-4">
           <Input
             id="ai-search-query"
-            placeholder="e.g., 'research paper on renewable energy' or 'print shops near library'"
+            placeholder="e.g., 'history of renewable energy' or 'print shops near library'"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-grow"
@@ -121,9 +119,9 @@ export function AiSearchDialog() {
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "tasks" | "print-locations")} className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "internet-search" | "print-locations")} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="tasks">Tasks (Educational)</TabsTrigger>
+            <TabsTrigger value="internet-search">Internet Search</TabsTrigger> {/* Updated tab label and value */}
             <TabsTrigger value="print-locations">Print Locations</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -153,19 +151,19 @@ export function AiSearchDialog() {
                 <Card key={result.id} className="shadow-sm">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">{result.title}</CardTitle>
-                    <CardDescription className="text-xs pt-1">Type: {result.type}</CardDescription>
+                    <CardDescription className="text-xs pt-1">Type: {result.type === 'internet-search' ? 'Internet Search Result' : 'Print Location'}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">{result.description}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.description}</p>
                   </CardContent>
                   <CardFooter className="pt-3">
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => handleCopy(`${result.title}\n\nDescription:\n${result.description}`)}
+                      onClick={() => handleCopy(result.type === 'internet-search' ? result.description : `${result.title}\n\nDescription:\n${result.description}`)}
                       className="w-full"
                     >
-                      <Copy className="mr-2 h-4 w-4" /> Copy Details
+                      <Copy className="mr-2 h-4 w-4" /> Copy {result.type === 'internet-search' ? 'Answer' : 'Details'}
                     </Button>
                   </CardFooter>
                 </Card>
