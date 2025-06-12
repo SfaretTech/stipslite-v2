@@ -54,14 +54,14 @@ export function TaskSubmissionForm() {
   const performActualSubmission = (vaPreference: "specific" | "random") => {
     let vaMessage = "";
     if (vaPreference === "specific") {
-      vaMessage = "Your request has been sent to the specific Virtual Assistant for their approval. This option is typically available with a 'Professional VA' subscription.";
+      vaMessage = "Your request to assign a specific Virtual Assistant has been noted. If you have an active 'Professional VA' subscription, your chosen VA will be notified for approval. Otherwise, a random VA will be assigned.";
     } else {
-      vaMessage = "A Virtual Assistant will be assigned randomly.";
+      vaMessage = "A Virtual Assistant will be assigned randomly to your task.";
     }
 
     toast({
       title: "Task Submitted Successfully!",
-      description: `${vaMessage} Your task is now pending review and approval. Payment will be requested upon approval.`,
+      description: `${vaMessage} Your task is now pending review and admin approval. Payment will be requested upon approval.`,
       variant: "default",
       duration: 9000, 
     });
@@ -226,10 +226,9 @@ export function TaskSubmissionForm() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Virtual Assistant Preference</AlertDialogTitle>
                 <AlertDialogDescription>
-                  To request a specific Virtual Assistant, you typically need an active 'Professional VA' subscription.
-                  This allows you to search and select a preferred VA. Your chosen VA will then be notified to review and accept your task.
-                  If you don't have this subscription or don't choose a specific VA, one will be assigned randomly.
-                  Specific VA requests are subject to their availability.
+                  Requesting a specific Virtual Assistant by searching their name is a premium feature. This is typically available with our <strong>Professional VA plan (₦2000/year)</strong>. 
+                  If you have this plan and select a specific VA, they will be notified to review and accept your task, subject to their availability.
+                  If you do not have this plan, or do not wish to choose a specific VA, one will be assigned randomly.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -254,3 +253,4 @@ export function TaskSubmissionForm() {
     </Card>
   );
 }
+

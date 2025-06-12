@@ -7,7 +7,7 @@ import { SubscriptionCard } from "@/components/subscription/SubscriptionCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw } from "lucide-react";
+import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const plans = [
@@ -27,6 +27,15 @@ const plans = [
     features: ["Unlimited task submissions", "Advanced print center filters", "Enhanced referral rewards", "AI-powered search tool", "Priority email & chat support"],
     isCurrent: true, // Mock current plan
     isPopular: true,
+  },
+  {
+    id: "professional_va",
+    name: "Professional VA",
+    priceMonthly: "₦200", // Placeholder monthly, emphasize yearly
+    priceYearly: "₦2000",
+    features: ["All Pro features", "Request specific Virtual Assistants by name", "Priority in random VA assignment pool", "Direct messaging with assigned VA (soon)"],
+    isCurrent: false,
+    isPopular: false, // Can be changed if it becomes popular
   },
   { 
     id: "premium", 
@@ -68,12 +77,12 @@ export default function SubscriptionPage() {
         <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as "monthly" | "yearly")} className="w-auto">
           <TabsList>
             <TabsTrigger value="monthly">Monthly</TabsTrigger>
-            <TabsTrigger value="yearly">Yearly (Save ~16%)</TabsTrigger>
+            <TabsTrigger value="yearly">Yearly (Save ~16% or more)</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
       
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch"> {/* Adjusted grid for 4 plans */}
         {plans.map(plan => (
           <SubscriptionCard 
             key={plan.id} 
@@ -95,7 +104,7 @@ export default function SubscriptionPage() {
               <div>
                 <p className="text-lg font-semibold">{currentPlan.name} Plan ({billingCycle})</p>
                 <p className="text-sm text-muted-foreground">
-                  Price: {billingCycle === 'yearly' ? currentPlan.priceYearly : currentPlan.priceMonthly} / {billingCycle}
+                  Price: {billingCycle === 'yearly' ? currentPlan.priceYearly : currentPlan.priceMonthly} / {billingCycle === 'yearly' ? 'year' : 'month'}
                 </p>
               </div>
               <Button variant="outline" size="sm">Change Plan</Button>
@@ -116,7 +125,7 @@ export default function SubscriptionPage() {
             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 flex items-start">
                 <AlertTriangle className="h-5 w-5 mr-2 mt-0.5 shrink-0"/>
                 <p className="text-sm">
-                    This is a UI demonstration. Payments are handled via Flutterwave integration (not implemented in this UI-only version).
+                    This is a UI demonstration. Payments are handled via Flutterwave integration (not implemented in this UI-only version). Subscription changes are simulated.
                 </p>
             </div>
           </CardContent>
@@ -146,3 +155,4 @@ export default function SubscriptionPage() {
     </div>
   );
 }
+
