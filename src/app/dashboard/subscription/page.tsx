@@ -2,15 +2,16 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // Import useRouter
 import { PageHeader } from "@/components/shared/PageHeader";
 import { SubscriptionCard } from "@/components/subscription/SubscriptionCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Users } from "lucide-react";
+import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Users, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const initialPlans = [ // Renamed to initialPlans to avoid confusion in handleChoosePlan
+const initialPlans = [ 
   {
     id: "professional_va",
     name: "Professional VA",
@@ -22,37 +23,70 @@ const initialPlans = [ // Renamed to initialPlans to avoid confusion in handleCh
       "Direct messaging with assigned VA (coming soon)",
       "All standard platform features"
     ],
-    isCurrent: false, // Default to not current, user "chooses" it
-    isPopular: true, // Only plan, so it's popular
+    isCurrent: false, 
+    isPopular: true, 
   },
 ];
 
 
 export default function SubscriptionPage() {
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly"); // Default to yearly as per pricing
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly"); 
   const { toast } = useToast();
-  const [plans, setPlans] = useState(initialPlans.map(p => ({...p}))); // Create a mutable copy for state
+  const router = useRouter(); // Initialize useRouter
+  const [plans, setPlans] = useState(initialPlans.map(p => ({...p}))); 
 
   const handleChoosePlan = (planId: string, cycle: "monthly" | "yearly") => {
     const chosenPlan = plans.find(p => p.id === planId);
-    toast({
-      title: `Switched to ${chosenPlan?.name} (${cycle})!`,
-      description: "Your subscription has been updated. This is a mock action.",
-    });
-    // Update user's subscription status
     setPlans(prevPlans => prevPlans.map(p => 
         p.id === planId ? { ...p, isCurrent: true, billingCycle: cycle } : { ...p, isCurrent: false }
     ));
+
+    toast({
+      title: `Switched to ${chosenPlan?.name} (${cycle})!`,
+      description: "Your subscription has been updated.",
+    });
+    
+    if (chosenPlan?.id === "professional_va") {
+        setTimeout(() => {
+             toast({
+                title: "Subscription Active!",
+                description: "Redirecting to find a Virtual Assistant...",
+                variant: "default",
+                duration: 3000,
+            });
+            router.push('/dashboard/find-va');
+        }, 1500); // Delay for toast visibility
+    }
   };
 
   const currentPlan = plans.find(p => p.isCurrent);
+
+  const handleFlutterwavePayment = () => {
+    toast({ 
+        title: "Flutterwave Payment Initiated", 
+        description: "Processing payment... (simulation)"
+    });
+    // Simulate payment success and then redirect
+    setTimeout(() => {
+        setPlans(prevPlans => prevPlans.map(p => 
+            p.id === "professional_va" ? { ...p, isCurrent: true, billingCycle: billingCycle } : { ...p, isCurrent: false }
+        ));
+        toast({
+            title: "Payment Successful!",
+            description: `Subscribed to Professional VA (${billingCycle}). Redirecting to find a Virtual Assistant...`,
+            variant: "default",
+            duration: 4000,
+        });
+        router.push('/dashboard/find-va');
+    }, 2500); // Simulate payment processing time
+  };
 
   return (
     <div className="space-y-8">
       <PageHeader 
         title="Manage Your Subscription"
         description="Subscribe to our Professional VA plan or manage your current subscription."
-        icon={CreditCard}
+        icon={Sparkles} // Changed icon to Sparkles to represent premium
       />
 
       <div className="flex justify-center mb-8">
@@ -90,10 +124,9 @@ export default function SubscriptionPage() {
                   Price: {(currentPlan.billingCycle || billingCycle) === 'yearly' ? currentPlan.priceYearly : currentPlan.priceMonthly} / {(currentPlan.billingCycle || billingCycle) === 'yearly' ? 'year' : 'month'}
                 </p>
               </div>
-              <Button variant="outline" size="sm" onClick={() => { /* Logic to change plan if other plans existed */ }}>
-                {/* Change Plan button might be less relevant with one plan, or could lead to billing cycle change */}
-                Modify Plan
-              </Button>
+               <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/find-va')}>
+                  Find a VA
+                </Button>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -126,11 +159,11 @@ export default function SubscriptionPage() {
                 <CardDescription>Simulated payment section. In a real app, this would integrate Flutterwave.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-center">
-                <p className="text-muted-foreground">Click the button below to simulate initiating a payment with Flutterwave.</p>
+                <p className="text-muted-foreground">Click the button below to simulate initiating a payment with Flutterwave for the Professional VA plan.</p>
                 <Button 
                     size="lg" 
                     className="bg-orange-500 hover:bg-orange-600 text-white"
-                    onClick={() => toast({ title: "Flutterwave Payment Initiated", description: "Redirecting to Flutterwave... (simulation)"})}
+                    onClick={handleFlutterwavePayment}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 108 29" role="img"><path fill="currentColor" d="M22.68 28.46H16.9L13.14 17.9H7.38V28.46H1.6V.5h11.1c2.58 0 4.8.36 6.66 1.08 1.92.72 3.42 1.86 4.5 3.42.96 1.5.96 3.3.96 5.46V10.5c0 2.76-.6 4.92-1.86 6.42-1.2.ಾಗ1.5-2.88 2.46-5.04 2.88l7.56 8.64h-.36ZM7.38 13.02h5.22c1.98 0 3.42-.36 4.32-1.02.9-.72 1.32-1.86 1.32-3.42V6.42c0-1.38-.42-2.46-1.26-3.18-.78-.72-2.1-.96-3.9-.96H7.38v10.74Zm18.9 15.44h10.62V.5H26.28v27.96Zm14.16 0h10.62V.5H40.44v27.96Zm27.42-13.8L58.26 28.46h-6.3L60.36.5h5.82l-3.78 13.8 3.78 14.16h5.58L76.02.5h5.82l-8.4 27.96h-6.06l4.02-13.74Zm14.46 13.8h5.76V.5h-5.76v27.96Zm14.76 0h5.76V.5h-5.76v27.96Z"></path></svg>
                     Pay with Flutterwave
@@ -141,4 +174,3 @@ export default function SubscriptionPage() {
     </div>
   );
 }
-

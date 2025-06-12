@@ -18,8 +18,9 @@ import {
   Settings,
   BookUser,
   Bell,
-  Star, // Added Star icon for Professional VA
-  Lock, // Added Lock icon for locked state
+  Star, 
+  Lock, 
+  Search // Added Search icon for Find VA
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -32,7 +33,7 @@ import {
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // Added for custom tooltip on locked item
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; 
 
 
 const studentNavItems = [
@@ -49,11 +50,12 @@ const studentNavItems = [
   { href: "/dashboard/referrals", label: "Referrals", icon: Users },
   { href: "/dashboard/subscription", label: "Subscription", icon: CreditCard },
   {
-    href: "/dashboard/subscription", // Links to subscription page to activate/manage
+    href: "/dashboard/subscription", 
     label: "Professional VA",
     icon: Star,
-    status: "locked" as "locked" | "active", // Simulate 'locked' state
+    status: "locked" as "locked" | "active", 
   },
+  { href: "/dashboard/find-va", label: "Find a VA", icon: Search }, // Added Find a VA link
 ];
 
 const accountNavItems = [
@@ -73,21 +75,21 @@ const adminNavItems = [
 
 export function SidebarNav({ role = "student" }: { role?: "student" | "admin" }) {
   const pathname = usePathname();
-  const { open, isMobile, state: sidebarState } = useSidebar(); // Added isMobile and sidebarState
+  const { open, isMobile, state: sidebarState } = useSidebar(); 
 
   const navItems = role === "admin" ? adminNavItems : studentNavItems;
 
   return (
     <SidebarMenu className="flex-1">
       {navItems.map((item) => {
-        // @ts-ignore - status is a custom prop for Professional VA item
+        
         const isProVALocked = item.label === "Professional VA" && item.status === "locked";
 
         if (item.subItems) {
           return (
             <SidebarMenuItem key={item.label} className="relative">
               <SidebarMenuButton
-                // @ts-ignore
+                
                 isActive={item.subItems.some(sub => pathname.startsWith(sub.href))}
                 tooltip={item.label}
               >
@@ -120,10 +122,16 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
             </>
           );
 
-          const tooltipText = isProVALocked ? `${item.label} (Activate via Subscription)` : item.label;
+          let tooltipText = item.label;
+          if (isProVALocked) {
+            tooltipText = `${item.label} (Activate via Subscription)`;
+          } else if (item.label === "Find a VA"){
+            tooltipText = "Find a Virtual Assistant (Requires Professional VA subscription)";
+          }
+
 
           return (
-            <SidebarMenuItem key={item.label}> {/* Changed item.href to item.label here */}
+            <SidebarMenuItem key={item.label}> 
               <Link href={item.href}>
                 <SidebarMenuButton
                   isActive={pathname === item.href && !isProVALocked}
@@ -151,7 +159,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
           <Separator className="my-4" />
           <SidebarGroupLabel className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200 pl-0")}>Account</SidebarGroupLabel>
           {accountNavItems.map((item) => (
-            <SidebarMenuItem key={item.label}> {/* Ensure key is unique here too, label is fine */}
+            <SidebarMenuItem key={item.label}> 
               <Link href={item.href}>
                 <SidebarMenuButton
                   isActive={pathname === item.href}
@@ -179,4 +187,3 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
     </SidebarMenu>
   );
 }
-
