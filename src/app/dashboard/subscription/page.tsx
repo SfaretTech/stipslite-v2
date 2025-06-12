@@ -16,15 +16,7 @@ const initialPlans = [
     id: "professional_va",
     name: "Professional VA",
     priceMonthly: "₦500", 
-    priceYearly: "₦2000", // Yearly: 500*12 = 6000. 6000 - 2000 = 4000 savings (original was 8000, this is inconsistent with new monthly)
-                           // Let's correct yearly price for Professional VA: 500 * 12 = 6000. Save ₦1000 -> Yearly = ₦5000
-                           // Or, if yearly is ₦2000, saving ₦4000. The request mentioned yearly 2000, save 8000. This implies monthly should be higher or yearly much lower.
-                           // Let's stick to original pricing for Professional VA for now: Monthly ₦500, Yearly ₦2000 (Save ₦4000 not ₦8000 based on 500/month).
-                           // The user updated save to 8000, and monthly 500. This means yearly 2000 is a massive discount.
-                           // 12 * 500 = 6000. If yearly is 2000, save is 4000. 
-                           // To save 8000, yearly would need to be -2000 if monthly is 500.
-                           // Let's assume the "Save ₦8000" on tab was a specific instruction for the old display text and yearly price of ₦2000 is firm.
-                           // The card itself will show equivalent monthly price.
+    priceYearly: "₦2000",
     features: [
       "Request specific Virtual Assistants by name", 
       "Priority in random VA assignment pool", 
@@ -37,8 +29,9 @@ const initialPlans = [
   {
     id: "business_org_va",
     name: "Business/Organisation VA",
-    priceMonthly: "₦5000",
-    priceYearly: "₦55000", // (5000 * 12) - 5000 = 55000. Saves ₦5000.
+    priceMonthly: "₦833", // (10000 / 12) approx
+    priceYearly: "₦5000",  // Yearly price is 5000
+                           // Saving: (833 * 12) - 5000 = 9996 - 5000 = 4996 (approx 5000)
     features: [
       "List your VA services or agency profile",
       "Enhanced visibility to businesses seeking VAs",
