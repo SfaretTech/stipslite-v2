@@ -1,3 +1,4 @@
+
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -77,9 +78,9 @@ export default function AdminTasksPage() {
                             [Placeholder for full task details, description, and attachments]
                            </p>
                           <div className="space-y-2">
-                            <Label htmlFor="estimatedCost">Set Estimated Cost (USD)</Label>
+                            <Label htmlFor="estimatedCost">Set Estimated Cost (NGN)</Label>
                             <div className="relative">
-                                <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
                                 <Input id="estimatedCost" type="number" placeholder="e.g., 25.00" className="pl-8" />
                             </div>
                           </div>

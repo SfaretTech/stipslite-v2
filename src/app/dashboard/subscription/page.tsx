@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -13,16 +14,16 @@ const plans = [
   { 
     id: "basic", 
     name: "Basic", 
-    priceMonthly: "$9.99", 
-    priceYearly: "$99.99", 
+    priceMonthly: "₦9.99", 
+    priceYearly: "₦99.99", 
     features: ["Up to 10 task submissions/month", "Standard print center search", "Basic referral rewards", "Email support"],
     isCurrent: false,
   },
   { 
     id: "pro", 
     name: "Pro", 
-    priceMonthly: "$19.99", 
-    priceYearly: "$199.99",
+    priceMonthly: "₦19.99", 
+    priceYearly: "₦199.99",
     features: ["Unlimited task submissions", "Advanced print center filters", "Enhanced referral rewards", "AI-powered search tool", "Priority email & chat support"],
     isCurrent: true, // Mock current plan
     isPopular: true,
@@ -30,8 +31,8 @@ const plans = [
   { 
     id: "premium", 
     name: "Premium", 
-    priceMonthly: "$29.99", 
-    priceYearly: "$299.99",
+    priceMonthly: "₦29.99", 
+    priceYearly: "₦299.99",
     features: ["All Pro features", "Dedicated account manager", "Early access to new features", "Custom task workflows (soon)"],
     isCurrent: false,
   },

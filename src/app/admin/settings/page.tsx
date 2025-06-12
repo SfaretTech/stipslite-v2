@@ -1,3 +1,4 @@
+
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -52,7 +53,7 @@ export default function AdminSettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                     <Label htmlFor="currency">Default Currency</Label>
-                    <Input id="currency" defaultValue="USD" />
+                    <Input id="currency" defaultValue="NGN" />
                 </div>
                 <div className="space-y-1.5">
                     <Label htmlFor="serviceFee">Service Fee Percentage</Label>
@@ -65,8 +66,8 @@ export default function AdminSettingsPage() {
              <div className="space-y-1.5">
               <Label htmlFor="subscriptionTiers">Subscription Tier Configuration (JSON)</Label>
               <Textarea id="subscriptionTiers" rows={5} defaultValue={JSON.stringify([
-                  { id: "basic", name: "Basic", priceMonthly: 9.99, priceYearly: 99.99 },
-                  { id: "pro", name: "Pro", priceMonthly: 19.99, priceYearly: 199.99 },
+                  { id: "basic", name: "Basic", priceMonthly: 9.99, priceYearly: 99.99, currency: "NGN" },
+                  { id: "pro", name: "Pro", priceMonthly: 19.99, priceYearly: 199.99, currency: "NGN" },
               ], null, 2)} 
               className="font-code"
               />
@@ -83,16 +84,16 @@ export default function AdminSettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                    <Label htmlFor="referralBonus">Referral Bonus Amount</Label>
+                    <Label htmlFor="referralBonus">Referral Bonus Amount (NGN)</Label>
                      <div className="relative">
-                        <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
                         <Input id="referralBonus" type="number" defaultValue="5.00" className="pl-8" />
                     </div>
                 </div>
                 <div className="space-y-1.5">
-                    <Label htmlFor="minWithdrawal">Minimum Withdrawal Amount</Label>
+                    <Label htmlFor="minWithdrawal">Minimum Withdrawal Amount (NGN)</Label>
                      <div className="relative">
-                        <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
                         <Input id="minWithdrawal" type="number" defaultValue="10.00" className="pl-8" />
                     </div>
                 </div>

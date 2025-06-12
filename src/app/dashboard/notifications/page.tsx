@@ -22,8 +22,8 @@ interface NotificationItem {
 }
 
 const initialNotifications: NotificationItem[] = [
-  { id: "N001", title: "Task 'Research Paper Q1' Approved", description: "Your task has been approved. Payment of $25.00 is now due.", timestamp: "2024-07-22 10:00 AM", read: false, category: "Task Update", link: "/dashboard/tasks/TSK001", icon: Check },
-  { id: "N002", title: "New Referral Signup!", description: "Jane Doe signed up using your referral link. You'll earn $5.00 once they complete their first task.", timestamp: "2024-07-21 14:30 PM", read: false, category: "Referral", link: "/dashboard/referrals", icon: Users },
+  { id: "N001", title: "Task 'Research Paper Q1' Approved", description: "Your task has been approved. Payment of ₦25.00 is now due.", timestamp: "2024-07-22 10:00 AM", read: false, category: "Task Update", link: "/dashboard/tasks/TSK001", icon: Check },
+  { id: "N002", title: "New Referral Signup!", description: "Jane Doe signed up using your referral link. You'll earn ₦5.00 once they complete their first task.", timestamp: "2024-07-21 14:30 PM", read: false, category: "Referral", link: "/dashboard/referrals", icon: Users },
   { id: "N003", title: "Subscription Renewal Soon", description: "Your Pro plan will renew on August 1st, 2024.", timestamp: "2024-07-20 09:15 AM", read: true, category: "System Alert", link: "/dashboard/subscription", icon: CreditCard },
   { id: "N004", title: "AI Search Feature Launched", description: "Try our new AI-powered search in the header to find tasks and print centers faster!", timestamp: "2024-07-19 11:00 AM", read: true, category: "New Feature", icon: Sparkles },
   { id: "N005", title: "Payment Received for TSK00X", description: "We've received your payment for task 'Placeholder Task'. Work will begin shortly.", timestamp: "2024-07-18 16:45 PM", read: true, category: "Payment", link: "/dashboard/tasks/TSK00X", icon: DollarSign },

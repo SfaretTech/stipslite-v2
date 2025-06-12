@@ -1,3 +1,4 @@
+
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/button";
@@ -31,10 +32,10 @@ export default function DashboardPage() {
         />
         <StatCard 
           title="Referral Earnings" 
-          value="$25.50" 
+          value="₦25.50" 
           icon={DollarSign} 
           description="Total earnings from referrals"
-          trend="+ $5.00 this week"
+          trend="+ ₦5.00 this week"
           trendColor="green"
         />
         <StatCard 
@@ -102,7 +103,7 @@ export default function DashboardPage() {
         <CardContent>
             <div className="mb-2 flex justify-between text-sm">
                 <span>Monthly Plan</span>
-                <span className="font-semibold text-primary">$9.99 / month</span>
+                <span className="font-semibold text-primary">₦9.99 / month</span>
             </div>
             <Progress value={60} aria-label="Subscription period progress" className="h-3"/>
             <p className="text-xs text-muted-foreground mt-1 text-right">Renews on July 30, 2024</p>

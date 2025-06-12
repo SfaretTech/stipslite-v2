@@ -10,7 +10,7 @@ import { Copy, DollarSign, Users, Gift, Smartphone, Send } from "lucide-react";
 import { StatCard } from "@/components/shared/StatCard";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react"; // Added useState
+import { useState } from "react"; 
 
 interface Referral {
   id: string;
@@ -21,9 +21,9 @@ interface Referral {
 }
 
 const mockReferrals: Referral[] = [
-  { id: "REF001", referredUser: "Alice Wonderland", date: "2024-07-01", status: "Completed", earnings: "$5.00" },
-  { id: "REF002", referredUser: "Bob The Builder", date: "2024-07-05", status: "Earned", earnings: "$5.00" },
-  { id: "REF003", referredUser: "Charlie Brown", date: "2024-07-10", status: "Pending", earnings: "$0.00" },
+  { id: "REF001", referredUser: "Alice Wonderland", date: "2024-07-01", status: "Completed", earnings: "₦5.00" },
+  { id: "REF002", referredUser: "Bob The Builder", date: "2024-07-05", status: "Earned", earnings: "₦5.00" },
+  { id: "REF003", referredUser: "Charlie Brown", date: "2024-07-10", status: "Pending", earnings: "₦0.00" },
 ];
 
 const mobileMoneyPlatforms = [
@@ -36,7 +36,7 @@ const mobileMoneyPlatforms = [
 export function ReferralDashboard() {
   const referralLink = "https://stips.lite/ref/YOUR_CODE_XYZ"; // Placeholder
   const { toast } = useToast();
-  const [withdrawalAmount, setWithdrawalAmount] = useState(""); // State for withdrawal amount
+  const [withdrawalAmount, setWithdrawalAmount] = useState(""); 
   const currentBalance = 10.00; // Mock balance
 
   const copyToClipboard = () => {
@@ -66,7 +66,7 @@ export function ReferralDashboard() {
     if (amountToWithdraw > currentBalance) {
         toast({
             title: "Insufficient Balance",
-            description: `You cannot withdraw more than your current balance of $${currentBalance.toFixed(2)}.`,
+            description: `You cannot withdraw more than your current balance of ₦${currentBalance.toFixed(2)}.`,
             variant: "destructive",
         });
         return;
@@ -74,17 +74,17 @@ export function ReferralDashboard() {
 
     toast({
       title: "Withdrawal Request Submitted",
-      description: `Your request to withdraw $${amountToWithdraw.toFixed(2)} is pending admin approval.`,
+      description: `Your request to withdraw ₦${amountToWithdraw.toFixed(2)} is pending admin approval.`,
       variant: "default",
     });
     
     toast({
         title: "Admin Notification (Simulated)",
-        description: `Admin would be notified of a withdrawal request for $${amountToWithdraw.toFixed(2)}. User: [Current User], Wallet Details: [Details from form]`,
+        description: `Admin would be notified of a withdrawal request for ₦${amountToWithdraw.toFixed(2)}. User: [Current User], Wallet Details: [Details from form]`,
         variant: "default",
         duration: 5000, 
     });
-    console.log(`SIMULATION: Admin notified for withdrawal of $${amountToWithdraw.toFixed(2)}. User: [Current User], Wallet Details: [Details from form]`);
+    console.log(`SIMULATION: Admin notified for withdrawal of ₦${amountToWithdraw.toFixed(2)}. User: [Current User], Wallet Details: [Details from form]`);
     setWithdrawalAmount(""); // Clear input after submission
   };
 
@@ -93,8 +93,8 @@ export function ReferralDashboard() {
     <div className="space-y-8">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <StatCard title="Total Referrals" value="3" icon={Users} description="Successful user sign-ups." />
-        <StatCard title="Total Earnings" value={`$${currentBalance.toFixed(2)}`} icon={DollarSign} description="From completed referrals." />
-        <StatCard title="Pending Earnings" value="$0.00" icon={Gift} description="Potential earnings from pending referrals." />
+        <StatCard title="Total Earnings" value={`₦${currentBalance.toFixed(2)}`} icon={DollarSign} description="From completed referrals." />
+        <StatCard title="Pending Earnings" value="₦0.00" icon={Gift} description="Potential earnings from pending referrals." />
       </div>
 
       <Card className="shadow-xl">
@@ -110,7 +110,7 @@ export function ReferralDashboard() {
           </Button>
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
-          You earn $5.00 for each friend who signs up and completes their first task.
+          You earn ₦5.00 for each friend who signs up and completes their first task.
         </CardFooter>
       </Card>
 
@@ -191,7 +191,7 @@ export function ReferralDashboard() {
                 <Smartphone className="mr-2 h-4 w-4" /> Save Wallet Details
             </Button>
             <p className="text-xs text-muted-foreground pt-2">
-                Ensure your mobile number and name are correct to avoid withdrawal issues. Minimum withdrawal amount is $10.00.
+                Ensure your mobile number and name are correct to avoid withdrawal issues. Minimum withdrawal amount is ₦10.00.
             </p>
         </CardContent>
       </Card>
@@ -200,14 +200,14 @@ export function ReferralDashboard() {
         <CardHeader>
             <CardTitle className="font-headline text-xl">Withdraw Earnings</CardTitle>
             <CardDescription>
-                Your current withdrawable balance is <span className="font-semibold text-primary">${currentBalance.toFixed(2)}</span>.
+                Your current withdrawable balance is <span className="font-semibold text-primary">₦{currentBalance.toFixed(2)}</span>.
             </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
             <div className="space-y-1.5">
-                <Label htmlFor="withdrawalAmount">Amount to Withdraw</Label>
+                <Label htmlFor="withdrawalAmount">Amount to Withdraw (NGN)</Label>
                 <div className="relative">
-                    <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
                     <Input 
                         id="withdrawalAmount" 
                         type="number" 
@@ -236,5 +236,3 @@ export function ReferralDashboard() {
     </div>
   );
 }
-
-    

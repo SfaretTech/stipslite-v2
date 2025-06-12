@@ -20,7 +20,7 @@ const mockTaskDetails = {
     status: "Approved - Payment Due", 
     description: "Conduct a comprehensive literature review for the first chapter of the research paper on renewable energy sources. Focus on studies published in the last 5 years. Include at least 20 relevant sources.",
     attachments: [{name: "guidelines.pdf", size: "1.2MB"}, {name: "initial_outline.docx", size:"300KB"}],
-    estimatedCost: "$50.00",
+    estimatedCost: "₦50.00",
     deadline: "2024-07-25",
     comments: [
         {user: "Admin", text: "Task approved. Please proceed with payment to start processing.", timestamp: "2024-07-11 09:00 AM"},
@@ -36,7 +36,7 @@ const mockTaskDetails = {
     status: "In Progress",
     description: "Create a 20-slide presentation for the Q3 marketing strategy. Include market analysis, competitor overview, proposed campaigns, and budget allocation.",
     attachments: [],
-    estimatedCost: "$75.00",
+    estimatedCost: "₦75.00",
     deadline: "2024-07-20",
     comments: []
   },
