@@ -102,7 +102,7 @@ export function TaskSubmissionForm() {
 
           <div className="space-y-2">
             <Label htmlFor="taskDescription">Task Description</Label>
-            <Textarea id="taskDescription" name="taskDescription" placeholder="Provide a detailed description of the task requirements..." rows={4} required />
+            <Textarea id="taskDescription" name="taskDescription" placeholder="Provide a detailed description of the task requirements including formatting (e.g., APA 7th ed., font size 12, font name: Times New Roman), specific sources to use, or any other instructions." rows={4} required />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
