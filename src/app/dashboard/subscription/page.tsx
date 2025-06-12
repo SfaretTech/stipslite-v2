@@ -15,7 +15,7 @@ const initialPlans = [
   {
     id: "professional_va",
     name: "Professional VA",
-    priceMonthly: "₦200", 
+    priceMonthly: "₦500", 
     priceYearly: "₦2000",
     features: [
       "Request specific Virtual Assistants by name", 
@@ -92,7 +92,7 @@ export default function SubscriptionPage() {
       <div className="flex justify-center mb-8">
         <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as "monthly" | "yearly")} className="w-auto">
           <TabsList>
-            <TabsTrigger value="monthly">Monthly (₦200)</TabsTrigger>
+            <TabsTrigger value="monthly">Monthly (₦500)</TabsTrigger>
             <TabsTrigger value="yearly">Yearly (₦2000 - Save ₦400)</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -174,3 +174,4 @@ export default function SubscriptionPage() {
     </div>
   );
 }
+
