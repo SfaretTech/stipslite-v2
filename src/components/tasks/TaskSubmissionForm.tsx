@@ -54,7 +54,7 @@ export function TaskSubmissionForm() {
   const performActualSubmission = (vaPreference: "specific" | "random") => {
     let vaMessage = "";
     if (vaPreference === "specific") {
-      vaMessage = "Your request to assign a specific Virtual Assistant has been noted. If you have an active 'Professional VA' subscription, your chosen VA will be notified for approval. Otherwise, a random VA will be assigned.";
+      vaMessage = "Your task has been submitted. As per your request for a specific VA (Professional Plan feature), the task will be assigned to them for review and acceptance.";
     } else {
       vaMessage = "A Virtual Assistant will be assigned randomly to your task.";
     }
@@ -226,9 +226,10 @@ export function TaskSubmissionForm() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Virtual Assistant Preference</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Requesting a specific Virtual Assistant by searching their name is a premium feature. This is typically available with our <strong>Professional VA plan (₦2000/year)</strong>. 
-                  If you have this plan and select a specific VA, they will be notified to review and accept your task, subject to their availability.
-                  If you do not have this plan, or do not wish to choose a specific VA, one will be assigned randomly.
+                  Choosing 'Request Specific VA' means you intend for a particular Virtual Assistant to work on this task.
+                  With an active <strong>Professional VA plan (₦2000/year)</strong>, you can find and select your preferred VA (e.g., using the 'Find a VA' page).
+                  After confirming your preference here and submitting your task, it will be directly assigned to them. They will then be notified to review and accept your work, subject to their availability.
+                  If you don't have the Professional VA plan, do not wish to specify a VA, or if your chosen VA is unavailable, one will be assigned randomly.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
