@@ -20,6 +20,9 @@ import {
   Bell,
   Star,
   Lock,
+  Briefcase, // Added for VA tasks
+  CalendarCheck, // Added for VA availability
+  DollarSign, // Added for VA earnings/payouts
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -57,7 +60,7 @@ const studentNavItemsBase = [
   },
 ];
 
-const accountNavItems = [
+const accountNavItemsStudent = [
   { href: "/dashboard/profile", label: "Profile", icon: UserCircle },
   { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
   { href: "/dashboard/subscription", label: "Subscription", icon: CreditCard },
@@ -72,8 +75,18 @@ const adminNavItems = [
    { href: "/admin/settings", label: "Site Settings", icon: Settings },
 ];
 
+const vaNavItems = [
+  { href: "/va/dashboard", label: "VA Dashboard", icon: LayoutDashboard },
+  { href: "/va/tasks", label: "Assigned Tasks", icon: Briefcase },
+  { href: "/va/profile", label: "My VA Profile", icon: UserCircle },
+  // { href: "/va/availability", label: "My Availability", icon: CalendarCheck }, // Potentially part of profile
+  // { href: "/va/payouts", label: "Payouts", icon: DollarSign }, // Could be part of dashboard or a separate section
+  { href: "/va/notifications", label: "Notifications", icon: Bell },
+  { href: "/va/support", label: "Support", icon: MessageSquare },
+];
 
-export function SidebarNav({ role = "student" }: { role?: "student" | "admin" }) {
+
+export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | "va" }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { open, isMobile, state: sidebarState } = useSidebar();
@@ -99,8 +112,6 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
 
     const planActivatedQuery = searchParams.get('plan_activated');
     
-    // Determine if the VA Plus feature should be considered active
-    // based on query params (just subscribed), current path, or localStorage (persisted subscription)
     const isVaPlanCurrentlyActive = 
       planActivatedQuery === 'expert_va' ||
       planActivatedQuery === 'business_org_va' ||
@@ -108,43 +119,50 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
       isSubscribedToVaPlan;
 
     if (planActivatedQuery === 'expert_va' || planActivatedQuery === 'business_org_va') {
-        // If just activated via query param, ensure local state and localStorage are set
         if (!isSubscribedToVaPlan) setIsSubscribedToVaPlan(true);
         if (typeof window !== 'undefined' && localStorage.getItem('stipsLiteVaPlanActive') !== 'true') {
             localStorage.setItem('stipsLiteVaPlanActive', 'true');
         }
     }
 
-
     setStudentNavItems(prevItems =>
       prevItems.map(item =>
-        item.label === "VA Plus" ? { ...item, status: isVaPlanCurrentlyActive ? "active" : "locked" } : item
+        item.label === "VA Plus" ? { ...item, status: isVaPlanCurrentlyActive ? "active" : "locked", activeHref: "/dashboard/find-va" } : item
       )
     );
   }, [pathname, searchParams, hasMounted, isSubscribedToVaPlan]);
 
 
-  const navItemsToRender = role === "admin" ? adminNavItems : studentNavItems;
+  const navItemsToRender = 
+    role === "admin" ? adminNavItems : 
+    role === "va" ? vaNavItems : 
+    studentNavItems;
+  
+  const accountNavItems = role === "student" ? accountNavItemsStudent : []; // VA will have profile in main nav
 
   return (
     <SidebarMenu className="flex-1">
       {navItemsToRender.map((item) => {
         const isVaPlusItem = item.label === "VA Plus";
         const isVaPlusLocked = isVaPlusItem && item.status === "locked";
-        const currentHref = isVaPlusItem ? (isVaPlusLocked ? item.href : (item as any).activeHref) : item.href;
+        // Ensure activeHref exists before trying to access it
+        const activeHref = (item as any).activeHref;
+        const currentHref = isVaPlusItem ? (isVaPlusLocked ? item.href : activeHref) : item.href;
 
-        if (item.subItems) {
+
+        if ((item as any).subItems) {
+          const subItems = (item as any).subItems as { href?: string; label: string; icon?: React.ElementType }[];
           return (
             <SidebarMenuItem key={item.label} className="relative">
               <SidebarMenuButton
-                isActive={item.subItems.some(sub => pathname.startsWith(sub.href!))}
+                isActive={subItems.some(sub => sub.href && pathname.startsWith(sub.href))}
                 tooltip={item.label}
               >
                 <item.icon className="h-5 w-5" />
                 <span className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200")}>{item.label}</span>
               </SidebarMenuButton>
               <SidebarMenuSub>
-                {item.subItems.map((subItem) => (
+                {subItems.map((subItem) => (
                   <SidebarMenuSubItem key={subItem.href}>
                     <SidebarMenuSubButton
                       href={subItem.href!}
@@ -200,7 +218,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
         }
       })}
 
-      {role === "student" && (
+      {role === "student" && accountNavItems.length > 0 && (
         <>
           <Separator className="my-4" />
           <SidebarGroupLabel className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200 pl-0")}>Account</SidebarGroupLabel>
@@ -233,4 +251,3 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
     </SidebarMenu>
   );
 }
-

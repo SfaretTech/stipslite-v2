@@ -16,16 +16,28 @@ import { Settings } from "lucide-react";
 type AppLayoutProps = {
   children: React.ReactNode;
   defaultOpen?: boolean;
-  role?: "student" | "admin";
+  role?: "student" | "admin" | "va";
 };
 
 export function AppLayout({ children, defaultOpen = true, role = "student" }: AppLayoutProps) {
+  const getTitle = () => {
+    if (role === "admin") return "STIPS Lite Admin";
+    if (role === "va") return "STIPS Lite VA";
+    return "STIPS Lite";
+  };
+  
+  const getBaseLink = () => {
+    if (role === "admin") return "/admin/dashboard";
+    if (role === "va") return "/va/dashboard";
+    return "/dashboard";
+  }
+
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r">
         <SidebarHeader className="p-4 border-b">
-          <Link href={role === "admin" ? "/admin/dashboard" : "/dashboard"} className="text-2xl font-bold text-primary font-headline">
-            STIPS Lite {role === "admin" && <span className="text-sm text-muted-foreground font-normal">Admin</span>}
+          <Link href={getBaseLink()} className="text-2xl font-bold text-primary font-headline">
+            {getTitle()}
           </Link>
         </SidebarHeader>
         <SidebarContent className="p-0">
