@@ -10,57 +10,39 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const plans = [
-  { 
-    id: "basic", 
-    name: "Basic", 
-    priceMonthly: "₦9.99", 
-    priceYearly: "₦99.99", 
-    features: ["Up to 10 task submissions/month", "Standard print center search", "Basic referral rewards", "Email support"],
-    isCurrent: false,
-  },
-  { 
-    id: "pro", 
-    name: "Pro", 
-    priceMonthly: "₦19.99", 
-    priceYearly: "₦199.99",
-    features: ["Unlimited task submissions", "Advanced print center filters", "Enhanced referral rewards", "AI-powered search tool", "Priority email & chat support"],
-    isCurrent: true, // Mock current plan
-    isPopular: true,
-  },
+const initialPlans = [ // Renamed to initialPlans to avoid confusion in handleChoosePlan
   {
     id: "professional_va",
     name: "Professional VA",
-    priceMonthly: "₦200", // Placeholder monthly, emphasize yearly
+    priceMonthly: "₦200", 
     priceYearly: "₦2000",
-    features: ["All Pro features", "Request specific Virtual Assistants by name", "Priority in random VA assignment pool", "Direct messaging with assigned VA (soon)"],
-    isCurrent: false,
-    isPopular: false, // Can be changed if it becomes popular
-  },
-  { 
-    id: "premium", 
-    name: "Premium", 
-    priceMonthly: "₦29.99", 
-    priceYearly: "₦299.99",
-    features: ["All Pro features", "Dedicated account manager", "Early access to new features", "Custom task workflows (soon)"],
-    isCurrent: false,
+    features: [
+      "Request specific Virtual Assistants by name", 
+      "Priority in random VA assignment pool", 
+      "Direct messaging with assigned VA (coming soon)",
+      "All standard platform features"
+    ],
+    isCurrent: false, // Default to not current, user "chooses" it
+    isPopular: true, // Only plan, so it's popular
   },
 ];
 
 
 export default function SubscriptionPage() {
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly"); // Default to yearly as per pricing
   const { toast } = useToast();
+  const [plans, setPlans] = useState(initialPlans.map(p => ({...p}))); // Create a mutable copy for state
 
   const handleChoosePlan = (planId: string, cycle: "monthly" | "yearly") => {
-    // UI-only: Simulate choosing a plan
     const chosenPlan = plans.find(p => p.id === planId);
     toast({
       title: `Switched to ${chosenPlan?.name} (${cycle})!`,
       description: "Your subscription has been updated. This is a mock action.",
     });
-    // In a real app, update user's subscription status
-    plans.forEach(p => p.isCurrent = p.id === planId); // Update mock current plan for demo
+    // Update user's subscription status
+    setPlans(prevPlans => prevPlans.map(p => 
+        p.id === planId ? { ...p, isCurrent: true, billingCycle: cycle } : { ...p, isCurrent: false }
+    ));
   };
 
   const currentPlan = plans.find(p => p.isCurrent);
@@ -69,32 +51,33 @@ export default function SubscriptionPage() {
     <div className="space-y-8">
       <PageHeader 
         title="Manage Your Subscription"
-        description="Choose the plan that best suits your needs or manage your current subscription."
+        description="Subscribe to our Professional VA plan or manage your current subscription."
         icon={CreditCard}
       />
 
       <div className="flex justify-center mb-8">
         <Tabs value={billingCycle} onValueChange={(value) => setBillingCycle(value as "monthly" | "yearly")} className="w-auto">
           <TabsList>
-            <TabsTrigger value="monthly">Monthly</TabsTrigger>
-            <TabsTrigger value="yearly">Yearly (Save ~16% or more)</TabsTrigger>
+            <TabsTrigger value="monthly">Monthly (₦200)</TabsTrigger>
+            <TabsTrigger value="yearly">Yearly (₦2000 - Save ₦400)</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
       
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch"> {/* Adjusted grid for 4 plans */}
+      <div className="flex justify-center"> 
         {plans.map(plan => (
-          <SubscriptionCard 
-            key={plan.id} 
-            plan={plan} 
-            onChoosePlan={handleChoosePlan}
-            currentBillingCycle={billingCycle}
-          />
+          <div key={plan.id} className="w-full max-w-md">
+            <SubscriptionCard 
+              plan={plan} 
+              onChoosePlan={handleChoosePlan}
+              currentBillingCycle={billingCycle}
+            />
+          </div>
         ))}
       </div>
 
       {currentPlan && (
-        <Card className="shadow-lg">
+        <Card className="shadow-lg max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="font-headline">Current Subscription Details</CardTitle>
             <CardDescription>Overview of your active plan and billing information.</CardDescription>
@@ -102,22 +85,25 @@ export default function SubscriptionPage() {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center p-4 bg-muted/50 rounded-md">
               <div>
-                <p className="text-lg font-semibold">{currentPlan.name} Plan ({billingCycle})</p>
+                <p className="text-lg font-semibold">{currentPlan.name} Plan ({currentPlan.billingCycle || billingCycle})</p>
                 <p className="text-sm text-muted-foreground">
-                  Price: {billingCycle === 'yearly' ? currentPlan.priceYearly : currentPlan.priceMonthly} / {billingCycle === 'yearly' ? 'year' : 'month'}
+                  Price: {(currentPlan.billingCycle || billingCycle) === 'yearly' ? currentPlan.priceYearly : currentPlan.priceMonthly} / {(currentPlan.billingCycle || billingCycle) === 'yearly' ? 'year' : 'month'}
                 </p>
               </div>
-              <Button variant="outline" size="sm">Change Plan</Button>
+              <Button variant="outline" size="sm" onClick={() => { /* Logic to change plan if other plans existed */ }}>
+                {/* Change Plan button might be less relevant with one plan, or could lead to billing cycle change */}
+                Modify Plan
+              </Button>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <h4 className="font-medium text-sm mb-1 flex items-center"><CalendarDays className="h-4 w-4 mr-2 text-primary"/>Billing Cycle</h4>
-                    <p className="text-muted-foreground text-sm">Next renewal on: August 15, 2024</p>
+                    <p className="text-muted-foreground text-sm">Next renewal on: August 15, 2024 (mock data)</p>
                 </div>
                 <div>
                     <h4 className="font-medium text-sm mb-1 flex items-center"><CreditCard className="h-4 w-4 mr-2 text-primary"/>Payment Method</h4>
-                    <p className="text-muted-foreground text-sm">Visa **** **** **** 1234</p>
+                    <p className="text-muted-foreground text-sm">Visa **** **** **** 1234 (mock data)</p>
                     <Button variant="link" className="p-0 h-auto text-sm">Update Payment Method</Button>
                 </div>
             </div>
@@ -134,7 +120,7 @@ export default function SubscriptionPage() {
           </CardFooter>
         </Card>
       )}
-       <Card className="shadow-lg">
+       <Card className="shadow-lg max-w-2xl mx-auto">
             <CardHeader>
                 <CardTitle className="font-headline">Flutterwave Payment</CardTitle>
                 <CardDescription>Simulated payment section. In a real app, this would integrate Flutterwave.</CardDescription>
