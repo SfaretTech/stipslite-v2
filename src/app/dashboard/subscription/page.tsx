@@ -16,7 +16,7 @@ const initialPlans = [
     id: "expert_va", 
     name: "Expert VA", 
     priceMonthly: "₦500", 
-    priceYearly: "₦2000", // 500*12 = 6000. 6000-2000 = 4000 savings
+    priceYearly: "₦2000",
     features: [
       "Request specific Virtual Assistants by name", 
       "Priority in random VA assignment pool", 
@@ -31,7 +31,7 @@ const initialPlans = [
     id: "business_org_va",
     name: "Professional Business VA",
     priceMonthly: "₦1000", 
-    priceYearly: "₦5000", // 1000*12 = 12000. 12000-5000 = 7000 savings
+    priceYearly: "₦5000",
     features: [
       "Premium Profile Listing in VA Directory (Top Placement)",
       "Advanced Analytics & Reporting Dashboard",
@@ -56,36 +56,21 @@ export default function SubscriptionPage() {
 
   const handleChoosePlan = (planId: string, cycle: "monthly" | "yearly") => {
     const chosenPlan = plans.find(p => p.id === planId);
+    if (!chosenPlan) return;
+
     setPlans(prevPlans => prevPlans.map(p => 
         p.id === planId ? { ...p, isCurrent: true, billingCycle: cycle } : { ...p, isCurrent: false }
     ));
 
     toast({
-      title: `Switched to ${chosenPlan?.name} Plan (${cycle})!`,
-      description: "Your subscription has been updated.",
+      title: `Processing ${chosenPlan.name} Plan (${cycle})...`,
+      description: "Your subscription selection is being updated.",
     });
     
-    if (chosenPlan?.id === "expert_va") { 
-        setTimeout(() => {
-             toast({
-                title: "Expert VA Plan Active!",
-                description: "Redirecting to find a Virtual Assistant...",
-                variant: "default",
-                duration: 3000,
-            });
-            router.push('/dashboard/find-va?plan_activated=expert_va');
-        }, 1500); 
-    } else if (chosenPlan?.id === "business_org_va") { 
-         setTimeout(() => {
-             toast({
-                title: "Professional Business VA Plan Active!", 
-                description: "You can now manage your professional VA services. (Further navigation TBD)",
-                variant: "default",
-                duration: 3000,
-            });
-            // router.push('/dashboard/manage-services?plan_activated=business_org_va'); // Example redirect for business plan
-        }, 1500);
-    }
+    // Simulate redirection after a delay
+    setTimeout(() => {
+      router.push(`/dashboard/find-va?plan_activated=${planId}`);
+    }, 1500); 
   };
 
   const currentPlan = plans.find(p => p.isCurrent);
@@ -102,22 +87,13 @@ export default function SubscriptionPage() {
         description: `Processing payment for ${planToActivate.name} (${billingCycle})... (simulation)`
     });
     
+    // Simulate payment success and redirection
     setTimeout(() => {
         setPlans(prevPlans => prevPlans.map(p => 
             p.id === planIdToActivate ? { ...p, isCurrent: true, billingCycle: billingCycle } : { ...p, isCurrent: false }
         ));
-        toast({
-            title: "Payment Successful!",
-            description: `Subscribed to ${planToActivate.name} Plan (${billingCycle}).`,
-            variant: "default",
-            duration: 4000,
-        });
-
-        if (planIdToActivate === "expert_va") { 
-            router.push('/dashboard/find-va?plan_activated=expert_va');
-        } else if (planIdToActivate === "business_org_va") {
-            // router.push('/dashboard/manage-va-profile?plan_activated=business_org_va'); // Example redirect
-        }
+        // The toast for successful *activation* will be shown on the /dashboard/find-va page
+        router.push(`/dashboard/find-va?plan_activated=${planIdToActivate}`);
     }, 2500); 
   };
 
@@ -226,3 +202,4 @@ export default function SubscriptionPage() {
     </div>
   );
 }
+

@@ -6,7 +6,7 @@ import { VaSearch } from "@/components/va-directory/VaSearch";
 import { VaList, type VirtualAssistant as VaListVirtualAssistant } from "@/components/va-directory/VaList";
 import { Users } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation"; // Added usePathname
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -27,22 +27,33 @@ export default function FindVaPage() {
   const [searchFilters, setSearchFilters] = useState<any>({});
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
 
   useEffect(() => {
     const planActivated = searchParams.get('plan_activated');
+    let toastTitle = "";
+    let toastDescription = "";
+
     if (planActivated === 'expert_va') {
+      toastTitle = "Expert VA Plan Activated!";
+      toastDescription = "You can now search for and request specific Virtual Assistants.";
+    } else if (planActivated === 'business_org_va') {
+      toastTitle = "Professional Business VA Plan Activated!";
+      toastDescription = "Your business VA profile features are now active. (Further navigation/management TBD)";
+    }
+
+    if (toastTitle) {
       toast({
-        title: "Expert VA Plan Activated!",
-        description: "You can now search for and request specific Virtual Assistants.",
+        title: toastTitle,
+        description: toastDescription,
         variant: "default",
         duration: 5000,
       });
-      // Remove the query parameter from the URL without reloading the page or adding to history
-      const newPath = router.pathname; // In Next.js 13+ App Router, router.pathname is not directly available. We need just the path.
-      router.replace('/dashboard/find-va', { scroll: false });
+      // Remove the query parameter from the URL without reloading or adding to history
+      router.replace(pathname, { scroll: false });
     }
-  }, [searchParams, router, toast]);
+  }, [searchParams, router, toast, pathname]);
 
   const handleSearch = (filters: any) => {
     setSearchFilters(filters);
@@ -63,8 +74,8 @@ export default function FindVaPage() {
   return (
     <div className="space-y-8">
       <PageHeader 
-        title="Find a Virtual Assistant"
-        description="As an Expert VA Plan subscriber, browse and search for Virtual Assistants. VAs with a 'Professional Business VA' plan are indicated on their profile cards."
+        title="Find a Virtual Assistant (VA Plus)"
+        description="Browse and search for Virtual Assistants. This feature is enhanced if you have an active VA plan. VAs with a 'Professional Business VA' plan are indicated on their profile cards."
         icon={Users}
       />
       <VaSearch onSearch={handleSearch} />

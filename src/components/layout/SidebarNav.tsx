@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation"; // Added useSearchParams
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -34,9 +34,10 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; 
+import { useEffect, useState } from "react";
 
 
-const studentNavItems = [
+const studentNavItemsBase = [ // Renamed to base to allow dynamic status
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   {
     label: "Tasks",
@@ -49,11 +50,11 @@ const studentNavItems = [
   { href: "/dashboard/print-centers", label: "Print Centers", icon: Printer },
   { href: "/dashboard/referrals", label: "Referrals", icon: Users },
   {
-    href: "/dashboard/subscription", 
-    label: "VA Plus", // Changed from "Expert VA"
+    href: "/dashboard/subscription", // Default link if locked
+    activeHref: "/dashboard/find-va", // Link if unlocked
+    label: "VA Plus",
     icon: Star,
-    status: "locked" as "locked" | "active", 
-    activeHref: "/dashboard/find-va", 
+    status: "locked" as "locked" | "active", // Initial status
   },
 ];
 
@@ -75,23 +76,45 @@ const adminNavItems = [
 
 export function SidebarNav({ role = "student" }: { role?: "student" | "admin" }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { open, isMobile, state: sidebarState } = useSidebar(); 
+  
+  const [studentNavItems, setStudentNavItems] = useState(studentNavItemsBase);
 
-  const navItems = role === "admin" ? adminNavItems : studentNavItems;
+  useEffect(() => {
+    // Simulate checking subscription status for "VA Plus"
+    // In a real app, this would come from user context/auth state
+    const planActivated = searchParams.get('plan_activated');
+    const isVaPlanActive = planActivated === 'expert_va' || planActivated === 'business_org_va' || pathname.startsWith('/dashboard/find-va');
+
+    setStudentNavItems(prevItems => 
+      prevItems.map(item => 
+        item.label === "VA Plus" ? { ...item, status: isVaPlanActive ? "active" : "locked" } : item
+      )
+    );
+  // Effect should run when pathname changes, or when searchParams might indicate a new activation
+  // However, searchParams itself is an object that changes reference, so direct dependency can cause loops.
+  // Listening to planActivated is more stable.
+  }, [pathname, searchParams.get('plan_activated')]);
+
+
+  const navItemsToRender = role === "admin" ? adminNavItems : studentNavItems;
 
   return (
     <SidebarMenu className="flex-1">
-      {navItems.map((item) => {
+      {navItemsToRender.map((item) => {
         
-        const isVaPlusLocked = item.label === "VA Plus" && item.status === "locked";
-        const currentHref = isVaPlusLocked ? item.href : (item.label === "VA Plus" ? item.activeHref : item.href);
+        const isVaPlusItem = item.label === "VA Plus";
+        const isVaPlusLocked = isVaPlusItem && item.status === "locked";
+        // For VA Plus, if locked, href is subscription page, if active, href is find-va page.
+        const currentHref = isVaPlusItem ? (isVaPlusLocked ? item.href : (item as any).activeHref) : item.href;
 
         if (item.subItems) {
           return (
             <SidebarMenuItem key={item.label} className="relative">
               <SidebarMenuButton
                 
-                isActive={item.subItems.some(sub => pathname.startsWith(sub.href))}
+                isActive={item.subItems.some(sub => pathname.startsWith(sub.href!))}
                 tooltip={item.label}
               >
                 <item.icon className="h-5 w-5" />
@@ -101,7 +124,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
                 {item.subItems.map((subItem) => (
                   <SidebarMenuSubItem key={subItem.href}>
                     <SidebarMenuSubButton
-                      href={subItem.href} 
+                      href={subItem.href!} 
                       isActive={pathname === subItem.href}
                       className="justify-start"
                       size="sm"
@@ -124,10 +147,10 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
           );
 
           let tooltipText = item.label;
-          if (isVaPlusLocked) {
-            tooltipText = `Subscribe to Expert VA plan to find specific VAs`; // Referring to the actual plan name
-          } else if (item.label === "VA Plus" && item.status === "active") {
-            tooltipText = "Find an Expert VA"; // Refers to the role/type of VA
+          if (isVaPlusItem) {
+            tooltipText = isVaPlusLocked 
+              ? `Subscribe to a VA Plan to unlock` 
+              : (item.label === "VA Plus" ? "Find a Virtual Assistant" : item.label);
           }
 
 
