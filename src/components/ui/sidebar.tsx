@@ -4,6 +4,7 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
+import Link, { type LinkProps } from "next/link"; // Import Link and LinkProps
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -705,37 +706,53 @@ const SidebarMenuSubItem = React.forwardRef<
 >(({ ...props }, ref) => <li ref={ref} {...props} />)
 SidebarMenuSubItem.displayName = "SidebarMenuSubItem"
 
+
+interface SidebarMenuSubButtonOwnProps {
+  size?: "sm" | "md";
+  isActive?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+type SidebarMenuSubButtonProps = Omit<LinkProps, 'asChild' | 'legacyBehavior' | 'passHref'> & SidebarMenuSubButtonOwnProps;
+
 const SidebarMenuSubButton = React.forwardRef<
   HTMLAnchorElement,
-  Omit<React.ComponentProps<"a">, "asChild"> & {
-    size?: "sm" | "md";
-    isActive?: boolean;
-  }
->(({ size = "md", isActive, className, children, ...props }, ref) => {
-  // Defensively remove asChild from props if it exists, even if types say it shouldn't.
-  const { asChild, ...anchorProps } = props as any;
-
+  SidebarMenuSubButtonProps
+>(({
+  size = "md",
+  isActive = false,
+  className,
+  children,
+  href, // This is a LinkProp
+  ...restLinkProps // Other LinkProps
+}, ref) => {
   return (
-    <a // Always render 'a'
+    <Link
+      href={href}
       ref={ref}
-      data-sidebar="menu-sub-button"
-      data-size={size}
-      data-active={String(!!isActive)}
       className={cn(
         "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground",
-        "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
+        // CSS selectors for data-active should handle the active styling
+        // For example: data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground
+        // If isActive prop is used to conditionally apply classes, it can be done like:
+        // isActive && "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
         size === "sm" && "text-xs",
         size === "md" && "text-sm",
         "group-data-[collapsible=icon]:hidden",
         className
       )}
-      {...anchorProps} // Spread the cleaned props
+      data-sidebar="menu-sub-button"
+      data-size={size}
+      data-active={String(isActive)} // This attribute triggers CSS for active state
+      {...restLinkProps}
     >
       {children}
-    </a>
+    </Link>
   );
 });
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
+
 
 export {
   Sidebar,

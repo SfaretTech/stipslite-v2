@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -86,16 +85,15 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
             <SidebarMenuSub>
               {item.subItems.map((subItem) => (
                 <SidebarMenuSubItem key={subItem.href}>
-                  <Link href={subItem.href} asChild>
-                    <SidebarMenuSubButton
-                      isActive={pathname === subItem.href}
-                      className="justify-start"
-                      size="sm"
-                    >
-                      {subItem.icon && <subItem.icon className="h-4 w-4 mr-2" />}
-                      {subItem.label}
-                    </SidebarMenuSubButton>
-                  </Link>
+                  <SidebarMenuSubButton
+                    href={subItem.href}
+                    isActive={pathname === subItem.href}
+                    className="justify-start"
+                    size="sm"
+                  >
+                    {subItem.icon && <subItem.icon className="h-4 w-4 mr-2" />}
+                    {subItem.label}
+                  </SidebarMenuSubButton>
                 </SidebarMenuSubItem>
               ))}
             </SidebarMenuSub>
