@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -10,14 +11,28 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search } from "lucide-react";
+import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AiSearchDialog } from "@/components/ai/AiSearchDialog";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area"; // Added ScrollArea
+import { cn } from "@/lib/utils"; // Added cn
+
+// Mock notifications for the dropdown - ideally fetch this or share from a context
+const mockHeaderNotifications = [
+  { id: "N001", title: "Task 'Research Paper Q1' Approved", timestamp: "2 hours ago", read: false, link: "/dashboard/tasks/TSK001", icon: CheckCircle },
+  { id: "N002", title: "New Referral: Jane Doe", timestamp: "1 day ago", read: false, link: "/dashboard/referrals", icon: UsersIcon },
+  { id: "N003", title: "Subscription Renewal Soon", timestamp: "3 days ago", read: true, link: "/dashboard/subscription", icon: CreditCard },
+  { id: "N004", title: "Payment Received", timestamp: "5 days ago", read: true, link: "/dashboard/tasks/TSK00X", icon: DollarIcon },
+];
+
 
 export function Header() {
   const { isMobile } = useSidebar();
+  const unreadNotificationsCount = mockHeaderNotifications.filter(n => !n.read).length;
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
@@ -26,22 +41,63 @@ export function Header() {
       
       <div className="flex-1">
         {/* Optional: Global search bar if not using AI Search Dialog exclusively */}
-        {/* <form className="relative ml-auto flex-1 md:grow-0">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search..."
-            className="w-full rounded-lg bg-muted pl-8 md:w-[200px] lg:w-[320px]"
-          />
-        </form> */}
       </div>
 
       <div className="flex items-center gap-3">
         <AiSearchDialog />
-        <Button variant="outline" size="icon" className="rounded-full">
-          <Bell className="h-5 w-5" />
-          <span className="sr-only">Notifications</span>
-        </Button>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="rounded-full relative">
+              <Bell className="h-5 w-5" />
+              {unreadNotificationsCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs rounded-full"
+                >
+                  {unreadNotificationsCount}
+                </Badge>
+              )}
+              <span className="sr-only">Notifications</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80 md:w-96">
+            <DropdownMenuLabel className="flex justify-between items-center">
+              <span>Recent Notifications</span>
+              {unreadNotificationsCount > 0 && <Badge variant="secondary">{unreadNotificationsCount} Unread</Badge>}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <ScrollArea className="h-[300px] max-h-[calc(100vh-200px)]"> {/* Added ScrollArea */}
+              {mockHeaderNotifications.length === 0 && (
+                <DropdownMenuItem disabled className="text-center text-muted-foreground py-4">
+                  No new notifications.
+                </DropdownMenuItem>
+              )}
+              {mockHeaderNotifications.map(notification => {
+                const IconComponent = notification.icon || Bell;
+                return (
+                  <DropdownMenuItem key={notification.id} asChild className={cn(!notification.read && "bg-accent/50 hover:bg-accent/70", "cursor-pointer")}>
+                    <Link href={notification.link || "/dashboard/notifications"} className="flex items-start gap-3 p-2">
+                      <IconComponent className={cn("h-5 w-5 mt-0.5 shrink-0", notification.read ? "text-muted-foreground" : "text-primary")} />
+                      <div className="flex-grow">
+                        <p className={cn("text-sm font-medium", !notification.read && "text-foreground")}>{notification.title}</p>
+                        <p className="text-xs text-muted-foreground">{notification.timestamp}</p>
+                      </div>
+                       {!notification.read && <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1.5"></div>}
+                    </Link>
+                  </DropdownMenuItem>
+                );
+              })}
+            </ScrollArea>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/notifications" className="flex items-center justify-center text-primary hover:underline">
+                <Eye className="mr-2 h-4 w-4" /> View All Notifications
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -61,6 +117,13 @@ export function Header() {
               <Link href="/dashboard/profile">
                 <UserCircle className="mr-2 h-4 w-4" />
                 <span>Profile</span>
+              </Link>
+            </DropdownMenuItem>
+             <DropdownMenuItem asChild>
+              <Link href="/dashboard/notifications">
+                <Bell className="mr-2 h-4 w-4" />
+                <span>Notifications</span>
+                {unreadNotificationsCount > 0 && <Badge variant="destructive" className="ml-auto">{unreadNotificationsCount}</Badge>}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
@@ -88,3 +151,5 @@ export function Header() {
     </header>
   );
 }
+
+    

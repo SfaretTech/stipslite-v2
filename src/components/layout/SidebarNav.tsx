@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -16,7 +17,7 @@ import {
   ShieldCheck,
   Settings,
   BookUser,
-  Bell,
+  Bell, // Added Bell icon
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -46,6 +47,7 @@ const studentNavItems = [
 
 const accountNavItems = [
   { href: "/dashboard/profile", label: "Profile", icon: UserCircle },
+  { href: "/dashboard/notifications", label: "Notifications", icon: Bell }, // Added Notifications link
   { href: "/dashboard/support", label: "Support Chat", icon: MessageSquare },
 ];
 
@@ -71,11 +73,6 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
         item.subItems ? (
           <SidebarMenuItem key={item.label} className="relative">
             <SidebarMenuButton
-              // @ts-ignore TODO: Radix CollapsibleTrigger's 'asChild' prop is not compatible with 'Slot'.
-              // This is a known issue. For UI only, we can ignore the type error.
-              // In a real app, ensure Radix and shadcn versions are compatible or use alternative.
-              // This issue usually arises from version mismatches or specific setups.
-              // className="justify-start"
               isActive={item.subItems.some(sub => pathname.startsWith(sub.href))}
               tooltip={item.label}
             >
@@ -86,7 +83,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
               {item.subItems.map((subItem) => (
                 <SidebarMenuSubItem key={subItem.href}>
                   <SidebarMenuSubButton
-                    href={subItem.href}
+                    href={subItem.href} // Pass href directly
                     isActive={pathname === subItem.href}
                     className="justify-start"
                     size="sm"
@@ -117,6 +114,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
       {role === "student" && (
         <>
           <Separator className="my-4" />
+          <SidebarGroupLabel className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200 pl-0")}>Account</SidebarGroupLabel>
           {accountNavItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <Link href={item.href}>
@@ -146,3 +144,5 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
     </SidebarMenu>
   );
 }
+
+    
