@@ -1,4 +1,4 @@
-"use client";
+// "use client";
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
@@ -15,10 +15,11 @@ import { Input }                from "@/components/ui/input";
 import { Label }                from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea }           from "@/components/ui/scroll-area";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Search, Sparkles, AlertTriangle } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Loader2, Search, Sparkles, AlertTriangle, Copy } from "lucide-react";
 import { taskSearch, TaskSearchInput, TaskSearchOutput } from "@/ai/flows/task-search";
 import { printLocationSearch, PrintLocationSearchInput, PrintLocationSearchOutput } from "@/ai/flows/print-location-search";
+import { useToast } from "@/hooks/use-toast";
 
 type SearchResult = { id: string; title: string; description: string; type: 'task' | 'print-location' };
 
@@ -29,6 +30,7 @@ export function AiSearchDialog() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -44,7 +46,7 @@ export function AiSearchDialog() {
           const taskResults: SearchResult[] = output.results.map((id, index) => ({
             id,
             title: `Task Result ${index + 1}: ${id}`,
-            description: `This is a mock description for task ID ${id} based on your query: "${query}".`,
+            description: `This is a mock description for task ID ${id} based on your query: "${query}". This content is focused on educational materials.`,
             type: 'task',
           }));
           setResults(taskResults);
@@ -67,6 +69,24 @@ export function AiSearchDialog() {
     });
   };
 
+  const handleCopy = (textToCopy: string) => {
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        toast({
+          title: "Copied to clipboard!",
+          description: "The search result details have been copied.",
+        });
+      })
+      .catch(err => {
+        console.error("Failed to copy text: ", err);
+        toast({
+          title: "Copy failed",
+          description: "Could not copy details to clipboard. Please try again.",
+          variant: "destructive",
+        });
+      });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -82,14 +102,14 @@ export function AiSearchDialog() {
             AI Powered Search
           </DialogTitle>
           <DialogDescription>
-            Find tasks or print locations using natural language.
+            Find tasks or print locations using natural language. Task search focuses on educational content.
           </DialogDescription>
         </DialogHeader>
         
         <div className="flex gap-2 my-4">
           <Input
             id="ai-search-query"
-            placeholder="e.g., 'urgent programming tasks' or 'print shops near main campus'"
+            placeholder="e.g., 'research paper on renewable energy' or 'print shops near library'"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-grow"
@@ -103,7 +123,7 @@ export function AiSearchDialog() {
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "tasks" | "print-locations")} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="tasks">Tasks (Educational)</TabsTrigger>
             <TabsTrigger value="print-locations">Print Locations</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -138,13 +158,23 @@ export function AiSearchDialog() {
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{result.description}</p>
                   </CardContent>
+                  <CardFooter className="pt-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleCopy(`${result.title}\n\nDescription:\n${result.description}`)}
+                      className="w-full"
+                    >
+                      <Copy className="mr-2 h-4 w-4" /> Copy Details
+                    </Button>
+                  </CardFooter>
                 </Card>
               ))}
             </div>
           )}
         </ScrollArea>
 
-        <DialogFooter className="mt-auto pt-4">
+        <DialogFooter className="mt-auto pt-4 border-t">
           <Button variant="outline" onClick={() => setIsOpen(false)}>
             Close
           </Button>

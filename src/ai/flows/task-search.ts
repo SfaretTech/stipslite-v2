@@ -31,11 +31,11 @@ const prompt = ai.definePrompt({
   name: 'taskSearchPrompt',
   input: {schema: TaskSearchInputSchema},
   output: {schema: TaskSearchOutputSchema},
-  prompt: `You are a search assistant helping students find tasks. Based on the user's query, return a list of relevant task IDs.
+  prompt: `You are an AI search assistant specialized in finding educational tasks for students. Your goal is to understand student queries and return a list of relevant task IDs that strictly pertain to educational assignments, research, or learning activities.
 
 Query: {{{query}}}
 
-Results should be a JSON array of strings.`,
+Focus exclusively on educational content. Results should be a JSON array of strings representing task IDs.`,
 });
 
 const taskSearchFlow = ai.defineFlow(
