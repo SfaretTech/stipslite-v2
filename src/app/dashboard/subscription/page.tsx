@@ -29,20 +29,21 @@ const initialPlans = [
   },
   {
     id: "business_org_va",
-    name: "Business/Organisation VA",
+    name: "Professional Business VA", // Renamed
     priceMonthly: "₦1000", 
     priceYearly: "₦5000", // 1000*12 = 12000. 12000-5000 = 7000 savings
-    features: [
-      "List your VA agency/business profile prominently",
-      "Enhanced visibility to students & businesses",
-      "Offer services with business-level accountability (e.g., rechecks, revisions)",
-      "Tools for managing client tasks & communication (coming soon)",
-      "Featured profile options in VA directory",
-      "Analytics on your service/profile views"
+    features: [ // Enhanced features
+      "Premium Profile Listing in VA Directory (Top Placement)",
+      "Advanced Analytics & Reporting Dashboard",
+      "Integrated Client Communication & Task Management Suite (Coming Soon)",
+      "Showcase Client Testimonials & Portfolio",
+      "Offer Formal Service Level Agreements (e.g., Revisions, Guarantees)",
+      "Team Management Features for VA Agencies (Coming Soon)",
+      "Dedicated Business Support Channel"
     ],
     isCurrent: false,
     isPopular: false,
-    description: "For VA agencies and registered businesses. Offer students the assurance and accountability of a formal business entity when they choose your services."
+    description: "Tailored for established VA businesses and agencies seeking maximum visibility, advanced tools, and to showcase their professional services with enhanced credibility and client assurance." // Updated description
   },
 ];
 
@@ -74,11 +75,11 @@ export default function SubscriptionPage() {
             });
             router.push('/dashboard/find-va');
         }, 1500); 
-    } else if (chosenPlan?.id === "business_org_va") {
+    } else if (chosenPlan?.id === "business_org_va") { // Check for "Professional Business VA"
          setTimeout(() => {
              toast({
-                title: "Business/Organisation VA Plan Active!",
-                description: "You can now manage your VA services. (Further navigation TBD)",
+                title: "Professional Business VA Plan Active!", // Updated Toast title
+                description: "You can now manage your professional VA services. (Further navigation TBD)",
                 variant: "default",
                 duration: 3000,
             });
@@ -124,7 +125,7 @@ export default function SubscriptionPage() {
     <div className="space-y-8">
       <PageHeader 
         title="Manage Your Subscription"
-        description="Students can activate the Expert VA plan to find and request specific VAs. VAs/Agencies can subscribe to the Business/Organisation plan to list their services."
+        description="Students can activate the Expert VA plan to find VAs. VA Businesses can subscribe to the Professional Business VA plan to list their services."
         icon={CreditCard}
       />
 
@@ -225,4 +226,5 @@ export default function SubscriptionPage() {
     </div>
   );
 }
+
 
