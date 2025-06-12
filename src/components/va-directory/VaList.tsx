@@ -5,10 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, Briefcase, Award, CheckCircle, Sparkles, UserCheck } from "lucide-react"; // Added UserCheck
-import Link from "next/link"; // Added Link
-import { useToast } from "@/hooks/use-toast"; // Added useToast
-import { cn } from "@/lib/utils"; // Added import for cn
+import { Star, Briefcase, Award, CheckCircle, Sparkles, UserCheck } from "lucide-react";
+import { useRouter } from "next/navigation"; // Added useRouter
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 export interface VirtualAssistant {
   id: string;
@@ -20,8 +20,8 @@ export interface VirtualAssistant {
   specializations: string[];
   availability: 'Available' | 'Busy' | 'Unavailable';
   hourlyRate?: string;
-  shopName?: string; // Added shopName
-  businessName?: string; // Added businessName
+  shopName?: string;
+  businessName?: string;
 }
 
 interface VaListProps {
@@ -30,6 +30,7 @@ interface VaListProps {
 
 export function VaList({ virtualAssistants }: VaListProps) {
   const { toast } = useToast();
+  const router = useRouter(); // Initialized useRouter
 
   const handleRequestVa = (vaName: string) => {
     toast({
@@ -37,7 +38,15 @@ export function VaList({ virtualAssistants }: VaListProps) {
       description: `Your request to work with ${vaName} has been sent. They will be notified to review and accept your task.`,
       duration: 5000,
     });
-    // In a real app, this would trigger a backend notification to the VA
+  };
+
+  const handleViewProfile = (va: VirtualAssistant) => {
+    toast({
+      title: "Navigating to Profile",
+      description: `Viewing ${va.name}'s profile... (Page /dashboard/va-profile/${va.id} not yet implemented)`,
+      duration: 4000,
+    });
+    router.push(`/dashboard/va-profile/${va.id}`);
   };
 
   if (virtualAssistants.length === 0) {
@@ -117,9 +126,13 @@ export function VaList({ virtualAssistants }: VaListProps) {
             </div>
           </CardContent>
           <CardFooter className="pt-4 border-t space-x-2">
-            <Button variant="outline" size="sm" className="flex-1" asChild>
-              {/* In a real app, this could link to a full VA profile page: /dashboard/va-profile/${va.id} */}
-              <Link href="#">View Profile</Link>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1"
+              onClick={() => handleViewProfile(va)}
+            >
+              View Profile
             </Button>
             <Button 
               size="sm" 
