@@ -124,10 +124,8 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
 
           return (
             <SidebarMenuItem key={item.label}> {/* Changed item.href to item.label here */}
-              <Link href={item.href} passHref legacyBehavior>
+              <Link href={item.href}>
                 <SidebarMenuButton
-                  as="a"
-                  // @ts-ignore
                   isActive={pathname === item.href && !isProVALocked}
                   className={cn(
                     "justify-start w-full",
