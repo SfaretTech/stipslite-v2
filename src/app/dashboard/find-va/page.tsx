@@ -3,11 +3,13 @@
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { VaSearch } from "@/components/va-directory/VaSearch";
-import { VaList, type VirtualAssistant as VaListVirtualAssistant } from "@/components/va-directory/VaList"; // Renamed import
+import { VaList, type VirtualAssistant as VaListVirtualAssistant } from "@/components/va-directory/VaList";
 import { Users } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
-// Extended VirtualAssistant type to include planType
+
 export interface PageVirtualAssistant extends VaListVirtualAssistant {
   planType?: "Professional Business VA";
   shopName?: string;
@@ -23,6 +25,24 @@ const mockVAs: PageVirtualAssistant[] = [
 
 export default function FindVaPage() {
   const [searchFilters, setSearchFilters] = useState<any>({});
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const planActivated = searchParams.get('plan_activated');
+    if (planActivated === 'expert_va') {
+      toast({
+        title: "Expert VA Plan Activated!",
+        description: "You can now search for and request specific Virtual Assistants.",
+        variant: "default",
+        duration: 5000,
+      });
+      // Remove the query parameter from the URL without reloading the page or adding to history
+      const newPath = router.pathname; // In Next.js 13+ App Router, router.pathname is not directly available. We need just the path.
+      router.replace('/dashboard/find-va', { scroll: false });
+    }
+  }, [searchParams, router, toast]);
 
   const handleSearch = (filters: any) => {
     setSearchFilters(filters);

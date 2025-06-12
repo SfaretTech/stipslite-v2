@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation"; // Import useRouter
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { SubscriptionCard } from "@/components/subscription/SubscriptionCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Users, Sparkles, Briefcase } from "lucide-react"; 
+import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Users, Sparkles, Briefcase, Star } from "lucide-react"; 
 import { useToast } from "@/hooks/use-toast";
 
 const initialPlans = [ 
@@ -29,10 +29,10 @@ const initialPlans = [
   },
   {
     id: "business_org_va",
-    name: "Professional Business VA", // Renamed
+    name: "Professional Business VA",
     priceMonthly: "₦1000", 
     priceYearly: "₦5000", // 1000*12 = 12000. 12000-5000 = 7000 savings
-    features: [ // Enhanced features
+    features: [
       "Premium Profile Listing in VA Directory (Top Placement)",
       "Advanced Analytics & Reporting Dashboard",
       "Integrated Client Communication & Task Management Suite (Coming Soon)",
@@ -43,7 +43,7 @@ const initialPlans = [
     ],
     isCurrent: false,
     isPopular: false,
-    description: "Tailored for established VA businesses and agencies seeking maximum visibility, advanced tools, and to showcase their professional services with enhanced credibility and client assurance." // Updated description
+    description: "Tailored for established VA businesses and agencies seeking maximum visibility, advanced tools, and to showcase their professional services with enhanced credibility and client assurance."
   },
 ];
 
@@ -73,17 +73,17 @@ export default function SubscriptionPage() {
                 variant: "default",
                 duration: 3000,
             });
-            router.push('/dashboard/find-va');
+            router.push('/dashboard/find-va?plan_activated=expert_va');
         }, 1500); 
-    } else if (chosenPlan?.id === "business_org_va") { // Check for "Professional Business VA"
+    } else if (chosenPlan?.id === "business_org_va") { 
          setTimeout(() => {
              toast({
-                title: "Professional Business VA Plan Active!", // Updated Toast title
+                title: "Professional Business VA Plan Active!", 
                 description: "You can now manage your professional VA services. (Further navigation TBD)",
                 variant: "default",
                 duration: 3000,
             });
-            // router.push('/dashboard/manage-services'); // Example redirect for business plan
+            // router.push('/dashboard/manage-services?plan_activated=business_org_va'); // Example redirect for business plan
         }, 1500);
     }
   };
@@ -114,9 +114,9 @@ export default function SubscriptionPage() {
         });
 
         if (planIdToActivate === "expert_va") { 
-            router.push('/dashboard/find-va');
+            router.push('/dashboard/find-va?plan_activated=expert_va');
         } else if (planIdToActivate === "business_org_va") {
-            // router.push('/dashboard/manage-va-profile'); // Example redirect
+            // router.push('/dashboard/manage-va-profile?plan_activated=business_org_va'); // Example redirect
         }
     }, 2500); 
   };
@@ -125,7 +125,7 @@ export default function SubscriptionPage() {
     <div className="space-y-8">
       <PageHeader 
         title="Manage Your Subscription"
-        description="Students can activate the Expert VA plan to find VAs. VA Businesses can subscribe to the Professional Business VA plan to list their services."
+        description="Students: Activate the 'Expert VA' plan to find specific VAs. VA Businesses: Subscribe to the 'Professional Business VA' plan to list your services."
         icon={CreditCard}
       />
 
@@ -226,5 +226,3 @@ export default function SubscriptionPage() {
     </div>
   );
 }
-
-
