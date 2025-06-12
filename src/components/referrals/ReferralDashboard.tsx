@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Copy, DollarSign, Users, Gift, ExternalLink, Smartphone } from "lucide-react";
 import { StatCard } from "@/components/shared/StatCard";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Referral {
   id: string;
@@ -21,6 +23,13 @@ const mockReferrals: Referral[] = [
   { id: "REF001", referredUser: "Alice Wonderland", date: "2024-07-01", status: "Completed", earnings: "$5.00" },
   { id: "REF002", referredUser: "Bob The Builder", date: "2024-07-05", status: "Earned", earnings: "$5.00" },
   { id: "REF003", referredUser: "Charlie Brown", date: "2024-07-10", status: "Pending", earnings: "$0.00" },
+];
+
+const mobileMoneyPlatforms = [
+  { value: "opay", label: "OPay" },
+  { value: "moniepoint", label: "Moniepoint" },
+  { value: "paga", label: "Paga" },
+  { value: "palmpay", label: "PalmPay" },
 ];
 
 export function ReferralDashboard() {
@@ -98,8 +107,23 @@ export function ReferralDashboard() {
         </CardHeader>
         <CardContent className="space-y-4">
             <div className="space-y-1.5">
-                <Label htmlFor="mobileNumber">Mobile Number (M-Pesa, Airtel Money, etc.)</Label>
-                <Input id="mobileNumber" type="tel" placeholder="e.g., 0712345678" />
+              <Label htmlFor="mobileMoneyPlatform">Mobile Money Platform</Label>
+              <Select name="mobileMoneyPlatform">
+                <SelectTrigger id="mobileMoneyPlatform">
+                  <SelectValue placeholder="Select platform" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mobileMoneyPlatforms.map(platform => (
+                    <SelectItem key={platform.value} value={platform.value}>
+                      {platform.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+                <Label htmlFor="mobileNumber">Mobile Money Number</Label>
+                <Input id="mobileNumber" type="tel" placeholder="e.g., 08012345678" />
             </div>
             <div className="space-y-1.5">
                 <Label htmlFor="walletName">Registered Name on Wallet</Label>
