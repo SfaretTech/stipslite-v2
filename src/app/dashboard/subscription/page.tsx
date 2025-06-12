@@ -29,9 +29,8 @@ const initialPlans = [
   {
     id: "business_org_va",
     name: "Business/Organisation VA",
-    priceMonthly: "₦833", // (10000 / 12) approx
-    priceYearly: "₦5000",  // Yearly price is 5000
-                           // Saving: (833 * 12) - 5000 = 9996 - 5000 = 4996 (approx 5000)
+    priceMonthly: "₦1000", // Updated from ₦833
+    priceYearly: "₦5000",
     features: [
       "List your VA services or agency profile",
       "Enhanced visibility to businesses seeking VAs",
