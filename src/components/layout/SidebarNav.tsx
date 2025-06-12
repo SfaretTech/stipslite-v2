@@ -20,7 +20,7 @@ import {
   Bell,
   Star, 
   Lock, 
-  Search, // Added Search for consistency, though might not be used directly in this iteration
+  Search, 
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -48,20 +48,19 @@ const studentNavItems = [
   },
   { href: "/dashboard/print-centers", label: "Print Centers", icon: Printer },
   { href: "/dashboard/referrals", label: "Referrals", icon: Users },
-  // { href: "/dashboard/subscription", label: "Subscription", icon: CreditCard }, // Moved to accountNavItems
   {
     href: "/dashboard/subscription", 
-    label: "Professional VA",
+    label: "Expert VA", // Changed from "Professional VA"
     icon: Star,
     status: "locked" as "locked" | "active", 
-    activeHref: "/dashboard/find-va", // Store the target href for when it's active
+    activeHref: "/dashboard/find-va", 
   },
 ];
 
 const accountNavItems = [
   { href: "/dashboard/profile", label: "Profile", icon: UserCircle },
   { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
-  { href: "/dashboard/subscription", label: "Subscription", icon: CreditCard }, // Added here
+  { href: "/dashboard/subscription", label: "Subscription", icon: CreditCard },
   { href: "/dashboard/support", label: "Support Chat", icon: MessageSquare },
 ];
 
@@ -84,8 +83,8 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
     <SidebarMenu className="flex-1">
       {navItems.map((item) => {
         
-        const isProVALocked = item.label === "Professional VA" && item.status === "locked";
-        const currentHref = isProVALocked ? item.href : (item.label === "Professional VA" ? item.activeHref : item.href);
+        const isExpertVALocked = item.label === "Expert VA" && item.status === "locked"; // Changed from "Professional VA"
+        const currentHref = isExpertVALocked ? item.href : (item.label === "Expert VA" ? item.activeHref : item.href); // Changed from "Professional VA"
 
         if (item.subItems) {
           return (
@@ -120,14 +119,14 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
             <>
               <item.icon className="h-5 w-5" />
               <span className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200 flex-grow truncate")}>{item.label}</span>
-              {isProVALocked && open && <Lock className="h-3.5 w-3.5 ml-1 text-muted-foreground shrink-0" />}
+              {isExpertVALocked && open && <Lock className="h-3.5 w-3.5 ml-1 text-muted-foreground shrink-0" />}
             </>
           );
 
           let tooltipText = item.label;
-          if (isProVALocked) {
+          if (isExpertVALocked) {
             tooltipText = `${item.label} (Activate via Subscription)`;
-          } else if (item.label === "Professional VA" && item.status === "active") { // Conceptually active
+          } else if (item.label === "Expert VA" && item.status === "active") { // Changed from "Professional VA"
             tooltipText = "Find a Virtual Assistant";
           }
 
@@ -136,10 +135,10 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
             <SidebarMenuItem key={item.label}> 
               <Link href={currentHref}>
                 <SidebarMenuButton
-                  isActive={pathname === currentHref && !isProVALocked}
+                  isActive={pathname === currentHref && !isExpertVALocked}
                   className={cn(
                     "justify-start w-full",
-                    isProVALocked && "opacity-70 hover:bg-sidebar-accent/70"
+                    isExpertVALocked && "opacity-70 hover:bg-sidebar-accent/70"
                   )}
                   tooltip={{
                     children: tooltipText,

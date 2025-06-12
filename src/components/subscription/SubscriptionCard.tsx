@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, XCircle, Zap, Briefcase } from "lucide-react"; // Added Briefcase
+import { CheckCircle2, XCircle, Zap, Briefcase } from "lucide-react"; 
 import { cn } from "@/lib/utils";
 
 interface SubscriptionPlan {
@@ -57,7 +57,7 @@ export function SubscriptionCard({ plan, onChoosePlan, currentBillingCycle }: { 
                 {savingsText}
             </p>
         )}
-        <CardDescription>{plan.isCurrent ? "This is your current plan." : `Ideal for ${plan.name.toLowerCase().includes('professional') ? 'students seeking VA services' : 'VAs/Agencies offering services'}.`}</CardDescription>
+        <CardDescription>{plan.isCurrent ? "This is your current plan." : `Ideal for ${plan.name.toLowerCase().includes('expert') ? 'students seeking VA services' : 'VAs/Agencies offering services'}.`}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 flex-grow">
         <ul className="space-y-2">
@@ -67,8 +67,7 @@ export function SubscriptionCard({ plan, onChoosePlan, currentBillingCycle }: { 
               <span>{feature}</span>
             </li>
           ))}
-           {/* Example of a disabled feature for a lower tier plan */}
-          {plan.name === "Basic" && ( // Assuming Basic is a placeholder, actual plan name might differ
+          {plan.name === "Basic" && ( 
              <li className="flex items-start text-muted-foreground">
               <XCircle className="h-5 w-5 text-red-400 mr-2 shrink-0 mt-0.5" />
               <span>Advanced AI search features</span>
@@ -91,4 +90,3 @@ export function SubscriptionCard({ plan, onChoosePlan, currentBillingCycle }: { 
     </Card>
   );
 }
-
