@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Copy, DollarSign, Users, Gift, Smartphone, Send } from "lucide-react"; // Added Send icon
+import { Copy, DollarSign, Users, Gift, Smartphone, Send } from "lucide-react";
 import { StatCard } from "@/components/shared/StatCard";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react"; // Added useState
 
 interface Referral {
   id: string;
@@ -35,6 +36,8 @@ const mobileMoneyPlatforms = [
 export function ReferralDashboard() {
   const referralLink = "https://stips.lite/ref/YOUR_CODE_XYZ"; // Placeholder
   const { toast } = useToast();
+  const [withdrawalAmount, setWithdrawalAmount] = useState(""); // State for withdrawal amount
+  const currentBalance = 10.00; // Mock balance
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
@@ -51,21 +54,38 @@ export function ReferralDashboard() {
 
   const handleWithdrawFunds = () => {
     // UI-only: Simulate withdrawal request
-    const withdrawalAmount = "$10.00"; // Assuming this is the balance or a fixed amount
+    const amountToWithdraw = parseFloat(withdrawalAmount);
+    if (isNaN(amountToWithdraw) || amountToWithdraw <= 0) {
+        toast({
+            title: "Invalid Amount",
+            description: "Please enter a valid amount to withdraw.",
+            variant: "destructive",
+        });
+        return;
+    }
+    if (amountToWithdraw > currentBalance) {
+        toast({
+            title: "Insufficient Balance",
+            description: `You cannot withdraw more than your current balance of $${currentBalance.toFixed(2)}.`,
+            variant: "destructive",
+        });
+        return;
+    }
+
     toast({
       title: "Withdrawal Request Submitted",
-      description: `Your request to withdraw ${withdrawalAmount} is pending admin approval.`,
+      description: `Your request to withdraw $${amountToWithdraw.toFixed(2)} is pending admin approval.`,
       variant: "default",
     });
     
-    // Simulate admin notification (for dev/demo purposes)
     toast({
         title: "Admin Notification (Simulated)",
-        description: `Admin would be notified of a withdrawal request for ${withdrawalAmount}.`,
+        description: `Admin would be notified of a withdrawal request for $${amountToWithdraw.toFixed(2)}. User: [Current User], Wallet Details: [Details from form]`,
         variant: "default",
         duration: 5000, 
     });
-    console.log(`SIMULATION: Admin notified for withdrawal of ${withdrawalAmount}. User: [Current User], Wallet Details: [Details from form]`);
+    console.log(`SIMULATION: Admin notified for withdrawal of $${amountToWithdraw.toFixed(2)}. User: [Current User], Wallet Details: [Details from form]`);
+    setWithdrawalAmount(""); // Clear input after submission
   };
 
 
@@ -73,7 +93,7 @@ export function ReferralDashboard() {
     <div className="space-y-8">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <StatCard title="Total Referrals" value="3" icon={Users} description="Successful user sign-ups." />
-        <StatCard title="Total Earnings" value="$10.00" icon={DollarSign} description="From completed referrals." />
+        <StatCard title="Total Earnings" value={`$${currentBalance.toFixed(2)}`} icon={DollarSign} description="From completed referrals." />
         <StatCard title="Pending Earnings" value="$0.00" icon={Gift} description="Potential earnings from pending referrals." />
       </div>
 
@@ -123,6 +143,13 @@ export function ReferralDashboard() {
                   <TableCell>{ref.earnings}</TableCell>
                 </TableRow>
               ))}
+               {mockReferrals.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                    No referral history yet.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -157,22 +184,51 @@ export function ReferralDashboard() {
                 <Label htmlFor="walletName">Registered Name on Wallet</Label>
                 <Input id="walletName" type="text" placeholder="e.g., John Doe" />
             </div>
-            <p className="text-xs text-muted-foreground">
-                Ensure your mobile number and name are correct to avoid withdrawal issues. Minimum withdrawal amount is $10.00.
-            </p>
-        </CardContent>
-        <CardFooter className="flex flex-wrap gap-2 justify-between"> {/* Added flex-wrap and gap */}
-            <Button 
+             <Button 
               onClick={handleSaveWalletDetails}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+              className="bg-accent hover:bg-accent/90 text-accent-foreground w-full sm:w-auto"
             >
                 <Smartphone className="mr-2 h-4 w-4" /> Save Wallet Details
             </Button>
+            <p className="text-xs text-muted-foreground pt-2">
+                Ensure your mobile number and name are correct to avoid withdrawal issues. Minimum withdrawal amount is $10.00.
+            </p>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-xl">
+        <CardHeader>
+            <CardTitle className="font-headline text-xl">Withdraw Earnings</CardTitle>
+            <CardDescription>
+                Your current withdrawable balance is <span className="font-semibold text-primary">${currentBalance.toFixed(2)}</span>.
+            </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+                <Label htmlFor="withdrawalAmount">Amount to Withdraw</Label>
+                <div className="relative">
+                    <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        id="withdrawalAmount" 
+                        type="number" 
+                        placeholder="e.g., 10.00" 
+                        className="pl-8"
+                        value={withdrawalAmount}
+                        onChange={(e) => setWithdrawalAmount(e.target.value)}
+                        min="0.01"
+                        step="0.01"
+                    />
+                </div>
+            </div>
+        </CardContent>
+        <CardFooter>
              <Button 
                onClick={handleWithdrawFunds}
                variant="outline"
+               className="w-full"
+               disabled={currentBalance < 10} // Example: disable if balance is less than min withdrawal
              >
-                <DollarSign className="mr-2 h-4 w-4" /> Withdraw Funds (Balance: $10.00)
+                <Send className="mr-2 h-4 w-4" /> Request Withdrawal
             </Button>
         </CardFooter>
       </Card>
@@ -180,3 +236,5 @@ export function ReferralDashboard() {
     </div>
   );
 }
+
+    
