@@ -54,7 +54,7 @@ export function TaskSubmissionForm() {
   const performActualSubmission = (vaPreference: "specific" | "random") => {
     let vaMessage = "";
     if (vaPreference === "specific") {
-      vaMessage = "Your request for a specific Virtual Assistant will be considered.";
+      vaMessage = "Your request has been sent to the specific Virtual Assistant for their approval. This option is typically available with a 'Professional VA' subscription.";
     } else {
       vaMessage = "A Virtual Assistant will be assigned randomly.";
     }
@@ -63,15 +63,8 @@ export function TaskSubmissionForm() {
       title: "Task Submitted Successfully!",
       description: `${vaMessage} Your task is now pending review and approval. Payment will be requested upon approval.`,
       variant: "default",
-      duration: 7000, // Longer duration for more text
+      duration: 9000, 
     });
-    // In a real app, you'd clear form fields here if not redirecting immediately
-    // For example:
-    // document.getElementById("taskSubmissionForm")?.reset(); // if form had an ID
-    // setSubmissionDate(new Date());
-    // setDeadline(undefined);
-    // etc. for other controlled inputs if any
-
     router.push('/dashboard/tasks');
   };
 
@@ -82,7 +75,6 @@ export function TaskSubmissionForm() {
         <CardTitle className="font-headline text-2xl">Submit New Task</CardTitle>
         <CardDescription>Fill in the details below to submit your task for processing.</CardDescription>
       </CardHeader>
-      {/* The form tag is still useful for semantics and native browser behaviors, even if submission is handled via dialog */}
       <form onSubmit={(e) => e.preventDefault()} id="taskSubmissionForm">
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -234,8 +226,10 @@ export function TaskSubmissionForm() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Virtual Assistant Preference</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Do you want to request a specific Virtual Assistant for this task, or shall we assign one randomly?
-                  Requesting a specific VA may depend on their availability.
+                  To request a specific Virtual Assistant, you typically need an active 'Professional VA' subscription.
+                  This allows you to search and select a preferred VA. Your chosen VA will then be notified to review and accept your task.
+                  If you don't have this subscription or don't choose a specific VA, one will be assigned randomly.
+                  Specific VA requests are subject to their availability.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
