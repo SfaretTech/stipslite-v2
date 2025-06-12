@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, Briefcase, Award, CheckCircle, Sparkles, UserCheck } from "lucide-react"; // Added UserCheck
 import Link from "next/link"; // Added Link
 import { useToast } from "@/hooks/use-toast"; // Added useToast
+import { cn } from "@/lib/utils"; // Added import for cn
 
 export interface VirtualAssistant {
   id: string;
