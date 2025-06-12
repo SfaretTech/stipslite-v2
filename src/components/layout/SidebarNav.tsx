@@ -27,6 +27,7 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
   useSidebar,
+  SidebarGroupLabel, // Added import
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 
@@ -83,7 +84,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
               {item.subItems.map((subItem) => (
                 <SidebarMenuSubItem key={subItem.href}>
                   <SidebarMenuSubButton
-                    href={subItem.href} // Pass href directly
+                    href={subItem.href} 
                     isActive={pathname === subItem.href}
                     className="justify-start"
                     size="sm"
