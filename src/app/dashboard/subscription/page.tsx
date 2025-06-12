@@ -8,7 +8,7 @@ import { SubscriptionCard } from "@/components/subscription/SubscriptionCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Users, Sparkles, Briefcase } from "lucide-react"; // Added Briefcase
+import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Users, Sparkles, Briefcase } from "lucide-react"; 
 import { useToast } from "@/hooks/use-toast";
 
 const initialPlans = [ 
@@ -33,15 +33,16 @@ const initialPlans = [
     priceMonthly: "₦1000", 
     priceYearly: "₦5000", // 1000*12 = 12000. 12000-5000 = 7000 savings
     features: [
-      "List your VA services or agency profile",
-      "Enhanced visibility to students/businesses seeking VAs",
+      "List your VA agency/business profile prominently",
+      "Enhanced visibility to students & businesses",
+      "Offer services with business-level accountability (e.g., rechecks, revisions)",
       "Tools for managing client tasks & communication (coming soon)",
-      "Featured profile in VA directory (optional add-on)",
+      "Featured profile options in VA directory",
       "Analytics on your service/profile views"
     ],
     isCurrent: false,
     isPopular: false,
-    description: "Ideal for VAs or Agencies wanting to list their services and reach more clients."
+    description: "For VA agencies and registered businesses. Offer students the assurance and accountability of a formal business entity when they choose your services."
   },
 ];
 
@@ -224,3 +225,4 @@ export default function SubscriptionPage() {
     </div>
   );
 }
+
