@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -9,6 +10,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Paperclip, Send, User, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+
 
 interface Message {
   id: string;
@@ -24,7 +39,15 @@ const mockMessages: Message[] = [
   { id: "3", text: "I can't seem to upload my file. It keeps giving an error.", sender: "user", timestamp: "10:32 AM", avatar: "https://placehold.co/40x40.png?text=U" },
 ];
 
-const mockTickets = [
+interface Ticket {
+  id: string;
+  subject: string;
+  status: "New" | "Ongoing" | "Resolved";
+  lastUpdate: string;
+  category: "new" | "ongoing" | "old";
+}
+
+const initialMockTickets: Ticket[] = [
     { id: "TKT001", subject: "Task Submission Issue", status: "Ongoing", lastUpdate: "10:32 AM", category: "ongoing" },
     { id: "TKT002", subject: "Payment Problem", status: "New", lastUpdate: "Yesterday", category: "new" },
     { id: "TKT003", subject: "Referral Earnings Query", status: "Resolved", lastUpdate: "3 days ago", category: "old" },
@@ -35,7 +58,14 @@ export function SupportChatInterface() {
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [newMessage, setNewMessage] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const [activeTicketId, setActiveTicketId] = useState<string | null>(mockTickets.find(t => t.category === 'ongoing')?.id || null);
+  
+  const [tickets, setTickets] = useState<Ticket[]>(initialMockTickets);
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(tickets.find(t => t.category === 'ongoing')?.id || null);
+  
+  const [isCreateTicketDialogOpen, setIsCreateTicketDialogOpen] = useState(false);
+  const [newTicketSubject, setNewTicketSubject] = useState("");
+  const [newTicketMessage, setNewTicketMessage] = useState("");
+  const { toast } = useToast();
 
 
   useEffect(() => {
@@ -46,7 +76,7 @@ export function SupportChatInterface() {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === "") return;
+    if (newMessage.trim() === "" || !activeTicketId) return;
     const msg: Message = {
       id: String(Date.now()),
       text: newMessage,
@@ -57,17 +87,57 @@ export function SupportChatInterface() {
     setMessages([...messages, msg]);
     setNewMessage("");
 
-    // Simulate support reply
     setTimeout(() => {
       const replyMsg: Message = {
         id: String(Date.now() + 1),
-        text: "Thanks for your message. We are looking into it and will get back to you shortly.",
+        text: "Thanks for your message. We are looking into it for ticket " + activeTicketId + " and will get back to you shortly.",
         sender: "support",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         avatar: "https://placehold.co/40x40.png?text=S"
       };
       setMessages(prev => [...prev, replyMsg]);
     }, 1500);
+  };
+
+  const handleCreateNewTicket = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTicketSubject.trim() || !newTicketMessage.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide both a subject and a message for your ticket.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newTicketId = `TKT${String(tickets.length + 1).padStart(3, '0')}`;
+    const newTicket: Ticket = {
+      id: newTicketId,
+      subject: newTicketSubject,
+      status: "New",
+      lastUpdate: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      category: "new",
+    };
+    setTickets(prevTickets => [newTicket, ...prevTickets]);
+
+    const initialUserMessage: Message = {
+      id: String(Date.now()),
+      text: newTicketMessage,
+      sender: "user",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      avatar: "https://placehold.co/40x40.png?text=U",
+    };
+    setMessages([initialUserMessage]); // Start chat with the user's first message for this new ticket
+    
+    setActiveTicketId(newTicketId);
+    setNewTicketSubject("");
+    setNewTicketMessage("");
+    setIsCreateTicketDialogOpen(false);
+
+    toast({
+      title: "Support Ticket Created!",
+      description: `Your new ticket "${newTicketSubject}" (ID: ${newTicketId}) has been submitted.`,
+    });
   };
 
   const renderChatArea = () => (
@@ -78,7 +148,7 @@ export function SupportChatInterface() {
                 Chat with Support {activeTicketId && `(Ticket: ${activeTicketId})`}
             </CardTitle>
             <CardDescription>
-                {activeTicketId ? `Discussing: ${mockTickets.find(t=>t.id === activeTicketId)?.subject}` : "Select a ticket or start a new query."}
+                {activeTicketId ? `Discussing: ${tickets.find(t=>t.id === activeTicketId)?.subject}` : "Select a ticket or start a new query."}
             </CardDescription>
         </CardHeader>
         <CardContent className="flex-grow p-0">
@@ -124,7 +194,7 @@ export function SupportChatInterface() {
                 className="flex-grow"
                 disabled={!activeTicketId}
             />
-            <Button type="submit" size="icon" className="bg-accent hover:bg-accent/90 text-accent-foreground" disabled={!activeTicketId}>
+            <Button type="submit" size="icon" className="bg-accent hover:bg-accent/90 text-accent-foreground" disabled={!activeTicketId || !newMessage.trim()}>
                 <Send className="h-5 w-5" />
                 <span className="sr-only">Send message</span>
             </Button>
@@ -150,12 +220,17 @@ export function SupportChatInterface() {
                         {["new", "ongoing", "old"].map(category => (
                             <TabsContent key={category} value={category} className="m-0">
                                 <div className="space-y-2 p-2">
-                                    {mockTickets.filter(t => t.category === category).map(ticket => (
+                                    {tickets.filter(t => t.category === category).map(ticket => (
                                         <Button 
                                             key={ticket.id} 
                                             variant={activeTicketId === ticket.id ? "secondary" : "ghost"}
                                             className="w-full justify-start h-auto py-2 px-3 text-left"
-                                            onClick={() => setActiveTicketId(ticket.id)}
+                                            onClick={() => {
+                                                setActiveTicketId(ticket.id);
+                                                // TODO: Load messages specific to this ticket
+                                                // For now, demo purposes, we can clear messages or load a generic set
+                                                setMessages(mockMessages.filter(m => m.id === "1" || m.id === "2")); // Example
+                                            }}
                                         >
                                             <div>
                                                 <p className="font-medium text-sm">{ticket.subject}</p>
@@ -165,7 +240,7 @@ export function SupportChatInterface() {
                                             </div>
                                         </Button>
                                     ))}
-                                    {mockTickets.filter(t => t.category === category).length === 0 && (
+                                    {tickets.filter(t => t.category === category).length === 0 && (
                                         <p className="text-sm text-muted-foreground text-center py-4">No {category} tickets.</p>
                                     )}
                                 </div>
@@ -175,9 +250,52 @@ export function SupportChatInterface() {
                 </Tabs>
             </CardContent>
              <CardFooter className="border-t pt-4">
-                <Button className="w-full bg-primary hover:bg-primary/90">
-                    <User className="mr-2 h-4 w-4" /> Create New Ticket
-                </Button>
+                <Dialog open={isCreateTicketDialogOpen} onOpenChange={setIsCreateTicketDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button className="w-full bg-primary hover:bg-primary/90">
+                            <User className="mr-2 h-4 w-4" /> Create New Ticket
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-lg">
+                        <form onSubmit={handleCreateNewTicket}>
+                            <DialogHeader>
+                                <DialogTitle>Create New Support Ticket</DialogTitle>
+                                <DialogDescription>
+                                Describe your issue below. A support agent will get back to you.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="ticket-subject">Subject</Label>
+                                    <Input 
+                                        id="ticket-subject" 
+                                        placeholder="e.g., Issue with payment" 
+                                        value={newTicketSubject}
+                                        onChange={(e) => setNewTicketSubject(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="ticket-message">Initial Message</Label>
+                                    <Textarea 
+                                        id="ticket-message" 
+                                        placeholder="Please describe your problem in detail..." 
+                                        rows={5}
+                                        value={newTicketMessage}
+                                        onChange={(e) => setNewTicketMessage(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="button" variant="outline">Cancel</Button>
+                                </DialogClose>
+                                <Button type="submit">Submit Ticket</Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </CardFooter>
         </Card>
 
@@ -195,3 +313,4 @@ export function SupportChatInterface() {
     </div>
   );
 }
+
