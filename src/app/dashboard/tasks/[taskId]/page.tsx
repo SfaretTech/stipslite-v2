@@ -63,8 +63,10 @@ const statusIcons: Record<TaskStatus, React.ElementType> = {
 
 
 export default function TaskDetailPage() {
-  const params = useParams();
-  const taskId = params.taskId as string;
+  const paramsFromHook = useParams();
+  // Create a plain object to avoid potential enumeration issues with the proxy
+  const params = { taskId: paramsFromHook.taskId as string };
+  const taskId = params.taskId;
   
   // @ts-ignore
   const task = mockTaskDetails[taskId];

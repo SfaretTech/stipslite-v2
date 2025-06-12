@@ -9,14 +9,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Star, Briefcase, Award, Mail, Phone, MessageSquare, CalendarDays, DollarSign, UserCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, Star, Briefcase, Award, Mail, Phone, MessageSquare, CalendarDays, DollarSign, UserCircle, Sparkles, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Re-using the mock data and interface from the find-va page for consistency
 // In a real app, this data would likely be fetched from a service.
 const mockVAs = [
   { id: "VA001", name: "Aisha Bello", avatarUrl: "https://placehold.co/100x100.png?text=AB", rating: 4.8, tagline: "Expert academic writer and researcher.", skills: ["Academic Writing", "Research", "Proofreading", "APA/MLA Formatting"], specializations: ["Humanities", "Social Sciences", "Literature Reviews"], availability: "Available" as const, hourlyRate: "₦5000/hr", shopName: "Aisha's Academic Pro", bio: "With over 5 years of experience, I provide top-notch academic support to students, ensuring quality and timely delivery. My expertise spans various citation styles and research methodologies.", email: "aisha.bello@example.com", phone: "08012345678", joinedDate: "2023-01-15", completedTasks: 120 },
-  { id: "VA002", name: "Chinedu Okoro", avatarUrl: "https://placehold.co/100x100.png?text=CO", rating: 4.5, tagline: "Technical task wizard, specializing in STEM.", skills: ["Data Analysis", "Programming (Python)", "Technical Reports", "Statistical Analysis"], specializations: ["Engineering", "Computer Science", "Mathematics"], availability: "Busy" as const, businessName: "Okoro Tech Solutions", bio: "I'm a passionate problem-solver with a strong background in STEM fields. I help students tackle complex technical assignments and data-driven projects.", email: "chinedu.okoro@example.com", phone: "08023456789", joinedDate: "2022-11-01", completedTasks: 85 },
+  { id: "VA002", name: "Chinedu Okoro", avatarUrl: "https://placehold.co/100x100.png?text=CO", rating: 4.5, tagline: "Technical task wizard, specializing in STEM.", skills: ["Data Analysis", "Programming (Python)", "Technical Reports", "Statistical Analysis"], specializations: ["Engineering", "Computer Science", "Mathematics"], availability: "Busy" as const, businessName: "Okoro Tech Solutions", bio: "I'm a passionate problem-solver with a strong background in STEM fields. I help students tackle complex technical assignments and data-driven projects.", email: "chinedu.okoro@example.com", phone: "08023456789", joinedDate: "2022-11-01", completedTasks: 85, planType: "Professional Business VA" as const},
   { id: "VA003", name: "Fatima Diallo", avatarUrl: "https://placehold.co/100x100.png?text=FD", rating: 4.9, tagline: "Creative presentations and business support.", skills: ["Presentation Design (PPT/Slides)", "Graphic Design (Canva)", "Market Research", "Content Creation"], specializations: ["Business Proposals", "Marketing Materials", "General Admin"], availability: "Available" as const, bio: "I bring creativity and precision to every task, helping students and professionals create compelling presentations and business documents. Let's make your project shine!", email: "fatima.diallo@example.com", phone: "08034567890", joinedDate: "2023-05-20", completedTasks: 95 },
   { id: "VA004", name: "David Adebayo", avatarUrl: "https://placehold.co/100x100.png?text=DA", rating: 4.3, tagline: "Reliable VA for diverse tasks.", skills: ["Transcription", "Data Entry", "Customer Support", "Scheduling"], specializations: ["General Academic Support", "Administrative Tasks"], availability: "Unavailable" as const, shopName: "Dave's Gigs", bio: "I provide dependable support for a wide range of administrative and general academic tasks. My focus is on efficiency and accuracy.", email: "david.adebayo@example.com", phone: "08045678901", joinedDate: "2023-03-10", completedTasks: 70 },
 ];
@@ -24,9 +24,11 @@ const mockVAs = [
 export type VirtualAssistant = typeof mockVAs[0];
 
 export default function VaProfilePage() {
-  const params = useParams();
+  const paramsFromHook = useParams();
+  // Create a plain object to avoid potential enumeration issues with the proxy
+  const params = { vaId: paramsFromHook.vaId as string };
   const router = useRouter();
-  const vaId = params.vaId as string;
+  const vaId = params.vaId;
 
   const va = mockVAs.find(v => v.id === vaId);
 
