@@ -123,7 +123,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
           const tooltipText = isProVALocked ? `${item.label} (Activate via Subscription)` : item.label;
 
           return (
-            <SidebarMenuItem key={item.href}>
+            <SidebarMenuItem key={item.label}> {/* Changed item.href to item.label here */}
               <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   as="a"
@@ -153,7 +153,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
           <Separator className="my-4" />
           <SidebarGroupLabel className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200 pl-0")}>Account</SidebarGroupLabel>
           {accountNavItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
+            <SidebarMenuItem key={item.label}> {/* Ensure key is unique here too, label is fine */}
               <Link href={item.href}>
                 <SidebarMenuButton
                   isActive={pathname === item.href}
@@ -181,3 +181,4 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
     </SidebarMenu>
   );
 }
+
