@@ -49,11 +49,11 @@ const studentNavItems = [
   { href: "/dashboard/print-centers", label: "Print Centers", icon: Printer },
   { href: "/dashboard/referrals", label: "Referrals", icon: Users },
   {
-    href: "/dashboard/subscription", // Link to subscription page if locked
-    label: "Expert VA", 
+    href: "/dashboard/subscription", 
+    label: "VA Plus", // Changed from "Expert VA"
     icon: Star,
-    status: "locked" as "locked" | "active", // Simulate 'locked' status for now
-    activeHref: "/dashboard/find-va", // Actual link if 'active'
+    status: "locked" as "locked" | "active", 
+    activeHref: "/dashboard/find-va", 
   },
 ];
 
@@ -83,8 +83,8 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
     <SidebarMenu className="flex-1">
       {navItems.map((item) => {
         
-        const isExpertVALocked = item.label === "Expert VA" && item.status === "locked";
-        const currentHref = isExpertVALocked ? item.href : (item.label === "Expert VA" ? item.activeHref : item.href);
+        const isVaPlusLocked = item.label === "VA Plus" && item.status === "locked";
+        const currentHref = isVaPlusLocked ? item.href : (item.label === "VA Plus" ? item.activeHref : item.href);
 
         if (item.subItems) {
           return (
@@ -119,15 +119,15 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
             <>
               <item.icon className="h-5 w-5" />
               <span className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200 flex-grow truncate")}>{item.label}</span>
-              {isExpertVALocked && open && <Lock className="h-3.5 w-3.5 ml-1 text-muted-foreground shrink-0" />}
+              {isVaPlusLocked && open && <Lock className="h-3.5 w-3.5 ml-1 text-muted-foreground shrink-0" />}
             </>
           );
 
           let tooltipText = item.label;
-          if (isExpertVALocked) {
-            tooltipText = `Subscribe to Expert VA plan to find specific VAs`;
-          } else if (item.label === "Expert VA" && item.status === "active") {
-            tooltipText = "Find an Expert VA";
+          if (isVaPlusLocked) {
+            tooltipText = `Subscribe to Expert VA plan to find specific VAs`; // Referring to the actual plan name
+          } else if (item.label === "VA Plus" && item.status === "active") {
+            tooltipText = "Find an Expert VA"; // Refers to the role/type of VA
           }
 
 
@@ -135,10 +135,10 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" })
             <SidebarMenuItem key={item.label}> 
               <Link href={currentHref!}>
                 <SidebarMenuButton
-                  isActive={pathname === currentHref && !isExpertVALocked}
+                  isActive={pathname === currentHref && !isVaPlusLocked}
                   className={cn(
                     "justify-start w-full",
-                    isExpertVALocked && "opacity-70 hover:bg-sidebar-accent/70"
+                    isVaPlusLocked && "opacity-70 hover:bg-sidebar-accent/70"
                   )}
                   tooltip={{
                     children: tooltipText,
