@@ -9,9 +9,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, UploadCloud, DollarSign } from "lucide-react";
+import { Calendar as CalendarIcon, UploadCloud, DollarSign, Users, Shuffle } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -40,17 +51,30 @@ export function TaskSubmissionForm() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    // UI-only: Simulate task submission
+  const performActualSubmission = (vaPreference: "specific" | "random") => {
+    let vaMessage = "";
+    if (vaPreference === "specific") {
+      vaMessage = "Your request for a specific Virtual Assistant will be considered.";
+    } else {
+      vaMessage = "A Virtual Assistant will be assigned randomly.";
+    }
+
     toast({
       title: "Task Submitted Successfully!",
-      description: "Your task is now pending review and approval. Payment will be requested upon approval.",
+      description: `${vaMessage} Your task is now pending review and approval. Payment will be requested upon approval.`,
       variant: "default",
+      duration: 7000, // Longer duration for more text
     });
-    // Reset form or redirect
+    // In a real app, you'd clear form fields here if not redirecting immediately
+    // For example:
+    // document.getElementById("taskSubmissionForm")?.reset(); // if form had an ID
+    // setSubmissionDate(new Date());
+    // setDeadline(undefined);
+    // etc. for other controlled inputs if any
+
     router.push('/dashboard/tasks');
   };
+
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
@@ -58,7 +82,8 @@ export function TaskSubmissionForm() {
         <CardTitle className="font-headline text-2xl">Submit New Task</CardTitle>
         <CardDescription>Fill in the details below to submit your task for processing.</CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
+      {/* The form tag is still useful for semantics and native browser behaviors, even if submission is handled via dialog */}
+      <form onSubmit={(e) => e.preventDefault()} id="taskSubmissionForm">
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
@@ -199,9 +224,37 @@ export function TaskSubmissionForm() {
 
         </CardContent>
         <CardFooter className="pt-6">
-          <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-            Submit Task for Approval
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button type="button" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+                Submit Task for Approval
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Virtual Assistant Preference</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Do you want to request a specific Virtual Assistant for this task, or shall we assign one randomly?
+                  Requesting a specific VA may depend on their availability.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction
+                  onClick={() => performActualSubmission("specific")}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Users className="mr-2 h-4 w-4" /> Request Specific VA
+                </AlertDialogAction>
+                <AlertDialogAction
+                  onClick={() => performActualSubmission("random")}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                 <Shuffle className="mr-2 h-4 w-4" /> Assign Random VA
+                </AlertDialogAction>
+                 <AlertDialogCancel>Cancel</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardFooter>
       </form>
     </Card>
