@@ -93,7 +93,7 @@ export function ReferralDashboard() {
       
       <Card className="shadow-xl">
         <CardHeader>
-          <CardTitle className="font-headline text-xl">Withdrawal Setup</CardTitle>
+          <CardTitle className="font-headline text-xl">Add mobile money</CardTitle>
           <CardDescription>Set up your mobile wallet details to withdraw your earnings.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
