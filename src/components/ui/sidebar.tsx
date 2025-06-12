@@ -1,3 +1,4 @@
+/** @format */
 "use client"
 
 import * as React from "react"
@@ -11,7 +12,11 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle
+} from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -207,6 +212,7 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
+            <SheetTitle className="sr-only">Main Navigation</SheetTitle>
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>
@@ -707,36 +713,34 @@ const SidebarMenuSubItem = React.forwardRef<
 SidebarMenuSubItem.displayName = "SidebarMenuSubItem"
 
 
-interface SidebarMenuSubButtonOwnProps {
+interface SidebarMenuSubButtonOwnProps extends Omit<LinkProps, 'asChild' | 'legacyBehavior' | 'passHref'> {
   size?: "sm" | "md";
   isActive?: boolean;
   className?: string;
   children?: React.ReactNode;
 }
 
-type SidebarMenuSubButtonProps = Omit<LinkProps, 'asChild' | 'legacyBehavior' | 'passHref'> & SidebarMenuSubButtonOwnProps;
 
 const SidebarMenuSubButton = React.forwardRef<
   HTMLAnchorElement,
-  SidebarMenuSubButtonProps
+  SidebarMenuSubButtonOwnProps
 >(({
   size = "md",
   isActive = false,
   className,
   children,
   href, // This is a LinkProp
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  asChild: _asChild, // Destructure and ignore asChild
   ...restLinkProps // Other LinkProps
 }, ref) => {
   return (
-    <Link
+    <Link // Use Next.js Link component directly
       href={href}
       ref={ref}
       className={cn(
         "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground",
-        // CSS selectors for data-active should handle the active styling
-        // For example: data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground
-        // If isActive prop is used to conditionally apply classes, it can be done like:
-        // isActive && "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
+        isActive && "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
         size === "sm" && "text-xs",
         size === "md" && "text-sm",
         "group-data-[collapsible=icon]:hidden",
@@ -744,7 +748,7 @@ const SidebarMenuSubButton = React.forwardRef<
       )}
       data-sidebar="menu-sub-button"
       data-size={size}
-      data-active={String(isActive)} // This attribute triggers CSS for active state
+      data-active={String(!!isActive)}
       {...restLinkProps}
     >
       {children}
