@@ -1,3 +1,4 @@
+
 import { PageHeader } from "@/components/shared/PageHeader";
 import { SupportChatInterface } from "@/components/support/SupportChatInterface";
 import { LifeBuoy } from "lucide-react";
@@ -11,7 +12,7 @@ export default function SupportPage() {
         icon={LifeBuoy}
       />
       <div className="flex-grow">
-        <SupportChatInterface />
+        <SupportChatInterface userRole="student" />
       </div>
     </div>
   );
