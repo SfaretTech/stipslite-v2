@@ -57,7 +57,7 @@ const studentNavItemsBase = [
   {
     href: "/dashboard/subscription", 
     activeHref: "/dashboard/find-va", 
-    label: "VA Plus",
+    label: "VA Plus", // Student feature to find VAs
     icon: Star,
     status: "locked" as "locked" | "active",
   },
@@ -66,7 +66,7 @@ const studentNavItemsBase = [
 const accountNavItemsStudent = [
   { href: "/dashboard/profile", label: "Profile", icon: UserCircle },
   { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
-  { href: "/dashboard/subscription", label: "Subscription", icon: CreditCard },
+  { href: "/dashboard/subscription", label: "Subscription", icon: CreditCard }, // Student subscription page
   { href: "/dashboard/support", label: "Support Chat", icon: MessageSquare },
 ];
 
@@ -83,14 +83,15 @@ const vaNavItemsBase = [
   { href: "/va/live-tasks", label: "Live Tasks", icon: Signal },
   { href: "/va/my-tasks", label: "My Tasks", icon: ListChecks },
   { 
-    href: "/dashboard/subscription", // Locked state directs to subscription
-    activeHref: "/va/business-tasks", // Active state directs to actual page
+    href: "/va/subscription", // Locked state directs to VA subscription page
+    activeHref: "/va/business-tasks", 
     label: "Business Service Tasks", 
     icon: Target,
     status: "locked" as "locked" | "active",
   },
   { href: "/va/profile", label: "My VA Profile", icon: UserCircle },
   { href: "/va/notifications", label: "Notifications", icon: Bell },
+  { href: "/va/subscription", label: "My Subscription", icon: CreditCard }, // VA subscription page
   { href: "/va/support", label: "Support", icon: MessageSquare },
 ];
 
@@ -109,11 +110,11 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   useEffect(() => {
     setHasMounted(true);
     if (typeof window !== 'undefined') {
-      const studentPlanStatus = localStorage.getItem('stipsLiteVaPlanActive');
+      const studentPlanStatus = localStorage.getItem('stipsLiteVaPlanActive'); // Student's plan to find VAs
       if (studentPlanStatus === 'true') {
         setIsSubscribedToStudentVaPlan(true);
       }
-      const vaProPlanStatus = localStorage.getItem('stipsLiteVaProPlanActive');
+      const vaProPlanStatus = localStorage.getItem('stipsLiteVaProPlanActive'); // VA's own pro plan
       if (vaProPlanStatus === 'true') {
         setIsVaSubscribedToProPlan(true);
       }
@@ -127,13 +128,13 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
 
     const planActivatedQuery = searchParams.get('plan_activated');
     
-    // Student VA Plus Plan Logic
+    // Student VA Plus Plan Logic (for /dashboard/find-va)
     const isStudentVaPlanCurrentlyActive = 
-      planActivatedQuery === 'expert_va' ||
+      planActivatedQuery === 'expert_va' || // This ID is from student-facing plans
       pathname.startsWith('/dashboard/find-va') ||
       isSubscribedToStudentVaPlan;
 
-    if (planActivatedQuery === 'expert_va') {
+    if (planActivatedQuery === 'expert_va') { // Check specific student plan activation
         if (!isSubscribedToStudentVaPlan) setIsSubscribedToStudentVaPlan(true);
         if (typeof window !== 'undefined' && localStorage.getItem('stipsLiteVaPlanActive') !== 'true') {
             localStorage.setItem('stipsLiteVaPlanActive', 'true');
@@ -146,13 +147,13 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
       )
     );
 
-    // VA Professional Business Plan Logic
+    // VA Professional Business Plan Logic (for /va/business-tasks)
     const isVaProPlanCurrentlyActive =
-        planActivatedQuery === 'business_org_va' ||
+        planActivatedQuery === 'va_professional_business' || // Check for VA's plan activation
         pathname.startsWith('/va/business-tasks') ||
         isVaSubscribedToProPlan;
     
-    if (planActivatedQuery === 'business_org_va') {
+    if (planActivatedQuery === 'va_professional_business') {
         if (!isVaSubscribedToProPlan) setIsVaSubscribedToProPlan(true);
         if (typeof window !== 'undefined' && localStorage.getItem('stipsLiteVaProPlanActive') !== 'true') {
             localStorage.setItem('stipsLiteVaProPlanActive', 'true');
@@ -288,5 +289,3 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
     </SidebarMenu>
   );
 }
-
-

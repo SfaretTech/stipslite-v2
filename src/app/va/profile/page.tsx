@@ -9,13 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UploadCloud, Save, UserCircle, Briefcase, Award, CalendarCheck, DollarSign, ShieldCheck, Banknote, Power } from "lucide-react";
+import { UploadCloud, Save, UserCircle, Briefcase, Award, CalendarCheck, DollarSign, ShieldCheck, Banknote, Power, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 
-const mockVaProfileData = { // Renamed to avoid conflict if used elsewhere, though we'll use state mostly
+const mockVaProfileData = {
   name: "Aisha Bello",
   email: "aisha.va@example.com",
   avatarUrl: "https://placehold.co/100x100.png?text=AB",
@@ -44,7 +44,7 @@ export default function VaProfilePage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const proPlanStatus = localStorage.getItem('stipsLiteVaProPlanActive');
+      const proPlanStatus = localStorage.getItem('stipsLiteVaProPlanActive'); // Key for VA's own pro plan
       setIsVaSubscribedToProPlan(proPlanStatus === 'true');
     }
   }, []);
@@ -72,8 +72,6 @@ export default function VaProfilePage() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // UI-only: Simulate profile update
-    // In a real app, save isAvailableForDirect along with other fields
     console.log("Direct Assignment Availability:", isAvailableForDirect);
     toast({
       title: "VA Profile Updated!",
@@ -142,28 +140,30 @@ export default function VaProfilePage() {
                     aria-label="Toggle direct assignment availability" 
                   />
                 </div>
+                 <p className="text-xs text-muted-foreground mt-2">
+                    Note: This feature requires an active "Professional Business VA Plan".
+                </p>
               </CardContent>
             </Card>
             
-             {/* VA Subscription Status - Now Dynamic */}
             <Card className="shadow-lg">
               <CardHeader>
-                <CardTitle className="font-headline flex items-center"><ShieldCheck className="mr-2 h-5 w-5 text-primary"/> My Subscription</CardTitle>
+                <CardTitle className="font-headline flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary"/> My VA Subscription</CardTitle>
               </CardHeader>
               <CardContent>
                 {isVaSubscribedToProPlan ? (
                     <div>
-                        <p className="text-sm font-medium">Plan: <Badge>Professional Business VA Plan</Badge></p>
+                        <p className="text-sm font-medium">Plan: <Badge className="bg-green-100 text-green-700">Professional Business VA Plan</Badge></p>
                         <p className="text-xs text-muted-foreground mt-1">Renews on: Dec 31, 2024 (mock data)</p>
                         <Button variant="outline" size="sm" className="w-full mt-3" asChild>
-                           <Link href="/dashboard/subscription">Manage Subscription</Link>
+                           <Link href="/va/subscription">Manage Subscription</Link>
                         </Button>
                     </div>
                 ) : (
                     <div>
-                        <p className="text-sm text-muted-foreground">You are not currently subscribed to the "Professional Business VA Plan" to enhance your visibility for direct assignments and access Business Service Tasks.</p>
+                        <p className="text-sm text-muted-foreground">You are not currently subscribed to the "Professional Business VA Plan". This plan unlocks Business Service Tasks and premium profile features.</p>
                         <Button asChild size="sm" className="w-full mt-3 bg-accent hover:bg-accent/90 text-accent-foreground">
-                            <Link href="/dashboard/subscription">Upgrade to Professional Business VA</Link>
+                            <Link href="/va/subscription">Upgrade to Professional Business VA</Link>
                         </Button>
                     </div>
                 )}
@@ -290,4 +290,3 @@ export default function VaProfilePage() {
     </div>
   );
 }
-

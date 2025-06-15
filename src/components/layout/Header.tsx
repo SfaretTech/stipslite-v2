@@ -30,8 +30,8 @@ const mockHeaderNotifications = [
 ];
 
 const mockVaNotifications = [
-  { id: "VAN001", title: "New Task Assigned", timestamp: "1 hour ago", read: false, link: "/va/tasks", icon: Briefcase },
-  { id: "VAN002", title: "Payment Processed", timestamp: "2 days ago", read: true, link: "/va/payouts", icon: DollarIcon }, // Assuming a payouts page
+  { id: "VAN001", title: "New Task Assigned", timestamp: "1 hour ago", read: false, link: "/va/business-tasks/BST001", icon: Briefcase }, // Updated link
+  { id: "VAN002", title: "Payment Processed", timestamp: "2 days ago", read: true, link: "/va/payouts", icon: DollarIcon }, 
 ];
 
 
@@ -52,19 +52,19 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     userEmail = "va@example.com";
     profileLink = "/va/profile";
     notificationsLink = "/va/notifications";
-    subscriptionSettingsLink = "/va/profile"; // VA might manage profile for plan/service tiers here
+    subscriptionSettingsLink = "/va/subscription"; // Link to VA's own subscription page
     supportLink = "/va/support";
     logoutLink = "/va/login";
     currentNotifications = mockVaNotifications;
   } else if (role === "admin") {
     userName = "Admin User";
     userEmail = "admin@example.com";
-    profileLink = "/admin/settings"; // Admin might have a settings/profile page
-    notificationsLink = "/admin/dashboard"; // Or a specific admin notifications page
+    profileLink = "/admin/settings"; 
+    notificationsLink = "/admin/dashboard"; 
     subscriptionSettingsLink = "/admin/settings"; 
-    supportLink = "/admin/dashboard"; // Or a specific admin support page/tool
-    logoutLink = "/auth/login"; // Or /admin/login if it existed
-    currentNotifications = []; // Admins might have a different notification system
+    supportLink = "/admin/dashboard"; 
+    logoutLink = "/auth/login"; 
+    currentNotifications = []; 
   }
   
   const unreadNotificationsCount = currentNotifications.filter(n => !n.read).length;
@@ -164,8 +164,8 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href={subscriptionSettingsLink}>
-                 {role === "student" ? <CreditCard className="mr-2 h-4 w-4" /> : <Settings className="mr-2 h-4 w-4" />}
-                <span>{role === "student" ? "Subscription" : (role === "va" ? "Profile Settings" : "Settings")}</span>
+                 {role === "admin" ? <Settings className="mr-2 h-4 w-4" /> : <CreditCard className="mr-2 h-4 w-4" />}
+                <span>{role === "admin" ? "Platform Settings" : "Subscription"}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>

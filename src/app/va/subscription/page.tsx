@@ -4,67 +4,56 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; 
 import { PageHeader } from "@/components/shared/PageHeader";
-import { SubscriptionCard } from "@/components/subscription/SubscriptionCard";
+import { SubscriptionCard } from "@/components/subscription/SubscriptionCard"; // Re-usable component
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Users, Sparkles, Briefcase, Star } from "lucide-react"; 
+import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Briefcase, Star } from "lucide-react"; 
 import { useToast } from "@/hooks/use-toast";
 
-// These plans are now primarily student-facing for accessing VA features
-// Or general platform features. VA's own professional subscription is on /va/subscription
-const studentFocusedPlans = [ 
+// VA-specific plans
+const vaSubscriptionPlans = [ 
   {
-    id: "expert_va", // Plan for students to FIND expert VAs
-    name: "Expert VA Plan", 
-    priceMonthly: "₦500", 
-    priceYearly: "₦2000",
+    id: "va_professional_business", // Unique ID for VA plan
+    name: "Professional Business VA Plan",
+    priceMonthly: "₦1000", 
+    priceYearly: "₦5000", // Example: 2 months free for yearly
     features: [
-      "Request specific Virtual Assistants by name", 
-      "Priority in random VA assignment pool", 
-      "Direct messaging with assigned VA (coming soon)",
-      "All standard platform features"
+      "Premium Profile Listing in VA Directory (Top Placement)",
+      "Access to 'Business Service Tasks' (Direct Assignments)",
+      "Advanced Analytics & Reporting Dashboard (Coming Soon)",
+      "Integrated Client Communication & Task Management Suite (Coming Soon)",
+      "Showcase Client Testimonials & Portfolio",
+      "Offer Formal Service Level Agreements (e.g., Revisions, Guarantees)",
+      "Team Management Features for VA Agencies (Coming Soon)",
+      "Dedicated Business Support Channel"
     ],
-    isCurrent: false, 
-    isPopular: true, 
-    description: "Ideal for students seeking to hire specific VAs for their tasks."
+    isCurrent: false,
+    isPopular: true, // Mark as popular for VAs
+    description: "Tailored for established VA businesses and agencies seeking maximum visibility, advanced tools, and to showcase their professional services with enhanced credibility and client assurance."
   },
-  // Example: Could add a "Student Basic" vs "Student Pro" if platform had tiered features for students themselves
-  // {
-  //   id: "student_pro",
-  //   name: "Student Pro Access",
-  //   priceMonthly: "₦200",
-  //   priceYearly: "₦1000",
-  //   features: ["Feature A", "Feature B"],
-  //   isCurrent: false,
-  //   isPopular: false,
-  //   description: "Unlock advanced student tools."
-  // }
+  // Potentially add a "VA Basic" or other VA-specific tiers in the future
 ];
 
 
-export default function SubscriptionPage() {
+export default function VaSubscriptionPage() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly"); 
   const { toast } = useToast();
   const router = useRouter(); 
-  // This page now only manages student-focused plans
-  const [plans, setPlans] = useState(studentFocusedPlans.map(p => ({...p}))); 
+  const [plans, setPlans] = useState(vaSubscriptionPlans.map(p => ({...p}))); 
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Check for student's VA plan (stipsLiteVaPlanActive)
-      const studentVaPlanActive = localStorage.getItem('stipsLiteVaPlanActive') === 'true';
-      const activeStudentPlanId = localStorage.getItem('stipsLiteActivePlanId'); // General active plan ID for students
-      const activeStudentPlanCycle = localStorage.getItem('stipsLiteActivePlanCycle') as "monthly" | "yearly" | null;
-
-      if (activeStudentPlanId) { // If any student plan is active
+      const activeVaPlanId = localStorage.getItem('stipsLiteActiveVaPlanId'); // VA-specific key
+      const activeVaPlanCycle = localStorage.getItem('stipsLiteActiveVaPlanCycle') as "monthly" | "yearly" | null; // VA-specific key
+      
+      if (activeVaPlanId) {
         setPlans(prevPlans => prevPlans.map(p => {
-          let isCurrentPlan = p.id === activeStudentPlanId;
-          // Specifically mark 'expert_va' plan as current if stipsliteVaPlanActive is true,
-          // this aligns with how SidebarNav determines access to /dashboard/find-va
-          if (studentVaPlanActive && p.id === 'expert_va') isCurrentPlan = true;
-          
-          return { ...p, isCurrent: isCurrentPlan, billingCycle: activeStudentPlanCycle || billingCycle };
+          return { 
+            ...p, 
+            isCurrent: p.id === activeVaPlanId, 
+            billingCycle: activeVaPlanCycle || billingCycle 
+          };
         }));
       }
     }
@@ -76,19 +65,19 @@ export default function SubscriptionPage() {
     if (!chosenPlan) return;
 
     let toastTitle = `Processing ${chosenPlan.name} (${cycle})...`;
-    let toastDescription = "Your subscription selection is being updated.";
-    let redirectPath = "/dashboard"; // Default redirect
+    let toastDescription = "Your VA subscription selection is being updated.";
+    let redirectPath = "/va/business-tasks"; // Default redirect for VAs after subscribing
 
     if (typeof window !== 'undefined') {
-        localStorage.setItem('stipsLiteActivePlanId', planId); // General student active plan
-        localStorage.setItem('stipsLiteActivePlanCycle', cycle);
+        localStorage.setItem('stipsLiteActiveVaPlanId', planId); // VA-specific
+        localStorage.setItem('stipsLiteActiveVaPlanCycle', cycle); // VA-specific
 
-        if (planId === 'expert_va') {
-            localStorage.setItem('stipsLiteVaPlanActive', 'true'); // For student sidebar unlock of Find VA
-            toastDescription = "You can now search for and request specific Virtual Assistants.";
-            redirectPath = `/dashboard/find-va?plan_activated=${planId}`;
+        if (planId === 'va_professional_business') {
+            localStorage.setItem('stipsLiteVaProPlanActive', 'true'); // Enables Business Tasks
+            toastDescription = "Your Professional Business VA Plan is active. You can now manage Business Service Tasks and enjoy premium features.";
+            redirectPath = `/va/business-tasks?plan_activated=${planId}`;
         }
-        // Add other student plan specific logic here
+        // Add more else if blocks for other VA plans if they exist
     }
     
     setPlans(prevPlans => prevPlans.map(p => 
@@ -116,10 +105,10 @@ export default function SubscriptionPage() {
     }
 
     let toastDescription = `Processing payment for ${planToActivate.name} (${billingCycle})... (simulation)`;
-    let redirectPath = "/dashboard"; 
+    let redirectPath = "/va/business-tasks"; 
 
     toast({ 
-        title: "Flutterwave Payment Initiated", 
+        title: "Flutterwave Payment Initiated (VA)", 
         description: toastDescription
     });
     
@@ -128,13 +117,12 @@ export default function SubscriptionPage() {
             p.id === planIdToActivate ? { ...p, isCurrent: true, billingCycle: billingCycle } : { ...p, isCurrent: false }
         ));
         if (typeof window !== 'undefined') {
-            localStorage.setItem('stipsLiteActivePlanId', planIdToActivate);
-            localStorage.setItem('stipsLiteActivePlanCycle', billingCycle);
-            if (planIdToActivate === 'expert_va') {
-                localStorage.setItem('stipsLiteVaPlanActive', 'true');
-                redirectPath = `/dashboard/find-va?plan_activated=${planIdToActivate}`;
+            localStorage.setItem('stipsLiteActiveVaPlanId', planIdToActivate); // VA-specific
+            localStorage.setItem('stipsLiteActiveVaPlanCycle', billingCycle); // VA-specific
+            if (planIdToActivate === 'va_professional_business') {
+                localStorage.setItem('stipsLiteVaProPlanActive', 'true'); // Enables Business Tasks
+                redirectPath = `/va/business-tasks?plan_activated=${planIdToActivate}`;
             }
-             // Add other student plan specific logic here
         }
         router.push(redirectPath);
     }, 2500); 
@@ -142,16 +130,14 @@ export default function SubscriptionPage() {
 
   const handleCancelSubscription = () => {
     if (typeof window !== 'undefined') {
-      // Clear student-specific subscription flags
-      localStorage.removeItem('stipsLiteVaPlanActive'); // For Find VA access
-      localStorage.removeItem('stipsLiteActivePlanId'); // General student plan ID
-      localStorage.removeItem('stipsLiteActivePlanCycle');
-      // Note: We DO NOT touch stipsLiteVaProPlanActive here, as this page is for students.
+      localStorage.removeItem('stipsLiteVaProPlanActive'); // Clears Business Tasks access
+      localStorage.removeItem('stipsLiteActiveVaPlanId'); // VA-specific
+      localStorage.removeItem('stipsLiteActiveVaPlanCycle'); // VA-specific
     }
     setPlans(prevPlans => prevPlans.map(p => ({ ...p, isCurrent: false })));
     toast({
-      title: "Subscription Cancelled",
-      description: "Your subscription has been cancelled (simulation). Premium features are now locked.",
+      title: "VA Subscription Cancelled",
+      description: "Your VA subscription has been cancelled (simulation). Premium VA features are now locked.",
     });
   };
 
@@ -159,8 +145,8 @@ export default function SubscriptionPage() {
   return (
     <div className="space-y-8">
       <PageHeader 
-        title="Manage Your Subscription (Student)"
-        description="Students: Activate the 'Expert VA Plan' to find and request specific VAs. Other platform feature subscriptions may appear here."
+        title="Manage Your VA Subscription"
+        description="Subscribe to the 'Professional Business VA Plan' to list your services, access Business Service Tasks, and unlock premium features."
         icon={CreditCard}
       />
 
@@ -184,15 +170,15 @@ export default function SubscriptionPage() {
           </div>
         ))}
          {plans.length === 0 && (
-            <p className="text-center text-muted-foreground col-span-full py-8">No student subscription plans are currently available. Please check back later.</p>
+            <p className="text-center text-muted-foreground col-span-full py-8">No VA subscription plans are currently available. Please check back later.</p>
         )}
       </div>
 
       {currentPlan && (
         <Card className="shadow-lg max-w-2xl mx-auto">
           <CardHeader>
-            <CardTitle className="font-headline">Current Subscription Details</CardTitle>
-            <CardDescription>Overview of your active plan and billing information.</CardDescription>
+            <CardTitle className="font-headline">Current VA Subscription Details</CardTitle>
+            <CardDescription>Overview of your active VA plan and billing information.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center p-4 bg-muted/50 rounded-md">
@@ -202,9 +188,9 @@ export default function SubscriptionPage() {
                   Price: {(currentPlan.billingCycle || billingCycle) === 'yearly' ? currentPlan.priceYearly : currentPlan.priceMonthly} / {(currentPlan.billingCycle || billingCycle) === 'yearly' ? 'year' : 'month'}
                 </p>
               </div>
-               {currentPlan.id === "expert_va" && ( 
-                 <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/find-va')}>
-                    Find an Expert VA
+                {currentPlan.id === "va_professional_business" && (
+                 <Button variant="outline" size="sm" onClick={() => router.push('/va/business-tasks')}>
+                    Manage Business Tasks
                   </Button>
                )}
             </div>
@@ -236,20 +222,20 @@ export default function SubscriptionPage() {
 
        <Card className="shadow-lg max-w-2xl mx-auto">
             <CardHeader>
-                <CardTitle className="font-headline">Flutterwave Payment (Student Plans)</CardTitle>
-                <CardDescription>Simulated payment section. Choose a plan above and click its "Choose Plan" button to simulate payment.</CardDescription>
+                <CardTitle className="font-headline">Flutterwave Payment (VA Plans)</CardTitle>
+                <CardDescription>Simulated payment section for VA subscriptions. Choose a plan above and click its "Choose Plan" button to simulate payment.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-center">
                  <p className="text-muted-foreground">
-                    The "Choose Plan" buttons on the cards above now simulate the subscription and payment process for the respective student plan.
+                    The "Choose Plan" buttons on the VA plan cards above now simulate the subscription and payment process.
                 </p>
                 <Button 
                     size="lg" 
-                    className="bg-orange-500 hover:bg-orange-600 text-white"
-                    onClick={() => handleFlutterwavePayment("expert_va")} 
-                    disabled={plans.some(p => p.isCurrent && p.id === "expert_va")} 
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    onClick={() => handleFlutterwavePayment("va_professional_business")} 
+                    disabled={plans.some(p => p.isCurrent && p.id === "va_professional_business")} 
                 >
-                    <Sparkles className="mr-2 h-5 w-5" /> Pay with Flutterwave (Expert VA Plan)
+                    <Briefcase className="mr-2 h-5 w-5" /> Pay with Flutterwave (Professional Business VA Plan)
                 </Button>
                 <p className="text-xs text-muted-foreground mt-2">This button is for UI demonstration only.</p>
             </CardContent>
