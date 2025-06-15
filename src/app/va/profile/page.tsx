@@ -13,21 +13,20 @@ import { UploadCloud, Save, UserCircle, Briefcase, Award, CalendarCheck, DollarS
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const mockVaProfile = {
+const mockVaProfileData = { // Renamed to avoid conflict if used elsewhere, though we'll use state mostly
   name: "Aisha Bello",
   email: "aisha.va@example.com",
   avatarUrl: "https://placehold.co/100x100.png?text=AB",
   tagline: "Expert academic writer and researcher.",
   bio: "With over 5 years of experience, I provide top-notch academic support to students, ensuring quality and timely delivery. My expertise spans various citation styles and research methodologies.",
-  skills: ["Academic Writing", "Research", "Proofreading", "APA/MLA Formatting", "Data Analysis"],
-  specializations: ["Humanities", "Social Sciences", "Literature Reviews", "Business Reports"],
+  initialSkills: ["Academic Writing", "Research", "Proofreading", "APA/MLA Formatting", "Data Analysis"],
+  initialSpecializations: ["Humanities", "Social Sciences", "Literature Reviews", "Business Reports"],
   hourlyRate: "₦5000", 
-  isAvailableForDirectAssignment: true, // New field
+  initialIsAvailableForDirectAssignment: true,
   shopName: "Aisha's Academic Pro",
   businessName: "", 
-  planType: "Professional Business VA", // Assuming subscribed for demo
   bankName: "Zenith Bank",
   accountNumber: "1234567890",
   accountName: "Aisha Bello"
@@ -36,11 +35,19 @@ const mockVaProfile = {
 
 export default function VaProfilePage() {
   const { toast } = useToast();
-  const [currentSkills, setCurrentSkills] = useState<string[]>(mockVaProfile.skills);
+  const [currentSkills, setCurrentSkills] = useState<string[]>(mockVaProfileData.initialSkills);
   const [skillInput, setSkillInput] = useState("");
-  const [currentSpecs, setCurrentSpecs] = useState<string[]>(mockVaProfile.specializations);
+  const [currentSpecs, setCurrentSpecs] = useState<string[]>(mockVaProfileData.initialSpecializations);
   const [specInput, setSpecInput] = useState("");
-  const [isAvailableForDirect, setIsAvailableForDirect] = useState(mockVaProfile.isAvailableForDirectAssignment);
+  const [isAvailableForDirect, setIsAvailableForDirect] = useState(mockVaProfileData.initialIsAvailableForDirectAssignment);
+  const [isVaSubscribedToProPlan, setIsVaSubscribedToProPlan] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const proPlanStatus = localStorage.getItem('stipsLiteVaProPlanActive');
+      setIsVaSubscribedToProPlan(proPlanStatus === 'true');
+    }
+  }, []);
 
   const handleAddSkill = () => {
     if (skillInput.trim() && !currentSkills.includes(skillInput.trim())) {
@@ -92,26 +99,26 @@ export default function VaProfilePage() {
               <CardContent className="space-y-4">
                 <div className="flex flex-col items-center space-y-3">
                   <Avatar className="h-24 w-24 ring-2 ring-primary ring-offset-2">
-                    <AvatarImage src={mockVaProfile.avatarUrl} alt={mockVaProfile.name} data-ai-hint="person avatar professional"/>
-                    <AvatarFallback>{mockVaProfile.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarImage src={mockVaProfileData.avatarUrl} alt={mockVaProfileData.name} data-ai-hint="person avatar professional"/>
+                    <AvatarFallback>{mockVaProfileData.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <Input id="avatarUploadVa" type="file" className="text-xs" />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="vaName">Full Name</Label>
-                  <Input id="vaName" defaultValue={mockVaProfile.name} />
+                  <Input id="vaName" defaultValue={mockVaProfileData.name} />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="vaEmail">Email (Cannot be changed)</Label>
-                  <Input id="vaEmail" type="email" defaultValue={mockVaProfile.email} readOnly disabled />
+                  <Input id="vaEmail" type="email" defaultValue={mockVaProfileData.email} readOnly disabled />
                 </div>
                  <div className="space-y-1.5">
                   <Label htmlFor="vaShopName">Shop Name (Optional)</Label>
-                  <Input id="vaShopName" defaultValue={mockVaProfile.shopName} placeholder="e.g., Aisha's Academics" />
+                  <Input id="vaShopName" defaultValue={mockVaProfileData.shopName} placeholder="e.g., Aisha's Academics" />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="vaBusinessName">Registered Business Name (If applicable)</Label>
-                  <Input id="vaBusinessName" defaultValue={mockVaProfile.businessName} placeholder="e.g., Okoro Tech Solutions Ltd." />
+                  <Input id="vaBusinessName" defaultValue={mockVaProfileData.businessName} placeholder="e.g., Okoro Tech Solutions Ltd." />
                 </div>
               </CardContent>
             </Card>
@@ -138,15 +145,15 @@ export default function VaProfilePage() {
               </CardContent>
             </Card>
             
-             {/* VA Subscription Status - Placeholder */}
+             {/* VA Subscription Status - Now Dynamic */}
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="font-headline flex items-center"><ShieldCheck className="mr-2 h-5 w-5 text-primary"/> My Subscription</CardTitle>
               </CardHeader>
               <CardContent>
-                {mockVaProfile.planType === "Professional Business VA" ? (
+                {isVaSubscribedToProPlan ? (
                     <div>
-                        <p className="text-sm font-medium">Plan: <Badge>{mockVaProfile.planType}</Badge></p>
+                        <p className="text-sm font-medium">Plan: <Badge>Professional Business VA Plan</Badge></p>
                         <p className="text-xs text-muted-foreground mt-1">Renews on: Dec 31, 2024 (mock data)</p>
                         <Button variant="outline" size="sm" className="w-full mt-3" asChild>
                            <Link href="/dashboard/subscription">Manage Subscription</Link>
@@ -154,7 +161,7 @@ export default function VaProfilePage() {
                     </div>
                 ) : (
                     <div>
-                        <p className="text-sm text-muted-foreground">You are not currently subscribed to the "Professional Business VA" plan to enhance your visibility for direct assignments.</p>
+                        <p className="text-sm text-muted-foreground">You are not currently subscribed to the "Professional Business VA Plan" to enhance your visibility for direct assignments and access Business Service Tasks.</p>
                         <Button asChild size="sm" className="w-full mt-3 bg-accent hover:bg-accent/90 text-accent-foreground">
                             <Link href="/dashboard/subscription">Upgrade to Professional Business VA</Link>
                         </Button>
@@ -174,17 +181,17 @@ export default function VaProfilePage() {
                 <CardContent className="space-y-4">
                     <div className="space-y-1.5">
                         <Label htmlFor="vaTagline">Tagline / Short Pitch</Label>
-                        <Input id="vaTagline" defaultValue={mockVaProfile.tagline} placeholder="e.g., Your reliable partner for academic success." />
+                        <Input id="vaTagline" defaultValue={mockVaProfileData.tagline} placeholder="e.g., Your reliable partner for academic success." />
                     </div>
                     <div className="space-y-1.5">
                         <Label htmlFor="vaBio">Full Biography / About Me</Label>
-                        <Textarea id="vaBio" defaultValue={mockVaProfile.bio} placeholder="Describe your experience, expertise, and working style." rows={5} />
+                        <Textarea id="vaBio" defaultValue={mockVaProfileData.bio} placeholder="Describe your experience, expertise, and working style." rows={5} />
                     </div>
                      <div className="space-y-1.5">
                         <Label htmlFor="vaHourlyRate">Standard Hourly Rate (Optional)</Label>
                         <div className="relative">
                              <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
-                            <Input id="vaHourlyRate" type="text" defaultValue={mockVaProfile.hourlyRate?.replace('₦','')} placeholder="e.g., 5000" className="pl-8"/>
+                            <Input id="vaHourlyRate" type="text" defaultValue={mockVaProfileData.hourlyRate?.replace('₦','')} placeholder="e.g., 5000" className="pl-8"/>
                         </div>
                         <p className="text-xs text-muted-foreground">Specify your rate if you offer hourly services. Task payouts are typically per-project.</p>
                     </div>
@@ -257,15 +264,15 @@ export default function VaProfilePage() {
               <CardContent className="space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="bankName">Bank Name</Label>
-                  <Input id="bankName" defaultValue={mockVaProfile.bankName} placeholder="e.g., Guaranty Trust Bank" />
+                  <Input id="bankName" defaultValue={mockVaProfileData.bankName} placeholder="e.g., Guaranty Trust Bank" />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="accountNumber">Account Number</Label>
-                  <Input id="accountNumber" defaultValue={mockVaProfile.accountNumber} placeholder="e.g., 0123456789" />
+                  <Input id="accountNumber" defaultValue={mockVaProfileData.accountNumber} placeholder="e.g., 0123456789" />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="accountName">Account Name (as registered with bank)</Label>
-                  <Input id="accountName" defaultValue={mockVaProfile.accountName} placeholder="e.g., John Doe Ventures" />
+                  <Input id="accountName" defaultValue={mockVaProfileData.accountName} placeholder="e.g., John Doe Ventures" />
                 </div>
                  <p className="text-xs text-muted-foreground pt-1">
                     Payments are processed weekly for completed and approved tasks. Ensure these details are accurate.
