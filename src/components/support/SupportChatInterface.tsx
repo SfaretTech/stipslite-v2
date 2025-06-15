@@ -17,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -50,6 +49,7 @@ const getMockStudentTickets = (): Ticket[] => [
     { id: "TKT_S001", subject: "Task Submission Issue", status: "Ongoing", lastUpdate: "10:32 AM", category: "ongoing", from: "You", to: "Admin Support" },
     { id: "TKT_S002", subject: "Payment Problem", status: "New", lastUpdate: "Yesterday", category: "new", from: "You", to: "Admin Support" },
     { id: "TKT_S003", subject: "Query on Task TSK001", status: "Ongoing", lastUpdate: "2 hours ago", category: "ongoing", from: "You", to: "VA Aisha B.", taskId: "TSK001" },
+    { id: "TKT_S_FROM_VA", subject: "Update on your Task TSK123", status: "New", lastUpdate: "Just now", category: "new", from: "VA David A.", to: "You (Student)", taskId: "TSK123" },
     { id: "TKT_S004", subject: "Referral Earnings Query", status: "Resolved", lastUpdate: "3 days ago", category: "old", from: "You", to: "Admin Support" },
 ];
 
@@ -69,24 +69,32 @@ const getMockMessagesForTicket = (ticketId: string, userRole: 'student' | 'va'):
     if (userRole === 'student') {
         if (ticketId === "TKT_S001") return [
             { id: "s1m1", text: "Hello, I'm having trouble submitting my task.", sender: "user", senderName: "Student", timestamp: "10:30 AM", avatar: userAvatar },
-            { id: "s1m2", text: "Hi there! I can help with that. Which step are you stuck on?", sender: "support", senderName: "Admin Support", timestamp: "10:31 AM", avatar: adminAvatar },
+            { id: "s1m2", text: "Hi there! I can help with that. Which step are you stuck on?", sender: "admin", senderName: "Admin Support", timestamp: "10:31 AM", avatar: adminAvatar },
         ];
         if (ticketId === "TKT_S003") return [
             { id: "s3m1", text: "Hi VA, I have a question about Task TSK001 requirements.", sender: "user", senderName: "Student", timestamp: "11:00 AM", avatar: userAvatar },
             { id: "s3m2", text: "Hello! Sure, what's your question regarding TSK001?", sender: "va", senderName: "VA Aisha B.", timestamp: "11:05 AM", avatar: vaAvatar },
         ];
+        if (ticketId === "TKT_S_FROM_VA") return [
+            { id: "s_va_m1", text: "Hi Student, just an update on your task TSK123: I'm making good progress and expect to submit it by tomorrow EOD.", sender: "va", senderName: "VA David A.", timestamp: "Just now", avatar: vaAvatar },
+            { id: "s_va_m2", text: "Great, thanks for the update David!", sender: "user", senderName: "You (Student)", timestamp: "A moment later", avatar: userAvatar },
+        ];
     }
     if (userRole === 'va') {
          if (ticketId === "TKT_V001") return [
-            { id: "v1m1", text: "Hi, I have a question about the deadline for task TSK102 you are working on.", sender: "support", senderName: "Student Chinedu O.", timestamp: "10:00 AM", avatar: userAvatar }, // Simulating student messaged VA
-            { id: "v1m2", text: "Hello Chinedu, the deadline is firm for now. Is there an issue?", sender: "user", senderName: "VA (You)", timestamp: "10:05 AM", avatar: vaAvatar },
+            { id: "v1m1", text: "Hi VA, I have a question about the deadline for task TSK102 you are working on. Can it be extended by a day?", sender: "support", senderName: "Student Chinedu O.", timestamp: "1 hour ago", avatar: userAvatar }, // Simulating student messaged VA
+            { id: "v1m2", text: "Hello Chinedu, I'll check if an extension is possible and let you know. What's the reason for the request?", sender: "user", senderName: "VA (You)", timestamp: "55 mins ago", avatar: vaAvatar },
         ];
         if (ticketId === "TKT_V002") return [
             { id: "v2m1", text: "Hi Admin, I haven't received my payment for July's tasks.", sender: "user", senderName: "VA (You)", timestamp: "9:00 AM", avatar: vaAvatar },
-            { id: "v2m2", text: "Hi VA, we are looking into this. Payments are processed by EOD today.", sender: "admin", senderName: "Admin Support", timestamp: "9:15 AM", avatar: adminAvatar },
+            { id: "v2m2", text: "Hi VA, we are looking into this. Payments are processed by EOD today. Please check again later.", sender: "admin", senderName: "Admin Support", timestamp: "9:15 AM", avatar: adminAvatar },
+        ];
+         if (ticketId === "TKT_V003") return [
+            { id: "v3m1", text: "Hello VAs, please note the updated policy on task revisions. Details can be found on the announcements page.", sender: "admin", senderName: "Admin", timestamp: "Yesterday", avatar: adminAvatar },
+            { id: "v3m2", text: "Okay, thanks for the update.", sender: "user", senderName: "VA (You)", timestamp: "This morning", avatar: vaAvatar },
         ];
     }
-    return [{ id: "fallback", text: `No messages found for ticket ${ticketId} or role ${userRole}. Select another ticket.`, sender: "support", timestamp: "N/A", avatar: commonSupportAvatar }];
+    return [{ id: "fallback", text: `No messages found for ticket ${ticketId} or role ${userRole}. Select another ticket or create a new one.`, sender: "support", timestamp: "N/A", avatar: commonSupportAvatar }];
 };
 
 
@@ -98,7 +106,7 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
   const initialTickets = userRole === 'student' ? getMockStudentTickets() : getMockVaTickets();
   const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(
-    initialTickets.find(t => t.category === 'ongoing')?.id || initialTickets[0]?.id || null
+    initialTickets.find(t => t.category === 'new' && t.from !== "You")?.id || initialTickets.find(t => t.category === 'ongoing')?.id || initialTickets[0]?.id || null
   );
   
   const [isCreateTicketDialogOpen, setIsCreateTicketDialogOpen] = useState(false);
@@ -119,6 +127,7 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
   }, [activeTicketId, userRole]);
 
   useEffect(() => {
+    // This effect handles pre-filling the "Create New Ticket" dialog for VAs contacting students.
     if (userRole === 'va' && typeof window !== 'undefined') {
         const contactTaskId = localStorage.getItem('stipsLiteContactStudentTaskId');
         const contactStudentName = localStorage.getItem('stipsLiteContactStudentName');
@@ -126,7 +135,7 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
         if (contactTaskId && contactStudentName) {
             setIsCreateTicketDialogOpen(true);
             setNewTicketSubject(`Query re: Task ${contactTaskId} for Student ${contactStudentName}`);
-            setVaQueryType('communication_to_student');
+            setVaQueryType('communication_to_student'); // Set the query type
             
             localStorage.removeItem('stipsLiteContactStudentTaskId');
             localStorage.removeItem('stipsLiteContactStudentName');
@@ -160,8 +169,9 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
     setMessages(prev => [...prev, msg]);
     setNewMessage("");
 
+    // Simulate a reply
     setTimeout(() => {
-      let replyText = "Thanks for your message. We are looking into it";
+      let replyText = "Thanks for your message. We are looking into it.";
       let replySender: "support" | "admin" | "va" = "support";
       let replySenderName = "Support";
       let replyAvatar = "https://placehold.co/40x40.png?text=S";
@@ -172,25 +182,25 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
             replySender = "va";
             replySenderName = currentTicket.to || "Assigned VA";
             replyAvatar = "https://placehold.co/40x40.png?text=VA";
-        } else {
+        } else { // To Admin Support
             replyText = `An admin is reviewing your query for ticket ${activeTicketId}.`;
             replySender = "admin";
             replySenderName = "Admin Support";
             replyAvatar = "https://placehold.co/40x40.png?text=AD";
         }
-      } else { // VA is user
-         if (currentTicket.to?.startsWith("Student")) { // VA is replying to a student initiated ticket
-            replyText = `Your reply to ${currentTicket.from} for task ${currentTicket.taskId || ''} has been sent.`;
+      } else { // userRole === 'va'
+         if (currentTicket.to?.includes("Student")) { // VA is replying to a student or a ticket initiated by admin about a student
+            replyText = `Your reply to ${currentTicket.from} regarding task ${currentTicket.taskId || ''} has been sent.`;
             replySender = "support"; // System message confirming send
-            replySenderName = "System";
-         } else if (currentTicket.subject.startsWith("Query re: Task") && currentTicket.subject.includes("for Student")){ // VA initiated contact to student
-            replyText = `Your message regarding task ${currentTicket.taskId || 'ID_UNKNOWN'} for student ${currentTicket.to?.replace('Message for Student ','').split(' re: Task')[0] || '...'} has been sent (via Admin).`;
+            replySenderName = "System"; // Or simulate student's name if replying directly
+         } else if (currentTicket.subject.startsWith("Query re: Task") && currentTicket.subject.includes("for Student")){ // VA initiated contact to student (via Admin)
+            replyText = `Your message for student regarding task ${currentTicket.taskId || 'ID_UNKNOWN'} has been noted (simulated send via Admin).`;
             replySender = "admin"; // System message confirming send via admin
             replySenderName = "Admin Relay";
             replyAvatar = "https://placehold.co/40x40.png?text=AD";
          }
          else { // VA's query to Admin
-            replyText = `Your message to Admin Support for ticket ${activeTicketId} has been sent.`;
+            replyText = `Your message to Admin Support for ticket ${activeTicketId} has been received.`;
             replySender = "admin"; 
             replySenderName = "Admin Support";
             replyAvatar = "https://placehold.co/40x40.png?text=AD";
@@ -222,19 +232,21 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
 
     let recipient = "Admin Support";
     let toastMessage = `Your new ticket "${newTicketSubject}" has been submitted to Admin Support.`;
-    let ticketTaskId = undefined;
+    let ticketTaskId: string | undefined = undefined;
 
     if (userRole === 'student') {
         if (!studentQueryType) {
             toast({ title: "Query Type Required", description: "Please select a query type.", variant: "destructive"});
             return;
         }
-        if (studentQueryType === "task_specific" && relevantTaskId) {
-            recipient = `VA for Task ${relevantTaskId}`; 
-            toastMessage = `Your query about Task ${relevantTaskId} has been sent to the assigned VA.`;
-            ticketTaskId = relevantTaskId;
+        if (studentQueryType === "task_specific") {
+            recipient = `VA for Task ${relevantTaskId || 'General VA Queue'}`; 
+            toastMessage = `Your query about Task ${relevantTaskId || 'N/A'} has been sent to the assigned VA.`;
+            ticketTaskId = relevantTaskId || undefined; // ensure it's undefined if empty
         } else if (studentQueryType === "task_specific" && !relevantTaskId) {
-            toast({ title: "Task ID Recommended", description: "Please provide a Task ID for task-specific questions if possible, or choose a general query type.", variant: "destructive" });
+            // This case might be redundant if recipient defaults or handled above
+            // For now, let it proceed to Admin or a general VA queue as per recipient logic.
+            toast({ title: "Task ID Optional", description: "Task ID not provided, query will be general if no VA can be matched.", variant: "default", duration: 4000 });
         }
     } else { // userRole === 'va'
         if (!vaQueryType) {
@@ -242,18 +254,16 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
             return;
         }
         if (vaQueryType === 'communication_to_student') {
-            // Subject should be pre-filled from localStorage, extract student/task if possible for recipient
             const studentNameMatch = newTicketSubject.match(/for Student (.*?)(?:\)| re:|$)/);
             const taskIdMatch = newTicketSubject.match(/Task (\S+)/);
             const studentName = studentNameMatch ? studentNameMatch[1] : "Student";
             ticketTaskId = taskIdMatch ? taskIdMatch[1] : undefined;
-            recipient = `Message for ${studentName} (Task: ${ticketTaskId || 'N/A'}) via Admin`;
-            toastMessage = `Your message for ${studentName} regarding task ${ticketTaskId || 'N/A'} is being sent via Admin Support.`;
-        } else {
+            recipient = `Student ${studentName} (Task: ${ticketTaskId || 'N/A'}) via Admin`; // To make it clear it's relayed
+            toastMessage = `Your message for Student ${studentName} regarding task ${ticketTaskId || 'N/A'} is being processed (simulated send via Admin).`;
+        } else { // VA's query to Admin
             toastMessage = `Your ticket "${newTicketSubject}" regarding '${vaQueryType.replace(/_/g, ' ')}' has been sent to Admin Support.`;
         }
     }
-
 
     const newTicketId = `${userRole === 'student' ? 'S' : 'V'}${String(Date.now()).slice(-5)}`;
     const newGeneratedTicket: Ticket = {
@@ -276,7 +286,16 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       avatar: "https://placehold.co/40x40.png?text=U",
     };
-    setMessages([initialUserMessage]); 
+    // Simulate sending the first message from the user in the new ticket
+     const firstReply: Message = {
+      id: String(Date.now() + 1),
+      text: `Thanks for creating ticket ${newTicketId}. We'll get back to you soon.`,
+      sender: recipient.includes("Admin") ? "admin" : "support",
+      senderName: recipient.includes("Admin") ? "Admin Support" : "System",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      avatar: recipient.includes("Admin") ? "https://placehold.co/40x40.png?text=AD" : "https://placehold.co/40x40.png?text=S",
+    };
+    setMessages([initialUserMessage, firstReply]); 
     
     setActiveTicketId(newTicketId);
     setNewTicketSubject("");
