@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Bell, Check, Eye, X, Archive, ArchiveX, Briefcase, DollarSign, MessageSquare, Info } from "lucide-react";
+import { Bell, Check, Eye, X, Archive, ArchiveX, Target, DollarSign, MessageSquare, Info, Broadcast } from "lucide-react"; // Added Target, Broadcast
 import { cn } from "@/lib/utils";
 
 interface VaNotificationItem {
@@ -16,27 +16,29 @@ interface VaNotificationItem {
   description: string;
   timestamp: string;
   read: boolean;
-  category: 'New Task' | 'Task Update' | 'Payment' | 'System Alert' | 'Student Message';
+  category: 'New Business Task' | 'Task Update' | 'Payment' | 'System Alert' | 'Student Message' | 'Live Task Available';
   link?: string;
   icon?: React.ElementType;
 }
 
 const initialVaNotifications: VaNotificationItem[] = [
-  { id: "VAN001", title: "New Task Assigned: 'Calculus Problem Set'", description: "Student John Student has assigned you a new task. Please review and accept or decline.", timestamp: "2024-07-22 11:00 AM", read: false, category: "New Task", link: "/va/tasks/TSK123", icon: Briefcase },
-  { id: "VAN002", title: "Revision Requested for 'Python API Integration'", description: "Student Carol Coder has requested revisions. Please check the task details for comments.", timestamp: "2024-07-21 15:30 PM", read: false, category: "Task Update", link: "/va/tasks/TSK075", icon: MessageSquare },
-  { id: "VAN003", title: "Payment Processed: ₦10,000", description: "Your payout for completed tasks has been processed.", timestamp: "2024-07-20 10:15 AM", read: true, category: "Payment", link: "/va/payouts", icon: DollarSign },
+  { id: "VAN001", title: "New Business Task: 'Dissertation Chapter 3'", description: "Student Sarah Researcher has assigned you a new task. Please review and accept or decline.", timestamp: "2024-07-22 11:00 AM", read: false, category: "New Business Task", link: "/va/business-tasks/BST001", icon: Target },
+  { id: "VAN002", title: "Revision Requested for 'Financial Modeling'", description: "Student Mike Finance has requested revisions. Please check the task details for comments.", timestamp: "2024-07-21 15:30 PM", read: false, category: "Task Update", link: "/va/business-tasks/BST002", icon: MessageSquare },
+  { id: "VAN003", title: "Payment Processed: ₦10,000", description: "Your payout for completed tasks has been processed.", timestamp: "2024-07-20 10:15 AM", read: true, category: "Payment", link: "/va/payouts", icon: DollarSign }, // Assuming /va/payouts page
   { id: "VAN004", title: "Profile Tip: Add More Skills", description: "Consider adding more skills to your profile to attract a wider range of tasks.", timestamp: "2024-07-19 09:00 AM", read: true, category: "System Alert", icon: Info },
-  { id: "VAN005", title: "Task 'History Essay' Completed by Student", description: "Student David Historian has marked task TSK050 as completed. Payment will be processed soon.", timestamp: "2024-07-18 17:00 PM", read: true, category: "Task Update", link: "/va/tasks/TSK050", icon: Check },
+  { id: "VAN005", title: "Task 'Legal Case Brief' Completed by Student", description: "Student Laura Lawyer has marked task BST003 as completed. Payment will be processed soon.", timestamp: "2024-07-18 17:00 PM", read: true, category: "Task Update", link: "/va/business-tasks/BST003", icon: Check },
+  { id: "VAN006", title: "New Live Task Available: 'Urgent Proofreading'", description: "A new task is available in the Live Tasks pool that matches your skills.", timestamp: "2024-07-23 09:00 AM", read: false, category: "Live Task Available", link: "/va/live-tasks", icon: Broadcast },
 ];
 
 
 function getVaCategoryBadgeVariant(category: VaNotificationItem['category']) {
     switch (category) {
-        case 'New Task': return 'bg-blue-100 text-blue-700 hover:bg-blue-200';
+        case 'New Business Task': return 'bg-blue-100 text-blue-700 hover:bg-blue-200';
         case 'Task Update': return 'bg-purple-100 text-purple-700 hover:bg-purple-200';
         case 'Payment': return 'bg-green-100 text-green-700 hover:bg-green-200';
         case 'System Alert': return 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200';
         case 'Student Message': return 'bg-pink-100 text-pink-700 hover:bg-pink-200';
+        case 'Live Task Available': return 'bg-teal-100 text-teal-700 hover:bg-teal-200';
         default: return 'secondary';
     }
 }

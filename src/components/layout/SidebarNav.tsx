@@ -20,9 +20,11 @@ import {
   Bell,
   Star,
   Lock,
-  Briefcase, // Added for VA tasks
-  CalendarCheck, // Added for VA availability
-  DollarSign, // Added for VA earnings/payouts
+  Briefcase, 
+  CalendarCheck, 
+  DollarSign, 
+  Broadcast, // Icon for Live Tasks
+  Target, // Icon for Business Service Tasks
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -77,7 +79,8 @@ const adminNavItems = [
 
 const vaNavItems = [
   { href: "/va/dashboard", label: "VA Dashboard", icon: LayoutDashboard },
-  { href: "/va/tasks", label: "Assigned Tasks", icon: Briefcase },
+  { href: "/va/live-tasks", label: "Live Tasks", icon: Broadcast },
+  { href: "/va/business-tasks", label: "Business Service Tasks", icon: Target },
   { href: "/va/profile", label: "My VA Profile", icon: UserCircle },
   // { href: "/va/availability", label: "My Availability", icon: CalendarCheck }, // Potentially part of profile
   // { href: "/va/payouts", label: "Payouts", icon: DollarSign }, // Could be part of dashboard or a separate section
@@ -241,7 +244,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
 
       <Separator className="my-4" />
       <SidebarMenuItem>
-         <Link href="/auth/login">
+         <Link href={ role === "va" ? "/va/login" : "/auth/login"}>
             <SidebarMenuButton className="justify-start text-red-500 hover:bg-red-100 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900 dark:hover:text-red-300" tooltip="Logout">
                 <LogOut className="h-5 w-5" />
                 <span className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200")}>Logout</span>
