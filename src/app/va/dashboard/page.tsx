@@ -1,8 +1,9 @@
+
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, CheckCircle2, Clock, DollarSign, Bell, UserCircle, ArrowRight, LayoutDashboard } from "lucide-react";
+import { Briefcase, CheckCircle2, Clock, DollarSign, Bell, UserCircle, ArrowRight, LayoutDashboard, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
 export default function VaDashboardPage() {
