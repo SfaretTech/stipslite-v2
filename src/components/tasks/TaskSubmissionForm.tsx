@@ -27,7 +27,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogClose, // Added DialogClose for programmatic closing if needed
+  DialogClose, 
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -35,8 +35,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, UploadCloud, DollarSign, Users, Shuffle } from "lucide-react";
-import { useState } from "react";
+import { Calendar as CalendarIcon, UploadCloud, DollarSign, Users, Shuffle, AlertTriangle } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
@@ -63,13 +63,15 @@ interface SelectableVa {
   name: string;
   avatarUrl: string;
   tagline: string;
+  isAvailableForDirectAssignment: boolean; // Added for simulation
 }
 
+// Mock data for VAs, including their direct assignment availability (simulated)
 const mockSelectableVAs: SelectableVa[] = [
-  { id: "VA001", name: "Aisha Bello", avatarUrl: "https://placehold.co/40x40.png?text=AB", tagline: "Expert academic writer and researcher." },
-  { id: "VA002", name: "Chinedu Okoro", avatarUrl: "https://placehold.co/40x40.png?text=CO", tagline: "Technical task wizard, specializing in STEM." },
-  { id: "VA003", name: "Fatima Diallo", avatarUrl: "https://placehold.co/40x40.png?text=FD", tagline: "Creative presentations and business support." },
-  { id: "VA004", name: "David Adebayo", avatarUrl: "https://placehold.co/40x40.png?text=DA", tagline: "Reliable VA for diverse tasks." },
+  { id: "VA001", name: "Aisha Bello", avatarUrl: "https://placehold.co/40x40.png?text=AB", tagline: "Expert academic writer and researcher.", isAvailableForDirectAssignment: true },
+  { id: "VA002", name: "Chinedu Okoro", avatarUrl: "https://placehold.co/40x40.png?text=CO", tagline: "Technical task wizard, specializing in STEM.", isAvailableForDirectAssignment: true },
+  { id: "VA003", name: "Fatima Diallo", avatarUrl: "https://placehold.co/40x40.png?text=FD", tagline: "Creative presentations and business support.", isAvailableForDirectAssignment: false }, // Example of unavailable VA
+  { id: "VA004", name: "David Adebayo", avatarUrl: "https://placehold.co/40x40.png?text=DA", tagline: "Reliable VA for diverse tasks.", isAvailableForDirectAssignment: true },
 ];
 
 
@@ -81,15 +83,39 @@ export function TaskSubmissionForm() {
 
   const [isVaSelectionDialogOpen, setIsVaSelectionDialogOpen] = useState(false);
   const [selectedVaId, setSelectedVaId] = useState<string | undefined>();
+  const [isSubscribedToExpertVaPlan, setIsSubscribedToExpertVaPlan] = useState(false); // Simulated
+
+  useEffect(() => {
+    // Simulate checking if user has Expert VA Plan
+    if (typeof window !== 'undefined') {
+      const planStatus = localStorage.getItem('stipsLiteActivePlanId'); // Assuming 'expert_va' plan enables this
+      if (planStatus === 'expert_va' || planStatus === 'business_org_va') { // business_org_va might also grant this
+        setIsSubscribedToExpertVaPlan(true);
+      }
+    }
+  }, []);
 
 
   const performActualSubmission = (vaPreference: "specific" | "random", vaIdToAssign?: string) => {
     let vaMessage = "";
     if (vaPreference === "specific" && vaIdToAssign) {
       const va = mockSelectableVAs.find(v => v.id === vaIdToAssign);
-      vaMessage = `Your task has been submitted and will be assigned to ${va ? va.name : 'your chosen VA'} for review and acceptance. This is a feature of the Expert VA Plan.`;
+      if (va && !va.isAvailableForDirectAssignment) {
+        toast({
+          title: "VA Currently Unavailable",
+          description: `${va.name} is not accepting direct assignments at the moment. Your task will be sent to the general pool, or you can cancel and choose another VA.`,
+          variant: "destructive",
+          duration: 7000,
+        });
+        // Fallback to random or let user decide further (for UI, we'll proceed with random assignment if they submitted from dialog)
+        // For simplicity, this simulation will treat it as if it goes to general pool after this toast.
+        // In a real app, you might re-open the selection dialog or offer clear choices.
+        vaMessage = `Your task has been submitted. Note: ${va.name} was selected but is currently unavailable for direct tasks, so it has been added to the general pool.`;
+      } else {
+        vaMessage = `Your task has been submitted and will be assigned to ${va ? va.name : 'your chosen VA'} for review and acceptance. This is a feature of the Expert VA Plan.`;
+      }
     } else {
-      vaMessage = "Your task has been submitted and a Virtual Assistant will be assigned randomly.";
+      vaMessage = "Your task has been submitted and a Virtual Assistant will be assigned randomly from the general pool.";
     }
 
     toast({
@@ -99,7 +125,8 @@ export function TaskSubmissionForm() {
       duration: 9000, 
     });
     router.push('/dashboard/tasks');
-    setIsVaSelectionDialogOpen(false); // Ensure VA selection dialog is closed
+    setIsVaSelectionDialogOpen(false); 
+    setSelectedVaId(undefined);
   };
 
 
@@ -261,30 +288,34 @@ export function TaskSubmissionForm() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Virtual Assistant Preference</AlertDialogTitle>
                 <AlertDialogDescription>
-                  To request a specific Virtual Assistant for this task, you need an active <strong>Expert VA Plan</strong>.
-                  If you have this plan, you can choose a specific VA.
-                  Choosing 'Request Specific VA' below will allow you to select one.
-                  If you don't have the Expert VA plan, or if your chosen VA is unavailable, one will be assigned randomly.
+                  You can have a Virtual Assistant assigned randomly from our general pool, or, if you have an active <strong>Expert VA Plan</strong>, you can request a specific VA.
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <AlertDialogFooter>
+              <AlertDialogFooter className="sm:flex-col sm:gap-2"> {/* Adjusted for better layout */}
                 <AlertDialogAction
                   onClick={() => {
-                    // This AlertDialogAction will close the AlertDialog,
-                    // then we open the VA Selection Dialog.
-                    setIsVaSelectionDialogOpen(true);
+                    if (isSubscribedToExpertVaPlan) {
+                      setIsVaSelectionDialogOpen(true);
+                    } else {
+                      toast({
+                        title: "Expert VA Plan Required",
+                        description: "To request a specific VA, please subscribe to the Expert VA Plan from the Subscription page.",
+                        variant: "destructive",
+                        action: <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/subscription')}>Go to Subscription</Button>
+                      });
+                    }
                   }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                 >
                   <Users className="mr-2 h-4 w-4" /> Request Specific VA
                 </AlertDialogAction>
                 <AlertDialogAction
                   onClick={() => performActualSubmission("random")}
-                  className="bg-primary hover:bg-primary/90"
+                  className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
                 >
                  <Shuffle className="mr-2 h-4 w-4" /> Assign Random VA
                 </AlertDialogAction>
-                 <AlertDialogCancel>Cancel</AlertDialogCancel>
+                 <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -293,15 +324,14 @@ export function TaskSubmissionForm() {
     </Card>
 
     <Dialog open={isVaSelectionDialogOpen} onOpenChange={setIsVaSelectionDialogOpen}>
-      <DialogContent className="sm:max-w-lg"> {/* Changed to sm:max-w-lg for a bit more space */}
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Select a Virtual Assistant</DialogTitle>
           <DialogDescription>
-            Choose a VA to assign this task to. This feature requires an active Expert VA Plan.
-            The VAs listed here are for demonstration.
+            Choose a VA to assign this task to. VAs who are currently unavailable for direct assignments are indicated.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[50vh] p-1 pr-3"> {/* Added pr-3 for scrollbar space */}
+        <ScrollArea className="max-h-[50vh] p-1 pr-3"> 
             <RadioGroup value={selectedVaId} onValueChange={setSelectedVaId} className="space-y-3 py-2">
             {mockSelectableVAs.map((va) => (
                 <Label
@@ -309,7 +339,8 @@ export function TaskSubmissionForm() {
                   htmlFor={`va-${va.id}`}
                   className={cn(
                       "flex items-center space-x-3 p-3 border rounded-md hover:bg-accent/30 cursor-pointer transition-colors",
-                      selectedVaId === va.id && "bg-accent/50 border-accent ring-2 ring-accent"
+                      selectedVaId === va.id && "bg-accent/50 border-accent ring-2 ring-accent",
+                      !va.isAvailableForDirectAssignment && "opacity-60 bg-muted/30 hover:bg-muted/40"
                   )}
                 >
                 <Avatar className="h-10 w-10">
@@ -319,8 +350,11 @@ export function TaskSubmissionForm() {
                 <div className="flex-grow">
                     <span className="font-medium text-sm">{va.name}</span>
                     <p className="text-xs text-muted-foreground">{va.tagline}</p>
+                    {!va.isAvailableForDirectAssignment && (
+                        <Badge variant="destructive" className="mt-1 text-xs">Unavailable for Direct Tasks</Badge>
+                    )}
                 </div>
-                <RadioGroupItem value={va.id} id={`va-${va.id}`} className="shrink-0"/>
+                <RadioGroupItem value={va.id} id={`va-${va.id}`} className="shrink-0" disabled={!va.isAvailableForDirectAssignment}/>
                 </Label>
             ))}
             {mockSelectableVAs.length === 0 && (
@@ -328,24 +362,32 @@ export function TaskSubmissionForm() {
             )}
             </RadioGroup>
         </ScrollArea>
-        <DialogFooter className="sm:justify-between items-center"> {/* Adjusted footer alignment */}
-          {selectedVaId && (
+         {selectedVaId && !mockSelectableVAs.find(va => va.id === selectedVaId)?.isAvailableForDirectAssignment && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 flex items-start mt-2 text-sm">
+                <AlertTriangle className="h-5 w-5 mr-2 mt-0.5 shrink-0"/>
+                <p>
+                    The selected VA is currently not available for direct assignments. If you proceed, your task will be sent to the general pool.
+                </p>
+            </div>
+        )}
+        <DialogFooter className="sm:justify-between items-center pt-4 border-t"> 
+          {selectedVaId && mockSelectableVAs.find(va => va.id === selectedVaId) && (
             <p className="text-sm text-muted-foreground hidden sm:block">
                 Selected: {mockSelectableVAs.find(va => va.id === selectedVaId)?.name || 'N/A'}
             </p>
           )}
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => {setIsVaSelectionDialogOpen(false); setSelectedVaId(undefined);}}>Cancel</Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={() => {setIsVaSelectionDialogOpen(false); setSelectedVaId(undefined);}} className="flex-1 sm:flex-none">Cancel</Button>
             <Button
               onClick={() => {
                 if (selectedVaId) {
                   performActualSubmission("specific", selectedVaId);
                 } else {
-                  toast({ title: "No VA Selected", description: "Please select a VA to proceed.", variant: "destructive"});
+                  toast({ title: "No VA Selected", description: "Please select a VA to proceed or cancel.", variant: "destructive"});
                 }
               }}
               disabled={!selectedVaId}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+              className="bg-accent hover:bg-accent/90 text-accent-foreground flex-1 sm:flex-none"
             >
               Submit with Selected VA
             </Button>

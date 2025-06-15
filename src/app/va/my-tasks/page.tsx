@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Target, CheckCircle, Clock, Eye, MessageSquare, MoreHorizontal, AlertCircle, Check, X, Upload, FileText, Sparkles } from "lucide-react";
+import { ListChecks, CheckCircle, Clock, Eye, MessageSquare, MoreHorizontal, AlertCircle, Check, X, Upload, FileText, Sparkles, Info } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -27,93 +27,89 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-type TaskStatusVA = "Pending Acceptance" | "In Progress" | "Submitted - Awaiting Review" | "Revision Requested" | "Completed" | "Cancelled By VA" | "Cancelled By Student";
+type MyTaskStatusVA = "Pending Review" | "In Progress" | "Submitted - Awaiting Review" | "Revision Requested" | "Completed" | "Declined By VA";
 
-interface BusinessServiceTask {
-  id: string;
+interface MyTaskItem {
+  id: string; // Could be same as Live Task ID initially
   title: string;
-  studentName: string;
-  submittedDate: string; 
-  assignedDate: string; 
-  deadline: string; 
-  status: TaskStatusVA;
-  payoutAmount: string;
+  studentId: string;
+  deadline: string;
+  payoutEstimate: string;
   brief: string;
-  studentFeedback?: string; // For revision requests
-  attachments?: { name: string, url: string }[]; // Student attachments
-  vaAvailabilityAtAssignment?: boolean; // For simulation
+  category: string;
+  pagesOrDuration: string;
+  attachments?: { name: string, url: string }[];
+  status: MyTaskStatusVA;
+  studentFeedback?: string; // For revision requests from student after submission
+  declineReason?: string; // If VA declines it from "My Tasks"
 }
 
-const mockBusinessServiceTasksInitial: BusinessServiceTask[] = [
-  { id: "BST001", title: "Dissertation Chapter 3 Methodology", studentName: "Sarah Researcher", submittedDate: "2024-07-20", assignedDate: "2024-07-21", deadline: "2024-07-28", status: "Pending Acceptance", payoutAmount: "₦150.00", brief: "Develop the methodology chapter for a PhD dissertation on climate change impact on agriculture in Sub-Saharan Africa. Must include quantitative and qualitative research design.", attachments: [{name: "research_proposal.pdf", url: "#"}, {name: "data_collection_plan.docx", url: "#"}], vaAvailabilityAtAssignment: true },
-  { id: "BST002", title: "Advanced Financial Modeling", studentName: "Mike Finance", submittedDate: "2024-07-18", assignedDate: "2024-07-19", deadline: "2024-07-25", status: "In Progress", payoutAmount: "₦200.00", brief: "Create a 5-year financial projection model for a tech startup. Include sensitivity analysis and valuation.", attachments: [{name: "company_deck.pptx", url: "#"}], vaAvailabilityAtAssignment: true },
-  { id: "BST003", title: "Legal Case Brief - Contract Law", studentName: "Laura Lawyer", submittedDate: "2024-07-15", assignedDate: "2024-07-16", deadline: "2024-07-20", status: "Submitted - Awaiting Review", payoutAmount: "₦100.00", brief: "Prepare a detailed case brief for Smith v. Jones (2022), focusing on breach of contract elements.", vaAvailabilityAtAssignment: true },
-  { id: "BST004", title: "Statistical Analysis for Thesis", studentName: "Ken Stats", submittedDate: "2024-07-12", assignedDate: "2024-07-13", deadline: "2024-07-19", status: "Revision Requested", payoutAmount: "₦180.00", brief: "Perform ANOVA and regression analysis on the provided dataset. Student requires clarification on the interpretation of p-values.", studentFeedback: "Please elaborate on the significance of the p-values for each variable and provide a clearer interpretation in the context of the research questions.", attachments: [{name: "dataset.xlsx", url: "#"}], vaAvailabilityAtAssignment: true },
-  { id: "BST005", title: "Machine Learning Model Development", studentName: "Alex AI", submittedDate: "2024-07-22", assignedDate: "2024-07-23", deadline: "2024-08-05", status: "Pending Acceptance", payoutAmount: "₦250.00", brief: "Develop a sentiment analysis model using Python and TensorFlow/Keras for customer reviews. Dataset provided.", attachments: [{name: "review_dataset.csv", url: "#"}, {name: "project_requirements.pdf", url: "#"}], vaAvailabilityAtAssignment: false }, // Example of task assigned when VA was "offline"
+// Tasks here are those the VA expressed interest in from Live Tasks
+const mockMyTasksInitial: MyTaskItem[] = [
+  { id: "LT001", title: "Urgent Proofreading - English Essay", studentId: "SID789", deadline: "2024-07-25", payoutEstimate: "₦20.00 - ₦30.00", brief: "Proofread a 5-page English literature essay for grammar, spelling, and punctuation errors. APA 7th edition.", category: "Proofreading", pagesOrDuration: "5 pages", attachments: [{name: "essay_draft.docx", url: "#"}], status: "Pending Review" },
+  // Add more tasks if one was "taken" from Live Tasks for demo
 ];
 
-const vaStatusColors: Record<TaskStatusVA, string> = {
-  "Pending Acceptance": "bg-orange-100 text-orange-700 border-orange-300",
+const myTaskStatusColors: Record<MyTaskStatusVA, string> = {
+  "Pending Review": "bg-orange-100 text-orange-700 border-orange-300",
   "In Progress": "bg-blue-100 text-blue-700 border-blue-300",
   "Submitted - Awaiting Review": "bg-purple-100 text-purple-700 border-purple-300",
   "Revision Requested": "bg-yellow-100 text-yellow-700 border-yellow-300",
   "Completed": "bg-green-100 text-green-700 border-green-300",
-  "Cancelled By VA": "bg-red-100 text-red-700 border-red-300",
-  "Cancelled By Student": "bg-gray-100 text-gray-700 border-gray-300",
+  "Declined By VA": "bg-red-100 text-red-700 border-red-300",
 };
 
-const vaStatusIcons: Record<TaskStatusVA, React.ElementType> = {
-  "Pending Acceptance": AlertCircle,
+const myTaskStatusIcons: Record<MyTaskStatusVA, React.ElementType> = {
+  "Pending Review": AlertCircle,
   "In Progress": Clock,
   "Submitted - Awaiting Review": Eye,
   "Revision Requested": MessageSquare,
   "Completed": CheckCircle,
-  "Cancelled By VA": X,
-  "Cancelled By Student": X,
+  "Declined By VA": X,
 };
 
 
-export default function VaBusinessTasksPage() {
-  const [tasks, setTasks] = useState<BusinessServiceTask[]>(mockBusinessServiceTasksInitial);
-  const [selectedTask, setSelectedTask] = useState<BusinessServiceTask | null>(null);
+export default function VaMyTasksPage() {
+  const [myTasks, setMyTasks] = useState<MyTaskItem[]>(mockMyTasksInitial);
+  const [selectedTask, setSelectedTask] = useState<MyTaskItem | null>(null);
   const [isDeclineSectionVisible, setIsDeclineSectionVisible] = useState(false);
-  const [declineReason, setDeclineReason] = useState("");
+  const [declineReasonInput, setDeclineReasonInput] = useState("");
   const [submissionNotes, setSubmissionNotes] = useState("");
   const { toast } = useToast();
 
-  const handleOpenDialog = (task: BusinessServiceTask) => {
+  const handleOpenDialog = (task: MyTaskItem) => {
     setSelectedTask(task);
     setIsDeclineSectionVisible(false); 
-    setDeclineReason(""); 
+    setDeclineReasonInput(""); 
     setSubmissionNotes(""); 
   };
 
-  const handleAcceptTask = () => {
+  const handleAcceptWork = () => {
     if (!selectedTask) return;
-    setTasks(prev => prev.map(t => t.id === selectedTask.id ? {...t, status: "In Progress"} : t));
-    toast({ title: "Task Accepted", description: `You have accepted business task: ${selectedTask.title}. It is now 'In Progress'.` });
+    setMyTasks(prev => prev.map(t => t.id === selectedTask.id ? {...t, status: "In Progress"} : t));
+    toast({ title: "Task Accepted & In Progress", description: `You have formally accepted task: ${selectedTask.title}.` });
     setSelectedTask(null); 
   };
 
   const handleConfirmDecline = () => {
-    if (!selectedTask || !declineReason.trim()) {
-      toast({ title: "Reason Required", description: "Please provide a reason for declining the task.", variant: "destructive"});
+    if (!selectedTask || !declineReasonInput.trim()) {
+      toast({ title: "Reason Required", description: "Please provide a reason for declining this task from your queue.", variant: "destructive"});
       return;
     }
-    setTasks(prev => prev.map(t => t.id === selectedTask.id ? {...t, status: "Cancelled By VA" } : t)); // Changed to Cancelled By VA
-    toast({ title: "Task Declined", description: `Business task ${selectedTask.title} declined. Reason: ${declineReason}` });
+    setMyTasks(prev => prev.map(t => t.id === selectedTask.id ? {...t, status: "Declined By VA", declineReason: declineReasonInput } : t));
+    toast({ title: "Task Declined from Queue", description: `Task ${selectedTask.title} declined. Reason: ${declineReasonInput}. It will be returned to the Live Tasks pool (simulated).` });
     setSelectedTask(null); 
-    setDeclineReason("");
+    setDeclineReasonInput("");
     setIsDeclineSectionVisible(false);
   };
   
   const handleSubmitWork = () => {
     if(!selectedTask) return;
-    const newStatus: TaskStatusVA = selectedTask.status === "Revision Requested" ? "Submitted - Awaiting Review" : "Submitted - Awaiting Review";
-     setTasks(prev => prev.map(t => t.id === selectedTask.id ? {...t, status: newStatus} : t));
+    const newStatus: MyTaskStatusVA = selectedTask.status === "Revision Requested" ? "Submitted - Awaiting Review" : "Submitted - Awaiting Review";
+     setMyTasks(prev => prev.map(t => t.id === selectedTask.id ? {...t, status: newStatus} : t));
     toast({
         title: selectedTask.status === "Revision Requested" ? "Revision Submitted" : "Work Submitted",
         description: `Your work for task '${selectedTask.title}' has been submitted with notes: "${submissionNotes || 'No notes'}". Student will be notified.`
@@ -122,13 +118,12 @@ export default function VaBusinessTasksPage() {
     setSubmissionNotes("");
   };
 
-
   return (
     <div className="space-y-8">
       <PageHeader 
-        title="Business Service Tasks"
-        description="Manage tasks directly assigned to you by students. These are typically for VAs with an active 'Professional Business VA' subscription and 'Available for Direct Assignment' status."
-        icon={Target}
+        title="My Tasks Queue"
+        description="Tasks you've expressed interest in from 'Live Tasks'. Review details and formally accept or decline."
+        icon={ListChecks}
       />
       <Dialog open={!!selectedTask} onOpenChange={(isOpen) => !isOpen && setSelectedTask(null)}>
         <DialogContent className="sm:max-w-lg">
@@ -137,18 +132,10 @@ export default function VaBusinessTasksPage() {
                 <DialogHeader>
                     <DialogTitle className="flex items-center"><Sparkles className="h-5 w-5 mr-2 text-primary" />{selectedTask.title} (ID: {selectedTask.id})</DialogTitle>
                     <DialogDescription>
-                    Student: {selectedTask.studentName} | Deadline: {selectedTask.deadline} | Payout: {selectedTask.payoutAmount}
+                    Student: {selectedTask.studentId} | Deadline: {selectedTask.deadline} | Payout Estimate: {selectedTask.payoutEstimate}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
-                    {selectedTask.status === "Pending Acceptance" && selectedTask.vaAvailabilityAtAssignment === false && (
-                        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 flex items-start">
-                            <AlertCircle className="h-5 w-5 mr-2 mt-0.5 shrink-0"/>
-                            <p className="text-sm">
-                                Note: This task was assigned while your "Available for Direct Assignment" status was OFF. You can still choose to accept it.
-                            </p>
-                        </div>
-                    )}
                     <div className="space-y-1">
                         <Label className="font-semibold text-primary">Task Brief:</Label>
                         <p className="text-sm text-foreground/80 p-3 bg-muted/10 border rounded-md whitespace-pre-wrap">{selectedTask.brief}</p>
@@ -180,14 +167,14 @@ export default function VaBusinessTasksPage() {
                         </div>
                     )}
 
-                    {selectedTask.status === "Pending Acceptance" && isDeclineSectionVisible && (
+                    {selectedTask.status === "Pending Review" && isDeclineSectionVisible && (
                         <div className="space-y-2 pt-2 border-t mt-2">
-                            <Label htmlFor="declineReason" className="font-semibold text-destructive">Reason for Declining:</Label>
+                            <Label htmlFor="declineReasonMyTask" className="font-semibold text-destructive">Reason for Declining:</Label>
                             <Textarea 
-                                id="declineReason" 
-                                value={declineReason}
-                                onChange={(e) => setDeclineReason(e.target.value)}
-                                placeholder="Please provide a brief reason for declining this task..." 
+                                id="declineReasonMyTask" 
+                                value={declineReasonInput}
+                                onChange={(e) => setDeclineReasonInput(e.target.value)}
+                                placeholder="Provide a brief reason if you are no longer interested..." 
                                 rows={3} 
                             />
                         </div>
@@ -196,9 +183,9 @@ export default function VaBusinessTasksPage() {
                     {(selectedTask.status === "In Progress" || selectedTask.status === "Revision Requested") && (
                     <>
                         <div className="space-y-2 pt-2 border-t mt-2">
-                            <Label htmlFor="submissionNotes" className="font-semibold text-primary">Submission Notes (Optional):</Label>
+                            <Label htmlFor="submissionNotesMyTask" className="font-semibold text-primary">Submission Notes (Optional):</Label>
                             <Textarea 
-                                id="submissionNotes" 
+                                id="submissionNotesMyTask" 
                                 value={submissionNotes}
                                 onChange={(e) => setSubmissionNotes(e.target.value)}
                                 placeholder="Any notes for the student or admin regarding your submission..." 
@@ -206,10 +193,10 @@ export default function VaBusinessTasksPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="attachments" className="font-semibold text-primary">Attach Completed Work:</Label>
+                            <Label htmlFor="attachmentsMyTask" className="font-semibold text-primary">Attach Completed Work:</Label>
                             <div className="flex items-center justify-center w-full">
                                 <Label 
-                                htmlFor="va-bstask-file-upload" 
+                                htmlFor="va-mytask-file-upload" 
                                 className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer bg-muted/30 hover:bg-muted/50 transition-colors"
                                 >
                                     <div className="flex flex-col items-center justify-center pt-4 pb-5">
@@ -219,7 +206,7 @@ export default function VaBusinessTasksPage() {
                                         </p>
                                         <p className="text-xs text-muted-foreground">DOCX, PDF, ZIP, etc.</p>
                                     </div>
-                                    <Input id="va-bstask-file-upload" type="file" className="hidden" multiple />
+                                    <Input id="va-mytask-file-upload" type="file" className="hidden" multiple />
                                 </Label>
                             </div>
                         </div>
@@ -231,19 +218,19 @@ export default function VaBusinessTasksPage() {
                         <Button type="button" variant="outline">Close</Button>
                     </DialogClose>
 
-                    {selectedTask.status === "Pending Acceptance" && !isDeclineSectionVisible && (
+                    {selectedTask.status === "Pending Review" && !isDeclineSectionVisible && (
                         <>
                         <Button onClick={() => setIsDeclineSectionVisible(true)} variant="destructive" className="bg-red-600 hover:bg-red-700">
                             <X className="mr-2 h-4 w-4" />Decline Task
                         </Button>
-                        <Button onClick={handleAcceptTask} className="bg-green-600 hover:bg-green-700 text-white">
-                            <Check className="mr-2 h-4 w-4" />Accept Task
+                        <Button onClick={handleAcceptWork} className="bg-green-600 hover:bg-green-700 text-white">
+                            <Check className="mr-2 h-4 w-4" />Accept & Start Work
                         </Button>
                         </>
                     )}
-                    {selectedTask.status === "Pending Acceptance" && isDeclineSectionVisible && (
-                         <Button onClick={handleConfirmDecline} variant="destructive" className="bg-red-600 hover:bg-red-700" disabled={!declineReason.trim()}>
-                            Confirm Decline with Reason
+                    {selectedTask.status === "Pending Review" && isDeclineSectionVisible && (
+                         <Button onClick={handleConfirmDecline} variant="destructive" className="bg-red-600 hover:bg-red-700" disabled={!declineReasonInput.trim()}>
+                            Confirm Decline from My Queue
                         </Button>
                     )}
 
@@ -260,15 +247,18 @@ export default function VaBusinessTasksPage() {
 
       <Card className="shadow-xl">
         <CardHeader>
-          <CardTitle className="font-headline">Assigned Business Tasks ({tasks.length})</CardTitle>
-          <CardDescription>Overview of all tasks specifically assigned to you.</CardDescription>
+          <CardTitle className="font-headline">Tasks in My Queue ({myTasks.length})</CardTitle>
+          <CardDescription>Tasks you've shown interest in. Formally accept them to start working, or decline if you're no longer available.</CardDescription>
         </CardHeader>
         <CardContent>
-          {tasks.length === 0 ? (
+          {myTasks.length === 0 ? (
              <div className="text-center py-12 text-muted-foreground">
-                <Target className="mx-auto h-16 w-16 mb-4" />
-                <p className="text-xl font-semibold">No business service tasks assigned yet.</p>
-                <p>Ensure your profile is up to date and you are "Available for Direct Assignments". Students with Expert VA plans may assign tasks to you directly.</p>
+                <ListChecks className="mx-auto h-16 w-16 mb-4" />
+                <p className="text-xl font-semibold">Your 'My Tasks' queue is empty.</p>
+                <p>Browse 'Live Tasks' to find work that interests you.</p>
+                <Button asChild className="mt-4">
+                    <Link href="/va/live-tasks">Browse Live Tasks</Link>
+                </Button>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -279,23 +269,23 @@ export default function VaBusinessTasksPage() {
                   <TableHead>Title</TableHead>
                   <TableHead>Student</TableHead>
                   <TableHead>Deadline</TableHead>
-                  <TableHead>Payout</TableHead>
+                  <TableHead>Est. Payout</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tasks.map(task => {
-                  const StatusIcon = vaStatusIcons[task.status];
+                {myTasks.map(task => {
+                  const StatusIcon = myTaskStatusIcons[task.status];
                   return (
                     <TableRow key={task.id}>
                       <TableCell className="font-medium">{task.id}</TableCell>
                       <TableCell>{task.title}</TableCell>
-                      <TableCell>{task.studentName}</TableCell>
+                      <TableCell>{task.studentId}</TableCell>
                       <TableCell>{task.deadline}</TableCell>
-                      <TableCell className="font-semibold">{task.payoutAmount}</TableCell>
+                      <TableCell className="font-semibold">{task.payoutEstimate}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={`text-xs ${vaStatusColors[task.status]}`}>
+                        <Badge variant="outline" className={`text-xs ${myTaskStatusColors[task.status]}`}>
                           <StatusIcon className="h-3.5 w-3.5 mr-1.5" />
                           {task.status}
                         </Badge>
@@ -311,11 +301,11 @@ export default function VaBusinessTasksPage() {
                                 <DropdownMenuItem onClick={() => handleOpenDialog(task)}>
                                   <Eye className="mr-2 h-4 w-4" />View Details & Actions
                                 </DropdownMenuItem>
-                              {task.status === "Pending Acceptance" && (
+                              {task.status === "Pending Review" && (
                                 <>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-green-600 focus:text-green-700 focus:bg-green-50" onClick={() => {setSelectedTask(task); handleAcceptTask();}}>
-                                    <Check className="mr-2 h-4 w-4" />Quick Accept Task
+                                  <DropdownMenuItem className="text-green-600 focus:text-green-700 focus:bg-green-50" onClick={() => {setSelectedTask(task); handleAcceptWork();}}>
+                                    <Check className="mr-2 h-4 w-4" />Accept & Start Work
                                   </DropdownMenuItem>
                                   <DropdownMenuItem className="text-red-600 focus:text-red-700 focus:bg-red-50" onClick={() => {handleOpenDialog(task); setIsDeclineSectionVisible(true);}}>
                                     <X className="mr-2 h-4 w-4" />Decline Task
@@ -345,6 +335,16 @@ export default function VaBusinessTasksPage() {
             </div>
           )}
         </CardContent>
+         <CardFooter className="border-t pt-4">
+            <div className="flex items-start text-sm text-muted-foreground p-2 bg-blue-50 border border-blue-200 rounded-md">
+                <Info className="h-5 w-5 mr-2 mt-0.5 text-blue-600 shrink-0"/>
+                <div>
+                    This page lists tasks you've shown interest in from 'Live Tasks'.
+                    Here you can formally commit by clicking 'Accept & Start Work' or decline them.
+                    Declined tasks will be removed from your queue (simulated return to Live Tasks).
+                </div>
+            </div>
+        </CardFooter>
       </Card>
     </div>
   );

@@ -1,7 +1,7 @@
 
 "use client";
 
-import Link from "next/link"; // Added import
+import Link from "next/link"; 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UploadCloud, Save, UserCircle, Briefcase, Award, CalendarCheck, DollarSign, ShieldCheck, Banknote } from "lucide-react";
+import { UploadCloud, Save, UserCircle, Briefcase, Award, CalendarCheck, DollarSign, ShieldCheck, Banknote, Power } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -23,11 +23,11 @@ const mockVaProfile = {
   bio: "With over 5 years of experience, I provide top-notch academic support to students, ensuring quality and timely delivery. My expertise spans various citation styles and research methodologies.",
   skills: ["Academic Writing", "Research", "Proofreading", "APA/MLA Formatting", "Data Analysis"],
   specializations: ["Humanities", "Social Sciences", "Literature Reviews", "Business Reports"],
-  hourlyRate: "₦5000", // Assuming NGN if not specified
-  isAvailable: true,
+  hourlyRate: "₦5000", 
+  isAvailableForDirectAssignment: true, // New field
   shopName: "Aisha's Academic Pro",
-  businessName: "", // Empty if not a registered business
-  planType: null, // Could be "Professional Business VA" if subscribed
+  businessName: "", 
+  planType: "Professional Business VA", // Assuming subscribed for demo
   bankName: "Zenith Bank",
   accountNumber: "1234567890",
   accountName: "Aisha Bello"
@@ -40,6 +40,7 @@ export default function VaProfilePage() {
   const [skillInput, setSkillInput] = useState("");
   const [currentSpecs, setCurrentSpecs] = useState<string[]>(mockVaProfile.specializations);
   const [specInput, setSpecInput] = useState("");
+  const [isAvailableForDirect, setIsAvailableForDirect] = useState(mockVaProfile.isAvailableForDirectAssignment);
 
   const handleAddSkill = () => {
     if (skillInput.trim() && !currentSkills.includes(skillInput.trim())) {
@@ -65,6 +66,8 @@ export default function VaProfilePage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     // UI-only: Simulate profile update
+    // In a real app, save isAvailableForDirect along with other fields
+    console.log("Direct Assignment Availability:", isAvailableForDirect);
     toast({
       title: "VA Profile Updated!",
       description: "Your VA profile details have been saved successfully.",
@@ -89,7 +92,7 @@ export default function VaProfilePage() {
               <CardContent className="space-y-4">
                 <div className="flex flex-col items-center space-y-3">
                   <Avatar className="h-24 w-24 ring-2 ring-primary ring-offset-2">
-                    <AvatarImage src={mockVaProfile.avatarUrl} alt={mockVaProfile.name} data-ai-hint="person avatar professional" />
+                    <AvatarImage src={mockVaProfile.avatarUrl} alt={mockVaProfile.name} data-ai-hint="person avatar professional"/>
                     <AvatarFallback>{mockVaProfile.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <Input id="avatarUploadVa" type="file" className="text-xs" />
@@ -115,17 +118,22 @@ export default function VaProfilePage() {
 
             <Card className="shadow-lg">
               <CardHeader>
-                <CardTitle className="font-headline flex items-center"><CalendarCheck className="mr-2 h-5 w-5 text-primary"/> Availability</CardTitle>
+                <CardTitle className="font-headline flex items-center"><Power className="mr-2 h-5 w-5 text-primary"/> Availability for Direct Assignments</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <Label htmlFor="isAvailable" className="text-base">Currently Available for Tasks</Label>
+                    <Label htmlFor="isAvailableForDirect" className="text-base">Accept Direct Assignments</Label>
                     <p className="text-sm text-muted-foreground">
-                      Toggle this off if you are not accepting new tasks.
+                      If off, students cannot assign tasks directly to you (Business Service Tasks). You can still take Live Tasks.
                     </p>
                   </div>
-                  <Switch id="isAvailable" defaultChecked={mockVaProfile.isAvailable} aria-label="Toggle availability" />
+                  <Switch 
+                    id="isAvailableForDirect" 
+                    checked={isAvailableForDirect}
+                    onCheckedChange={setIsAvailableForDirect}
+                    aria-label="Toggle direct assignment availability" 
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -139,12 +147,14 @@ export default function VaProfilePage() {
                 {mockVaProfile.planType === "Professional Business VA" ? (
                     <div>
                         <p className="text-sm font-medium">Plan: <Badge>{mockVaProfile.planType}</Badge></p>
-                        <p className="text-xs text-muted-foreground mt-1">Renews on: [Date]</p>
-                        <Button variant="outline" size="sm" className="w-full mt-3">Manage Subscription</Button>
+                        <p className="text-xs text-muted-foreground mt-1">Renews on: Dec 31, 2024 (mock data)</p>
+                        <Button variant="outline" size="sm" className="w-full mt-3" asChild>
+                           <Link href="/dashboard/subscription">Manage Subscription</Link>
+                        </Button>
                     </div>
                 ) : (
                     <div>
-                        <p className="text-sm text-muted-foreground">You are not currently subscribed to the "Professional Business VA" plan.</p>
+                        <p className="text-sm text-muted-foreground">You are not currently subscribed to the "Professional Business VA" plan to enhance your visibility for direct assignments.</p>
                         <Button asChild size="sm" className="w-full mt-3 bg-accent hover:bg-accent/90 text-accent-foreground">
                             <Link href="/dashboard/subscription">Upgrade to Professional Business VA</Link>
                         </Button>
@@ -273,3 +283,4 @@ export default function VaProfilePage() {
     </div>
   );
 }
+

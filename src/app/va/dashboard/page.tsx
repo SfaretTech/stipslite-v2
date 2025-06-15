@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, CheckCircle2, Clock, DollarSign, Bell, UserCircle, ArrowRight, LayoutDashboard, MessageSquare, Signal, Target } from "lucide-react"; 
+import { Briefcase, CheckCircle2, Clock, DollarSign, Bell, UserCircle, ArrowRight, LayoutDashboard, MessageSquare, Signal, Target, ListChecks } from "lucide-react"; 
 import Link from "next/link";
 
 export default function VaDashboardPage() {
@@ -17,22 +17,22 @@ export default function VaDashboardPage() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard 
-          title="Pending Business Tasks" 
-          value="2" 
-          icon={Target} 
-          description="Tasks awaiting your acceptance" 
-        />
-        <StatCard 
-          title="Active Business Tasks" 
-          value="3" 
-          icon={Clock} 
-          description="Tasks you are currently working on" 
-        />
-        <StatCard 
           title="Live Tasks Available" 
           value="5" 
           icon={Signal} 
           description="Tasks open for acceptance"
+        />
+        <StatCard 
+          title="Tasks in My Queue" 
+          value="1" 
+          icon={ListChecks} 
+          description="Tasks you're interested in" 
+        />
+        <StatCard 
+          title="Active Business Tasks" 
+          value="2" 
+          icon={Target} 
+          description="Directly assigned tasks in progress" 
         />
         <StatCard 
           title="Pending Payouts" 
@@ -53,6 +53,7 @@ export default function VaDashboardPage() {
           <CardContent className="space-y-4">
             {[
               { icon: Target, text: "New business task 'Dissertation Chapter 3' assigned.", time: "30 minutes ago", color: "text-blue-500", link: "/va/business-tasks/BST001" },
+              { icon: ListChecks, text: "You expressed interest in 'Urgent Proofreading'.", time: "1 hour ago", color: "text-orange-500", link: "/va/my-tasks/LT001" },
               { icon: CheckCircle2, text: "Task 'Financial Modeling' marked complete by student.", time: "2 hours ago", color: "text-green-500", link: "/va/business-tasks/BST002" }, 
               { icon: DollarSign, text: "Payout of ₦10,000 processed.", time: "1 day ago", color: "text-purple-500", link: "/va/payouts" }, 
             ].map((activity, index) => (
@@ -82,6 +83,9 @@ export default function VaDashboardPage() {
               <Link href="/va/live-tasks"><Signal className="mr-2 h-4 w-4" /> Browse Live Tasks</Link> 
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
+              <Link href="/va/my-tasks"><ListChecks className="mr-2 h-4 w-4" /> Manage My Tasks</Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-start" asChild>
               <Link href="/va/business-tasks"><Target className="mr-2 h-4 w-4" /> Manage Business Tasks</Link>
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
@@ -106,3 +110,4 @@ export default function VaDashboardPage() {
     </div>
   );
 }
+

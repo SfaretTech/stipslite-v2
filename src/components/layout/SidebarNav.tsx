@@ -23,8 +23,9 @@ import {
   Briefcase, 
   CalendarCheck, 
   DollarSign, 
-  Signal, // Corrected: Replaced Broadcast with Signal
+  Signal, 
   Target, 
+  ListChecks, // Added for My Tasks
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -79,7 +80,8 @@ const adminNavItems = [
 
 const vaNavItems = [
   { href: "/va/dashboard", label: "VA Dashboard", icon: LayoutDashboard },
-  { href: "/va/live-tasks", label: "Live Tasks", icon: Signal }, // Corrected: Replaced Broadcast with Signal
+  { href: "/va/live-tasks", label: "Live Tasks", icon: Signal },
+  { href: "/va/my-tasks", label: "My Tasks", icon: ListChecks }, // New "My Tasks"
   { href: "/va/business-tasks", label: "Business Service Tasks", icon: Target },
   { href: "/va/profile", label: "My VA Profile", icon: UserCircle },
   { href: "/va/notifications", label: "Notifications", icon: Bell },
@@ -251,3 +253,4 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
     </SidebarMenu>
   );
 }
+
