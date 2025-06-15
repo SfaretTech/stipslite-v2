@@ -23,8 +23,8 @@ import {
   Briefcase, 
   CalendarCheck, 
   DollarSign, 
-  Broadcast, // Icon for Live Tasks
-  Target, // Icon for Business Service Tasks
+  Signal, // Corrected: Replaced Broadcast with Signal
+  Target, 
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -79,11 +79,9 @@ const adminNavItems = [
 
 const vaNavItems = [
   { href: "/va/dashboard", label: "VA Dashboard", icon: LayoutDashboard },
-  { href: "/va/live-tasks", label: "Live Tasks", icon: Broadcast },
+  { href: "/va/live-tasks", label: "Live Tasks", icon: Signal }, // Corrected: Replaced Broadcast with Signal
   { href: "/va/business-tasks", label: "Business Service Tasks", icon: Target },
   { href: "/va/profile", label: "My VA Profile", icon: UserCircle },
-  // { href: "/va/availability", label: "My Availability", icon: CalendarCheck }, // Potentially part of profile
-  // { href: "/va/payouts", label: "Payouts", icon: DollarSign }, // Could be part of dashboard or a separate section
   { href: "/va/notifications", label: "Notifications", icon: Bell },
   { href: "/va/support", label: "Support", icon: MessageSquare },
 ];
@@ -141,14 +139,13 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
     role === "va" ? vaNavItems : 
     studentNavItems;
   
-  const accountNavItems = role === "student" ? accountNavItemsStudent : []; // VA will have profile in main nav
+  const accountNavItems = role === "student" ? accountNavItemsStudent : [];
 
   return (
     <SidebarMenu className="flex-1">
       {navItemsToRender.map((item) => {
         const isVaPlusItem = item.label === "VA Plus";
         const isVaPlusLocked = isVaPlusItem && item.status === "locked";
-        // Ensure activeHref exists before trying to access it
         const activeHref = (item as any).activeHref;
         const currentHref = isVaPlusItem ? (isVaPlusLocked ? item.href : activeHref) : item.href;
 

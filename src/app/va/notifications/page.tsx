@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Bell, Check, Eye, X, Archive, ArchiveX, Target, DollarSign, MessageSquare, Info, Broadcast } from "lucide-react"; // Added Target, Broadcast
+import { Bell, Check, Eye, X, Archive, ArchiveX, Target, DollarSign, MessageSquare, Info, Signal } from "lucide-react"; 
 import { cn } from "@/lib/utils";
 
 interface VaNotificationItem {
@@ -24,10 +24,10 @@ interface VaNotificationItem {
 const initialVaNotifications: VaNotificationItem[] = [
   { id: "VAN001", title: "New Business Task: 'Dissertation Chapter 3'", description: "Student Sarah Researcher has assigned you a new task. Please review and accept or decline.", timestamp: "2024-07-22 11:00 AM", read: false, category: "New Business Task", link: "/va/business-tasks/BST001", icon: Target },
   { id: "VAN002", title: "Revision Requested for 'Financial Modeling'", description: "Student Mike Finance has requested revisions. Please check the task details for comments.", timestamp: "2024-07-21 15:30 PM", read: false, category: "Task Update", link: "/va/business-tasks/BST002", icon: MessageSquare },
-  { id: "VAN003", title: "Payment Processed: ₦10,000", description: "Your payout for completed tasks has been processed.", timestamp: "2024-07-20 10:15 AM", read: true, category: "Payment", link: "/va/payouts", icon: DollarSign }, // Assuming /va/payouts page
+  { id: "VAN003", title: "Payment Processed: ₦10,000", description: "Your payout for completed tasks has been processed.", timestamp: "2024-07-20 10:15 AM", read: true, category: "Payment", link: "/va/payouts", icon: DollarSign }, 
   { id: "VAN004", title: "Profile Tip: Add More Skills", description: "Consider adding more skills to your profile to attract a wider range of tasks.", timestamp: "2024-07-19 09:00 AM", read: true, category: "System Alert", icon: Info },
   { id: "VAN005", title: "Task 'Legal Case Brief' Completed by Student", description: "Student Laura Lawyer has marked task BST003 as completed. Payment will be processed soon.", timestamp: "2024-07-18 17:00 PM", read: true, category: "Task Update", link: "/va/business-tasks/BST003", icon: Check },
-  { id: "VAN006", title: "New Live Task Available: 'Urgent Proofreading'", description: "A new task is available in the Live Tasks pool that matches your skills.", timestamp: "2024-07-23 09:00 AM", read: false, category: "Live Task Available", link: "/va/live-tasks", icon: Broadcast },
+  { id: "VAN006", title: "New Live Task Available: 'Urgent Proofreading'", description: "A new task is available in the Live Tasks pool that matches your skills.", timestamp: "2024-07-23 09:00 AM", read: false, category: "Live Task Available", link: "/va/live-tasks", icon: Signal }, 
 ];
 
 

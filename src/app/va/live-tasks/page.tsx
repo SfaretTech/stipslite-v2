@@ -3,10 +3,10 @@
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Broadcast, Eye, Check, FileText, DollarSign, CalendarDays } from "lucide-react";
+import { Signal, Eye, Check, FileText, DollarSign, CalendarDays } from "lucide-react"; 
 import {
   Dialog,
   DialogContent,
@@ -24,12 +24,12 @@ import { useToast } from "@/hooks/use-toast";
 interface LiveTask {
   id: string;
   title: string;
-  studentId: string; // Anonymized or placeholder
+  studentId: string; 
   deadline: string; 
   payoutEstimate: string;
   brief: string;
-  category: string; // e.g., Research, Writing, Design
-  pagesOrDuration: string; // e.g., "10 pages", "3 hours"
+  category: string; 
+  pagesOrDuration: string; 
   attachments?: { name: string, url: string }[];
 }
 
@@ -45,14 +45,13 @@ export default function VaLiveTasksPage() {
   const { toast } = useToast();
 
   const handleAcceptTask = (taskToAccept: LiveTask) => {
-    // Simulate accepting the task
     setLiveTasks(prev => prev.filter(t => t.id !== taskToAccept.id));
     toast({ 
       title: "Task Accepted!", 
       description: `Task "${taskToAccept.title}" has been accepted and notionally moved to your Business Service Tasks. Please check there to manage it.`,
       duration: 7000,
     });
-    setSelectedTask(null); // Close dialog
+    setSelectedTask(null); 
   };
 
   return (
@@ -60,7 +59,7 @@ export default function VaLiveTasksPage() {
       <PageHeader 
         title="Live Tasks"
         description="Browse tasks available for VAs. Accept tasks that match your skills."
-        icon={Broadcast}
+        icon={Signal} 
       />
       <Dialog open={!!selectedTask} onOpenChange={(isOpen) => !isOpen && setSelectedTask(null)}>
         <DialogContent className="sm:max-w-lg">
@@ -121,7 +120,7 @@ export default function VaLiveTasksPage() {
         <CardContent>
           {liveTasks.length === 0 ? (
              <div className="text-center py-12 text-muted-foreground">
-                <Broadcast className="mx-auto h-16 w-16 mb-4" />
+                <Signal className="mx-auto h-16 w-16 mb-4" /> 
                 <p className="text-xl font-semibold">No live tasks available right now.</p>
                 <p>Check back later, or ensure your skills in your profile are up to date.</p>
             </div>
