@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
+  DialogTrigger, // Added DialogTrigger
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
