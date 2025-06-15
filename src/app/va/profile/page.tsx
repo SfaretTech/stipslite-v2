@@ -1,6 +1,7 @@
 
 "use client";
 
+import Link from "next/link"; // Added import
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
