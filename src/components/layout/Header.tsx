@@ -14,12 +14,12 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye } from "lucide-react";
+import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye, Briefcase } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AiSearchDialog } from "@/components/ai/AiSearchDialog";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area"; // Added ScrollArea
-import { cn } from "@/lib/utils"; // Added cn
+import { ScrollArea } from "@/components/ui/scroll-area"; 
+import { cn } from "@/lib/utils"; 
 
 // Mock notifications for the dropdown - ideally fetch this or share from a context
 const mockHeaderNotifications = [
@@ -29,10 +29,46 @@ const mockHeaderNotifications = [
   { id: "N004", title: "Payment Received", timestamp: "5 days ago", read: true, link: "/dashboard/tasks/TSK00X", icon: DollarIcon },
 ];
 
+const mockVaNotifications = [
+  { id: "VAN001", title: "New Task Assigned", timestamp: "1 hour ago", read: false, link: "/va/tasks", icon: Briefcase },
+  { id: "VAN002", title: "Payment Processed", timestamp: "2 days ago", read: true, link: "/va/payouts", icon: DollarIcon }, // Assuming a payouts page
+];
 
-export function Header() {
+
+export function Header({ role = "student" }: { role?: "student" | "admin" | "va" }) {
   const { isMobile } = useSidebar();
-  const unreadNotificationsCount = mockHeaderNotifications.filter(n => !n.read).length;
+
+  let userName = "Student Name";
+  let userEmail = "student@example.com";
+  let profileLink = "/dashboard/profile";
+  let notificationsLink = "/dashboard/notifications";
+  let subscriptionSettingsLink = "/dashboard/subscription";
+  let supportLink = "/dashboard/support";
+  let logoutLink = "/auth/login";
+  let currentNotifications = mockHeaderNotifications;
+
+  if (role === "va") {
+    userName = "VA Name";
+    userEmail = "va@example.com";
+    profileLink = "/va/profile";
+    notificationsLink = "/va/notifications";
+    subscriptionSettingsLink = "/va/profile"; // VA might manage profile for plan/service tiers here
+    supportLink = "/va/support";
+    logoutLink = "/va/login";
+    currentNotifications = mockVaNotifications;
+  } else if (role === "admin") {
+    userName = "Admin User";
+    userEmail = "admin@example.com";
+    profileLink = "/admin/settings"; // Admin might have a settings/profile page
+    notificationsLink = "/admin/dashboard"; // Or a specific admin notifications page
+    subscriptionSettingsLink = "/admin/settings"; 
+    supportLink = "/admin/dashboard"; // Or a specific admin support page/tool
+    logoutLink = "/auth/login"; // Or /admin/login if it existed
+    currentNotifications = []; // Admins might have a different notification system
+  }
+  
+  const unreadNotificationsCount = currentNotifications.filter(n => !n.read).length;
+
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
@@ -67,17 +103,17 @@ export function Header() {
               {unreadNotificationsCount > 0 && <Badge variant="secondary">{unreadNotificationsCount} Unread</Badge>}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <ScrollArea className="h-[300px] max-h-[calc(100vh-200px)]"> {/* Added ScrollArea */}
-              {mockHeaderNotifications.length === 0 && (
+            <ScrollArea className="h-[300px] max-h-[calc(100vh-200px)]"> 
+              {currentNotifications.length === 0 && (
                 <DropdownMenuItem disabled className="text-center text-muted-foreground py-4">
                   No new notifications.
                 </DropdownMenuItem>
               )}
-              {mockHeaderNotifications.map(notification => {
+              {currentNotifications.map(notification => {
                 const IconComponent = notification.icon || Bell;
                 return (
                   <DropdownMenuItem key={notification.id} asChild className={cn(!notification.read && "bg-accent/50 hover:bg-accent/70", "cursor-pointer")}>
-                    <Link href={notification.link || "/dashboard/notifications"} className="flex items-start gap-3 p-2">
+                    <Link href={notification.link || notificationsLink} className="flex items-start gap-3 p-2">
                       <IconComponent className={cn("h-5 w-5 mt-0.5 shrink-0", notification.read ? "text-muted-foreground" : "text-primary")} />
                       <div className="flex-grow">
                         <p className={cn("text-sm font-medium", !notification.read && "text-foreground")}>{notification.title}</p>
@@ -91,7 +127,7 @@ export function Header() {
             </ScrollArea>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/notifications" className="flex items-center justify-center text-primary hover:underline">
+              <Link href={notificationsLink} className="flex items-center justify-center text-primary hover:underline">
                 <Eye className="mr-2 h-4 w-4" /> View All Notifications
               </Link>
             </DropdownMenuItem>
@@ -103,44 +139,44 @@ export function Header() {
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-9 w-9">
                 <AvatarImage src="https://placehold.co/100x100.png" alt="User Avatar" data-ai-hint="person avatar" />
-                <AvatarFallback>SL</AvatarFallback>
+                <AvatarFallback>{userName.substring(0,1).toUpperCase()}{userName.split(' ')[1]?.substring(0,1).toUpperCase() || ''}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
-              <p className="font-medium">Student Name</p>
-              <p className="text-xs text-muted-foreground">student@example.com</p>
+              <p className="font-medium">{userName}</p>
+              <p className="text-xs text-muted-foreground">{userEmail}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/profile">
+              <Link href={profileLink}>
                 <UserCircle className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </Link>
             </DropdownMenuItem>
              <DropdownMenuItem asChild>
-              <Link href="/dashboard/notifications">
+              <Link href={notificationsLink}>
                 <Bell className="mr-2 h-4 w-4" />
                 <span>Notifications</span>
                 {unreadNotificationsCount > 0 && <Badge variant="destructive" className="ml-auto">{unreadNotificationsCount}</Badge>}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/subscription">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Subscription</span>
+              <Link href={subscriptionSettingsLink}>
+                 {role === "student" ? <CreditCard className="mr-2 h-4 w-4" /> : <Settings className="mr-2 h-4 w-4" />}
+                <span>{role === "student" ? "Subscription" : (role === "va" ? "Profile Settings" : "Settings")}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/support">
+              <Link href={supportLink}>
                 <LifeBuoy className="mr-2 h-4 w-4" />
                 <span>Support</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/auth/login" className="text-red-600 focus:text-red-600 focus:bg-red-50">
+              <Link href={logoutLink} className="text-red-600 focus:text-red-600 focus:bg-red-50">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Logout</span>
               </Link>
@@ -151,5 +187,3 @@ export function Header() {
     </header>
   );
 }
-
-    

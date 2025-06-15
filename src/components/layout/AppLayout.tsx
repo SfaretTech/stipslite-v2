@@ -48,7 +48,7 @@ export function AppLayout({ children, defaultOpen = true, role = "student" }: Ap
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <Header />
+        <Header role={role} />
         <main className="flex-1 p-6 bg-background overflow-auto">
             {children}
         </main>
