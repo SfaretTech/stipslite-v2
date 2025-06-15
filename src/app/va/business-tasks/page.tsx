@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 type TaskStatusVA = "Pending Acceptance" | "In Progress" | "Submitted - Awaiting Review" | "Revision Requested" | "Completed" | "Cancelled By VA" | "Cancelled By Student";
 
@@ -83,6 +84,7 @@ export default function VaBusinessTasksPage() {
   const [declineReason, setDeclineReason] = useState("");
   const [submissionNotes, setSubmissionNotes] = useState("");
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleOpenDialog = (task: BusinessServiceTask) => {
     setSelectedTask(task);
@@ -122,6 +124,13 @@ export default function VaBusinessTasksPage() {
     setSubmissionNotes("");
   };
 
+  const handleContactStudent = (task: BusinessServiceTask) => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('stipsLiteContactStudentTaskId', task.id);
+        localStorage.setItem('stipsLiteContactStudentName', task.studentName);
+    }
+    router.push('/va/support');
+  };
 
   return (
     <div className="space-y-8">
@@ -331,7 +340,7 @@ export default function VaBusinessTasksPage() {
                                 </>
                               )}
                                <DropdownMenuSeparator />
-                               <DropdownMenuItem disabled> {/* Future Feature */}
+                               <DropdownMenuItem onClick={() => handleContactStudent(task)}> 
                                 <MessageSquare className="mr-2 h-4 w-4" />Contact Student
                               </DropdownMenuItem>
                             </DropdownMenuContent>

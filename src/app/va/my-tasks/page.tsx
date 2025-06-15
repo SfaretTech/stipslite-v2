@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 type MyTaskStatusVA = "Pending Review" | "In Progress" | "Submitted - Awaiting Review" | "Revision Requested" | "Completed" | "Declined By VA";
 
@@ -79,6 +80,7 @@ export default function VaMyTasksPage() {
   const [declineReasonInput, setDeclineReasonInput] = useState("");
   const [submissionNotes, setSubmissionNotes] = useState("");
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleOpenDialog = (task: MyTaskItem) => {
     setSelectedTask(task);
@@ -116,6 +118,14 @@ export default function VaMyTasksPage() {
     });
     setSelectedTask(null);
     setSubmissionNotes("");
+  };
+
+  const handleContactStudent = (task: MyTaskItem) => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('stipsLiteContactStudentTaskId', task.id);
+        localStorage.setItem('stipsLiteContactStudentName', task.studentId); // Using studentId as name placeholder
+    }
+    router.push('/va/support');
   };
 
   return (
@@ -321,7 +331,7 @@ export default function VaMyTasksPage() {
                                 </>
                               )}
                                <DropdownMenuSeparator />
-                               <DropdownMenuItem disabled> {/* Future Feature */}
+                               <DropdownMenuItem onClick={() => handleContactStudent(task)}> 
                                 <MessageSquare className="mr-2 h-4 w-4" />Contact Student
                               </DropdownMenuItem>
                             </DropdownMenuContent>
