@@ -25,7 +25,7 @@ import {
   DollarSign, 
   Signal, 
   Target, 
-  ListChecks, // Added for My Tasks
+  ListChecks,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -78,11 +78,17 @@ const adminNavItems = [
    { href: "/admin/settings", label: "Site Settings", icon: Settings },
 ];
 
-const vaNavItems = [
+const vaNavItemsBase = [
   { href: "/va/dashboard", label: "VA Dashboard", icon: LayoutDashboard },
   { href: "/va/live-tasks", label: "Live Tasks", icon: Signal },
-  { href: "/va/my-tasks", label: "My Tasks", icon: ListChecks }, // New "My Tasks"
-  { href: "/va/business-tasks", label: "Business Service Tasks", icon: Target },
+  { href: "/va/my-tasks", label: "My Tasks", icon: ListChecks },
+  { 
+    href: "/dashboard/subscription", // Locked state directs to subscription
+    activeHref: "/va/business-tasks", // Active state directs to actual page
+    label: "Business Service Tasks", 
+    icon: Target,
+    status: "locked" as "locked" | "active",
+  },
   { href: "/va/profile", label: "My VA Profile", icon: UserCircle },
   { href: "/va/notifications", label: "Notifications", icon: Bell },
   { href: "/va/support", label: "Support", icon: MessageSquare },
@@ -95,15 +101,21 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   const { open, isMobile, state: sidebarState } = useSidebar();
 
   const [studentNavItems, setStudentNavItems] = useState(studentNavItemsBase);
+  const [vaNavItems, setVaNavItems] = useState(vaNavItemsBase);
   const [hasMounted, setHasMounted] = useState(false);
-  const [isSubscribedToVaPlan, setIsSubscribedToVaPlan] = useState(false);
+  const [isSubscribedToStudentVaPlan, setIsSubscribedToStudentVaPlan] = useState(false);
+  const [isVaSubscribedToProPlan, setIsVaSubscribedToProPlan] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
     if (typeof window !== 'undefined') {
-      const storedPlanStatus = localStorage.getItem('stipsLiteVaPlanActive');
-      if (storedPlanStatus === 'true') {
-        setIsSubscribedToVaPlan(true);
+      const studentPlanStatus = localStorage.getItem('stipsLiteVaPlanActive');
+      if (studentPlanStatus === 'true') {
+        setIsSubscribedToStudentVaPlan(true);
+      }
+      const vaProPlanStatus = localStorage.getItem('stipsLiteVaProPlanActive');
+      if (vaProPlanStatus === 'true') {
+        setIsVaSubscribedToProPlan(true);
       }
     }
   }, []);
@@ -115,14 +127,14 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
 
     const planActivatedQuery = searchParams.get('plan_activated');
     
-    const isVaPlanCurrentlyActive = 
+    // Student VA Plus Plan Logic
+    const isStudentVaPlanCurrentlyActive = 
       planActivatedQuery === 'expert_va' ||
-      planActivatedQuery === 'business_org_va' ||
       pathname.startsWith('/dashboard/find-va') ||
-      isSubscribedToVaPlan;
+      isSubscribedToStudentVaPlan;
 
-    if (planActivatedQuery === 'expert_va' || planActivatedQuery === 'business_org_va') {
-        if (!isSubscribedToVaPlan) setIsSubscribedToVaPlan(true);
+    if (planActivatedQuery === 'expert_va') {
+        if (!isSubscribedToStudentVaPlan) setIsSubscribedToStudentVaPlan(true);
         if (typeof window !== 'undefined' && localStorage.getItem('stipsLiteVaPlanActive') !== 'true') {
             localStorage.setItem('stipsLiteVaPlanActive', 'true');
         }
@@ -130,10 +142,30 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
 
     setStudentNavItems(prevItems =>
       prevItems.map(item =>
-        item.label === "VA Plus" ? { ...item, status: isVaPlanCurrentlyActive ? "active" : "locked", activeHref: "/dashboard/find-va" } : item
+        item.label === "VA Plus" ? { ...item, status: isStudentVaPlanCurrentlyActive ? "active" : "locked" } : item
       )
     );
-  }, [pathname, searchParams, hasMounted, isSubscribedToVaPlan]);
+
+    // VA Professional Business Plan Logic
+    const isVaProPlanCurrentlyActive =
+        planActivatedQuery === 'business_org_va' ||
+        pathname.startsWith('/va/business-tasks') ||
+        isVaSubscribedToProPlan;
+    
+    if (planActivatedQuery === 'business_org_va') {
+        if (!isVaSubscribedToProPlan) setIsVaSubscribedToProPlan(true);
+        if (typeof window !== 'undefined' && localStorage.getItem('stipsLiteVaProPlanActive') !== 'true') {
+            localStorage.setItem('stipsLiteVaProPlanActive', 'true');
+        }
+    }
+
+    setVaNavItems(prevItems => 
+        prevItems.map(item => 
+            item.label === "Business Service Tasks" ? { ...item, status: isVaProPlanCurrentlyActive ? "active" : "locked" } : item
+        )
+    );
+
+  }, [pathname, searchParams, hasMounted, isSubscribedToStudentVaPlan, isVaSubscribedToProPlan]);
 
 
   const navItemsToRender = 
@@ -146,10 +178,13 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   return (
     <SidebarMenu className="flex-1">
       {navItemsToRender.map((item) => {
-        const isVaPlusItem = item.label === "VA Plus";
-        const isVaPlusLocked = isVaPlusItem && item.status === "locked";
-        const activeHref = (item as any).activeHref;
-        const currentHref = isVaPlusItem ? (isVaPlusLocked ? item.href : activeHref) : item.href;
+        const isDynamicStatusItem = item.label === "VA Plus" || item.label === "Business Service Tasks";
+        // @ts-ignore
+        const isItemLocked = isDynamicStatusItem && item.status === "locked";
+        // @ts-ignore
+        const activeHref = item.activeHref;
+        // @ts-ignore
+        const currentHref = isDynamicStatusItem ? (isItemLocked ? item.href : activeHref) : item.href;
 
 
         if ((item as any).subItems) {
@@ -185,14 +220,14 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
             <>
               <item.icon className="h-5 w-5" />
               <span className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200 flex-grow truncate")}>{item.label}</span>
-              {isVaPlusItem && isVaPlusLocked && open && <Lock className="h-3.5 w-3.5 ml-1 text-muted-foreground shrink-0" />}
+              {isDynamicStatusItem && isItemLocked && open && <Lock className="h-3.5 w-3.5 ml-1 text-muted-foreground shrink-0" />}
             </>
           );
 
           let tooltipText = item.label;
-          if (isVaPlusItem) {
-            tooltipText = isVaPlusLocked
-              ? `Subscribe to the Expert VA Plan to unlock`
+          if (isDynamicStatusItem) {
+            tooltipText = isItemLocked
+              ? `Subscribe to unlock ${item.label}`
               : (item.label === "VA Plus" ? "Find a Virtual Assistant" : item.label);
           }
 
@@ -200,10 +235,10 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
             <SidebarMenuItem key={item.label}>
               <Link href={currentHref!}>
                 <SidebarMenuButton
-                  isActive={pathname === currentHref && !(isVaPlusItem && isVaPlusLocked)} 
+                  isActive={pathname === currentHref && !(isDynamicStatusItem && isItemLocked)} 
                   className={cn(
                     "justify-start w-full",
-                    isVaPlusItem && isVaPlusLocked && "opacity-70 hover:bg-sidebar-accent/70"
+                    isDynamicStatusItem && isItemLocked && "opacity-70 hover:bg-sidebar-accent/70"
                   )}
                   tooltip={{
                     children: tooltipText,
@@ -253,4 +288,5 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
     </SidebarMenu>
   );
 }
+
 
