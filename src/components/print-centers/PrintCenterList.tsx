@@ -1,12 +1,15 @@
+
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Phone, Clock, Star, ExternalLink } from "lucide-react";
+import { MapPin, Phone, Clock, Star, ExternalLink, PrinterIcon } from "lucide-react";
 import Image from "next/image";
+import { PrintJobDialog } from "./PrintJobDialog"; // Import the new dialog
 
-interface PrintCenter {
+export interface PrintCenter { // Exporting for use in PrintJobDialog
   id: string;
   name: string;
   county: string;
@@ -27,8 +30,21 @@ const mockPrintCenters: PrintCenter[] = [
 ];
 
 export function PrintCenterList({ filters }: { filters: any }) {
+  const [selectedPrintCenter, setSelectedPrintCenter] = useState<PrintCenter | null>(null);
+  const [isPrintDialogVisible, setIsPrintDialogVisible] = useState(false);
+
   // In a real app, filter mockPrintCenters based on `filters` prop
   const filteredCenters = mockPrintCenters; // Placeholder
+
+  const handleOpenPrintDialog = (center: PrintCenter) => {
+    setSelectedPrintCenter(center);
+    setIsPrintDialogVisible(true);
+  };
+
+  const handleClosePrintDialog = () => {
+    setSelectedPrintCenter(null);
+    setIsPrintDialogVisible(false);
+  };
 
   if (filteredCenters.length === 0) {
     return (
@@ -43,58 +59,74 @@ export function PrintCenterList({ filters }: { filters: any }) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {filteredCenters.map(center => (
-        <Card key={center.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-          {center.imageUrl && (
-            <div className="relative h-48 w-full">
-              <Image 
-                src={center.imageUrl} 
-                alt={center.name} 
-                layout="fill" 
-                objectFit="cover" 
-                data-ai-hint="print shop storefront"
-              />
-            </div>
-          )}
-          <CardHeader className="pb-3">
-            <CardTitle className="font-headline text-xl">{center.name}</CardTitle>
-            <CardDescription className="flex items-center text-sm">
-              <MapPin className="h-4 w-4 mr-1.5 text-muted-foreground" /> {center.location}, {center.state}, {center.county}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm flex-grow">
-            <p className="text-muted-foreground">{center.address}</p>
-            {center.phone && (
-              <p className="flex items-center"><Phone className="h-4 w-4 mr-2 text-primary/70" /> {center.phone}</p>
-            )}
-            {center.hours && (
-              <p className="flex items-center"><Clock className="h-4 w-4 mr-2 text-primary/70" /> {center.hours}</p>
-            )}
-            {center.rating && (
-              <div className="flex items-center">
-                <Star className="h-4 w-4 mr-1 text-yellow-500 fill-yellow-400" /> 
-                <span>{center.rating.toFixed(1)} / 5.0</span>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredCenters.map(center => (
+          <Card key={center.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+            {center.imageUrl && (
+              <div className="relative h-48 w-full">
+                <Image 
+                  src={center.imageUrl} 
+                  alt={center.name} 
+                  layout="fill" 
+                  objectFit="cover" 
+                  data-ai-hint="print shop storefront"
+                />
               </div>
             )}
-            <div className="pt-2">
-              <h4 className="font-medium mb-1">Services:</h4>
-              <div className="flex flex-wrap gap-1.5">
-                {center.services.map(service => (
-                  <Badge key={service} variant="secondary" className="text-xs">{service}</Badge>
-                ))}
+            <CardHeader className="pb-3">
+              <CardTitle className="font-headline text-xl">{center.name}</CardTitle>
+              <CardDescription className="flex items-center text-sm">
+                <MapPin className="h-4 w-4 mr-1.5 text-muted-foreground" /> {center.location}, {center.state}, {center.county}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm flex-grow">
+              <p className="text-muted-foreground">{center.address}</p>
+              {center.phone && (
+                <p className="flex items-center"><Phone className="h-4 w-4 mr-2 text-primary/70" /> {center.phone}</p>
+              )}
+              {center.hours && (
+                <p className="flex items-center"><Clock className="h-4 w-4 mr-2 text-primary/70" /> {center.hours}</p>
+              )}
+              {center.rating && (
+                <div className="flex items-center">
+                  <Star className="h-4 w-4 mr-1 text-yellow-500 fill-yellow-400" /> 
+                  <span>{center.rating.toFixed(1)} / 5.0</span>
+                </div>
+              )}
+              <div className="pt-2">
+                <h4 className="font-medium mb-1">Services:</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {center.services.map(service => (
+                    <Badge key={service} variant="secondary" className="text-xs">{service}</Badge>
+                  ))}
+                </div>
               </div>
-            </div>
-          </CardContent>
-          <CardFooter className="pt-4 border-t">
-            <Button variant="outline" size="sm" className="w-full" asChild>
-              <a href={`https://maps.google.com/?q=${center.address}`} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="mr-2 h-4 w-4" /> View on Map / More Info
-              </a>
-            </Button>
-          </CardFooter>
-        </Card>
-      ))}
-    </div>
+            </CardContent>
+            <CardFooter className="pt-4 border-t flex flex-col sm:flex-row gap-2">
+              <Button variant="outline" size="sm" className="w-full sm:flex-1" asChild>
+                <a href={`https://maps.google.com/?q=${center.address}`} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="mr-2 h-4 w-4" /> View on Map
+                </a>
+              </Button>
+              <Button 
+                size="sm" 
+                className="w-full sm:flex-1 bg-accent hover:bg-accent/90 text-accent-foreground"
+                onClick={() => handleOpenPrintDialog(center)}
+              >
+                <PrinterIcon className="mr-2 h-4 w-4" /> Print with Shop
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+      {selectedPrintCenter && (
+        <PrintJobDialog 
+          isOpen={isPrintDialogVisible}
+          onClose={handleClosePrintDialog}
+          printCenter={selectedPrintCenter}
+        />
+      )}
+    </>
   );
 }
