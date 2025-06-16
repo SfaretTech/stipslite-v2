@@ -32,7 +32,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge"; // Added import for Badge
+import { Badge } from "@/components/ui/badge"; 
 
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -64,14 +64,14 @@ interface SelectableVa {
   name: string;
   avatarUrl: string;
   tagline: string;
-  isAvailableForDirectAssignment: boolean; // Added for simulation
+  isAvailableForDirectAssignment: boolean; 
 }
 
-// Mock data for VAs, including their direct assignment availability (simulated)
+
 const mockSelectableVAs: SelectableVa[] = [
   { id: "VA001", name: "Aisha Bello", avatarUrl: "https://placehold.co/40x40.png?text=AB", tagline: "Expert academic writer and researcher.", isAvailableForDirectAssignment: true },
   { id: "VA002", name: "Chinedu Okoro", avatarUrl: "https://placehold.co/40x40.png?text=CO", tagline: "Technical task wizard, specializing in STEM.", isAvailableForDirectAssignment: true },
-  { id: "VA003", name: "Fatima Diallo", avatarUrl: "https://placehold.co/40x40.png?text=FD", tagline: "Creative presentations and business support.", isAvailableForDirectAssignment: false }, // Example of unavailable VA
+  { id: "VA003", name: "Fatima Diallo", avatarUrl: "https://placehold.co/40x40.png?text=FD", tagline: "Creative presentations and business support.", isAvailableForDirectAssignment: false }, 
   { id: "VA004", name: "David Adebayo", avatarUrl: "https://placehold.co/40x40.png?text=DA", tagline: "Reliable VA for diverse tasks.", isAvailableForDirectAssignment: true },
 ];
 
@@ -84,13 +84,13 @@ export function TaskSubmissionForm() {
 
   const [isVaSelectionDialogOpen, setIsVaSelectionDialogOpen] = useState(false);
   const [selectedVaId, setSelectedVaId] = useState<string | undefined>();
-  const [isSubscribedToExpertVaPlan, setIsSubscribedToExpertVaPlan] = useState(false); // Simulated
+  const [isSubscribedToExpertVaPlan, setIsSubscribedToExpertVaPlan] = useState(false); 
 
   useEffect(() => {
-    // Simulate checking if user has Expert VA Plan
+    
     if (typeof window !== 'undefined') {
-      const planStatus = localStorage.getItem('stipsLiteActivePlanId'); // Assuming 'expert_va' plan enables this
-      if (planStatus === 'expert_va' || planStatus === 'business_org_va') { // business_org_va might also grant this
+      const planStatus = localStorage.getItem('stipsLiteActivePlanId'); 
+      if (planStatus === 'expert_va') { 
         setIsSubscribedToExpertVaPlan(true);
       }
     }
@@ -108,20 +108,18 @@ export function TaskSubmissionForm() {
           variant: "destructive",
           duration: 7000,
         });
-        // Fallback to random or let user decide further (for UI, we'll proceed with random assignment if they submitted from dialog)
-        // For simplicity, this simulation will treat it as if it goes to general pool after this toast.
-        // In a real app, you might re-open the selection dialog or offer clear choices.
+        
         vaMessage = `Your task has been submitted. Note: ${va.name} was selected but is currently unavailable for direct tasks, so it has been added to the general pool.`;
       } else {
-        vaMessage = `Your task has been submitted and will be assigned to ${va ? va.name : 'your chosen VA'} for review and acceptance. This is a feature of the Expert VA Plan.`;
+        vaMessage = `Your task has been submitted and will be assigned to ${va ? va.name : 'your chosen VA'} for review, quoting, and acceptance. This is a feature of the Expert VA Plan.`;
       }
     } else {
-      vaMessage = "Your task has been submitted and a Virtual Assistant will be assigned randomly from the general pool.";
+      vaMessage = "Your task has been submitted and a Virtual Assistant will be assigned randomly from the general pool. This task will have a platform-set price upon approval.";
     }
 
     toast({
       title: "Task Submitted Successfully!",
-      description: `${vaMessage} Your task is now pending review and admin approval. Payment will be requested upon approval.`,
+      description: `${vaMessage} Your task is now pending review and admin approval. Payment will be requested upon approval (or after VA quote acceptance if applicable).`,
       variant: "default",
       duration: 9000, 
     });
@@ -271,7 +269,7 @@ export function TaskSubmissionForm() {
               <div>
                 <h4 className="font-semibold text-primary">Payment Information</h4>
                 <p className="text-sm text-muted-foreground">
-                  An estimated cost will be provided upon task approval. Payment will be required to start processing.
+                  If a specific VA is requested (Expert VA Plan feature), they will provide a quote. Otherwise, an estimated cost will be provided upon task approval for randomly assigned VAs. Payment will be required to start processing.
                 </p>
               </div>
             </div>
@@ -289,10 +287,11 @@ export function TaskSubmissionForm() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Virtual Assistant Preference</AlertDialogTitle>
                 <AlertDialogDescription>
-                  You can have a Virtual Assistant assigned randomly from our general pool, or, if you have an active <strong>Expert VA Plan</strong>, you can request a specific VA.
+                  You can have a Virtual Assistant assigned randomly from our general pool (platform-set price upon approval). 
+                  Alternatively, if you have an active <strong>Expert VA Plan</strong>, you can request a specific VA who will then provide a custom quote for your task.
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <AlertDialogFooter className="sm:flex-col sm:gap-2"> {/* Adjusted for better layout */}
+              <AlertDialogFooter className="sm:flex-col sm:gap-2"> 
                 <AlertDialogAction
                   onClick={() => {
                     if (isSubscribedToExpertVaPlan) {
@@ -300,7 +299,7 @@ export function TaskSubmissionForm() {
                     } else {
                       toast({
                         title: "Expert VA Plan Required",
-                        description: "To request a specific VA, please subscribe to the Expert VA Plan from the Subscription page.",
+                        description: "To request a specific VA and receive custom quotes, please subscribe to the Expert VA Plan from the Subscription page.",
                         variant: "destructive",
                         action: <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/subscription')}>Go to Subscription</Button>
                       });
@@ -308,7 +307,7 @@ export function TaskSubmissionForm() {
                   }}
                   className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                 >
-                  <Users className="mr-2 h-4 w-4" /> Request Specific VA
+                  <Users className="mr-2 h-4 w-4" /> Request Specific VA (Expert VA Plan)
                 </AlertDialogAction>
                 <AlertDialogAction
                   onClick={() => performActualSubmission("random")}
