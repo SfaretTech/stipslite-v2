@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react"; // Added useState
+import { useState } from "react"; 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,14 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UploadCloud, Save, Store, List, Clock, Banknote, Info } from "lucide-react";
+import { UploadCloud, Save, Store, List, Clock, Banknote, Info, Power } from "lucide-react"; // Added Power
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { Switch } from "@/components/ui/switch"; // Added Switch import
+import { Switch } from "@/components/ui/switch"; 
 
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-// Updated mock data for initial form values
 const mockShopProfileData = {
   shopName: "Speedy Prints CBD",
   email: "contact@speedyprints.com",
@@ -28,11 +27,12 @@ const mockShopProfileData = {
   services: "Color Printing, Black & White Printing, Photocopying, Binding (Spiral, Comb, Perfect), Lamination, Scanning, Typesetting, Large Format Printing",
   operatingHoursConfig: daysOfWeek.map(day => ({
     day,
-    isOpen: !["Saturday", "Sunday"].includes(day), // Default Mon-Fri open
+    isOpen: !["Saturday", "Sunday"].includes(day), 
     from: "09:00",
     to: "17:00"
   })),
   specialClosuresNote: "Closed on all public holidays unless otherwise specified. Special hours for Christmas week will be announced.",
+  isOfflinePaymentEnabled: true, // New flag
   offlineBankName: "Equity Bank",
   offlineAccountNumber: "0123456789012",
   offlineAccountName: "Speedy Prints Limited",
@@ -44,6 +44,7 @@ const mockShopProfileData = {
 export default function PrintCenterProfilePage() {
   const { toast } = useToast();
   const [operatingHours, setOperatingHours] = useState(mockShopProfileData.operatingHoursConfig);
+  const [isOfflinePaymentEnabled, setIsOfflinePaymentEnabled] = useState(mockShopProfileData.isOfflinePaymentEnabled);
 
   const handleOperatingHoursChange = (day: string, field: 'isOpen' | 'from' | 'to', value: string | boolean) => {
     setOperatingHours(currentHours =>
@@ -55,7 +56,6 @@ export default function PrintCenterProfilePage() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // UI-only: Simulate profile update
     toast({
       title: "Shop Profile Updated!",
       description: "Your shop details have been saved successfully.",
@@ -194,44 +194,61 @@ export default function PrintCenterProfilePage() {
             </Card>
 
             <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="font-headline flex items-center"><Banknote className="mr-2 h-5 w-5 text-primary"/>Offline Payment Details</CardTitle>
-                <CardDescription>Provide details for students who prefer to pay you directly (offline).</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <div>
+                    <CardTitle className="font-headline flex items-center"><Banknote className="mr-2 h-5 w-5 text-primary"/>Offline Payment Details</CardTitle>
+                    <CardDescription>Allow students to pay you directly.</CardDescription>
+                </div>
+                <Switch
+                    id="toggleOfflinePayment"
+                    checked={isOfflinePaymentEnabled}
+                    onCheckedChange={setIsOfflinePaymentEnabled}
+                    aria-label="Toggle offline payment details"
+                />
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                    <Label htmlFor="offlineBankName">Bank Name</Label>
-                    <Input id="offlineBankName" defaultValue={mockShopProfileData.offlineBankName} placeholder="e.g., Equity Bank" />
-                    </div>
-                    <div className="space-y-1.5">
-                    <Label htmlFor="offlineAccountNumber">Bank Account Number</Label>
-                    <Input id="offlineAccountNumber" defaultValue={mockShopProfileData.offlineAccountNumber} placeholder="e.g., 001234567890" />
-                    </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="offlineAccountName">Bank Account Name</Label>
-                  <Input id="offlineAccountName" defaultValue={mockShopProfileData.offlineAccountName} placeholder="e.g., Your Shop Name Ltd" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                    <Label htmlFor="offlineMobileMoneyProvider">Mobile Money Provider</Label>
-                    <Input id="offlineMobileMoneyProvider" defaultValue={mockShopProfileData.offlineMobileMoneyProvider} placeholder="e.g., M-Pesa PayBill, Airtel Money Till" />
-                    </div>
-                    <div className="space-y-1.5">
-                    <Label htmlFor="offlineMobileMoneyNumber">Mobile Money Number / Till</Label>
-                    <Input id="offlineMobileMoneyNumber" defaultValue={mockShopProfileData.offlineMobileMoneyNumber} placeholder="e.g., 123456" />
-                    </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="offlinePaymentInstructions">Payment Instructions for Offline</Label>
-                  <Textarea id="offlinePaymentInstructions" defaultValue={mockShopProfileData.offlinePaymentInstructions} placeholder="e.g., Use Order ID as reference. Send M-Pesa confirmation..." rows={3} />
-                </div>
-                <div className="flex items-start p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-700">
-                    <Info className="h-5 w-5 mr-2 mt-0.5 shrink-0" />
-                    <p>Providing clear offline payment details helps students pay you correctly and can speed up order processing.</p>
-                </div>
-              </CardContent>
+              {isOfflinePaymentEnabled && (
+                <CardContent className="space-y-4 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                      <Label htmlFor="offlineBankName">Bank Name</Label>
+                      <Input id="offlineBankName" defaultValue={mockShopProfileData.offlineBankName} placeholder="e.g., Equity Bank" />
+                      </div>
+                      <div className="space-y-1.5">
+                      <Label htmlFor="offlineAccountNumber">Bank Account Number</Label>
+                      <Input id="offlineAccountNumber" defaultValue={mockShopProfileData.offlineAccountNumber} placeholder="e.g., 001234567890" />
+                      </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="offlineAccountName">Bank Account Name</Label>
+                    <Input id="offlineAccountName" defaultValue={mockShopProfileData.offlineAccountName} placeholder="e.g., Your Shop Name Ltd" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                      <Label htmlFor="offlineMobileMoneyProvider">Mobile Money Provider</Label>
+                      <Input id="offlineMobileMoneyProvider" defaultValue={mockShopProfileData.offlineMobileMoneyProvider} placeholder="e.g., M-Pesa PayBill, Airtel Money Till" />
+                      </div>
+                      <div className="space-y-1.5">
+                      <Label htmlFor="offlineMobileMoneyNumber">Mobile Money Number / Till</Label>
+                      <Input id="offlineMobileMoneyNumber" defaultValue={mockShopProfileData.offlineMobileMoneyNumber} placeholder="e.g., 123456" />
+                      </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="offlinePaymentInstructions">Payment Instructions for Offline</Label>
+                    <Textarea id="offlinePaymentInstructions" defaultValue={mockShopProfileData.offlinePaymentInstructions} placeholder="e.g., Use Order ID as reference. Send M-Pesa confirmation..." rows={3} />
+                  </div>
+                  <div className="flex items-start p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-700">
+                      <Info className="h-5 w-5 mr-2 mt-0.5 shrink-0" />
+                      <p>Providing clear offline payment details helps students pay you correctly and can speed up order processing.</p>
+                  </div>
+                </CardContent>
+              )}
+              {!isOfflinePaymentEnabled && (
+                <CardContent className="pt-4">
+                    <p className="text-sm text-muted-foreground italic flex items-center">
+                        <Power className="h-4 w-4 mr-2 text-muted-foreground"/> Offline payment methods are currently disabled for your shop.
+                    </p>
+                </CardContent>
+              )}
             </Card>
           </div>
         </div>
@@ -244,3 +261,4 @@ export default function PrintCenterProfilePage() {
     </div>
   );
 }
+
