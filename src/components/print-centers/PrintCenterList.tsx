@@ -21,6 +21,7 @@ export interface PrintCenter {
   rating?: number;
   services: string[];
   imageUrl?: string;
+  isOfflinePaymentEnabled: boolean; // Added this flag
   offlinePaymentDetails?: {
     bankName?: string;
     accountNumber?: string;
@@ -44,6 +45,7 @@ const mockPrintCenters: PrintCenter[] = [
     rating: 4.5, 
     services: ["Color Printing", "Binding", "Lamination", "Scanning"], 
     imageUrl: "https://placehold.co/600x400.png?text=Speedy+Prints",
+    isOfflinePaymentEnabled: true,
     offlinePaymentDetails: {
       bankName: "Equity Bank",
       accountNumber: "0123456789012",
@@ -53,8 +55,43 @@ const mockPrintCenters: PrintCenter[] = [
       instructions: "Use your Order ID (to be provided by shop) as the account number or reference."
     }
   },
-  { id: "PC002", name: "Westlands Quick Copy", county: "Nairobi", state: "Westlands", location: "The Mall", address: "The Mall, Ground Flr, Shop G12", phone: "0722 987654", hours: "Mon-Sun: 9am-7pm", rating: 4.2, services: ["Photocopy", "Large Format", "Typesetting"], imageUrl: "https://placehold.co/600x400.png?text=Quick+Copy" },
-  { id: "PC003", name: "Nyali Print Hub", county: "Mombasa", state: "Nyali", location: "City Mall", address: "City Mall, 1st Flr", hours: "Mon-Sat: 9am-5pm", rating: 4.0, services: ["Color Printing", "Binding"], imageUrl: "https://placehold.co/600x400.png?text=Nyali+Hub" },
+  { 
+    id: "PC002", 
+    name: "Westlands Quick Copy", 
+    county: "Nairobi", 
+    state: "Westlands", 
+    location: "The Mall", 
+    address: "The Mall, Ground Flr, Shop G12", 
+    phone: "0722 987654", 
+    hours: "Mon-Sun: 9am-7pm", 
+    rating: 4.2, 
+    services: ["Photocopy", "Large Format", "Typesetting"], 
+    imageUrl: "https://placehold.co/600x400.png?text=Quick+Copy",
+    isOfflinePaymentEnabled: false, // This shop does not accept offline
+     offlinePaymentDetails: { // Keep details for potential re-enablement
+      bankName: "KCB Bank",
+      accountNumber: "9876543210987",
+      accountName: "Westlands Quick Copy Ltd",
+    }
+  },
+  { 
+    id: "PC003", 
+    name: "Nyali Print Hub", 
+    county: "Mombasa", 
+    state: "Nyali", 
+    location: "City Mall", 
+    address: "City Mall, 1st Flr", 
+    hours: "Mon-Sat: 9am-5pm", 
+    rating: 4.0, 
+    services: ["Color Printing", "Binding"], 
+    imageUrl: "https://placehold.co/600x400.png?text=Nyali+Hub",
+    isOfflinePaymentEnabled: true,
+    offlinePaymentDetails: {
+      mobileMoneyProvider: "Airtel Money",
+      mobileMoneyNumber: "0733112233",
+      instructions: "Please include your name in the payment reference."
+    }
+  },
 ];
 
 export function PrintCenterList({ filters }: { filters: any }) {

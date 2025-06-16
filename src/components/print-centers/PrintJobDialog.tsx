@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { UploadCloud, Send, FileText, Info, CheckCircle, Banknote, Smartphone } from "lucide-react";
+import { UploadCloud, Send, FileText, Info, CheckCircle, Banknote, Smartphone, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { PrintCenter } from "./PrintCenterList"; 
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,8 +38,10 @@ export function PrintJobDialog({ isOpen, onClose, printCenter }: PrintJobDialogP
   const [showOfflinePaymentDetails, setShowOfflinePaymentDetails] = useState(false);
   const [offlinePaymentConfirmed, setOfflinePaymentConfirmed] = useState(false);
 
-  // Reset state when dialog is closed or printCenter changes
   useEffect(() => {
+    if (isOpen && printCenter && !printCenter.isOfflinePaymentEnabled && paymentPreference === "offline") {
+      setPaymentPreference("platform"); // Reset to platform if offline is not enabled for the current shop
+    }
     if (!isOpen) {
       setNumPages("");
       setNotes("");
@@ -51,12 +53,12 @@ export function PrintJobDialog({ isOpen, onClose, printCenter }: PrintJobDialogP
       const fileInput = document.getElementById('print-doc-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = "";
     }
-  }, [isOpen]);
+  }, [isOpen, printCenter, paymentPreference]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       setFileName(event.target.files[0].name);
-      setFileObject(event.target.files[0]); // Store file object
+      setFileObject(event.target.files[0]);
     } else {
       setFileName(null);
       setFileObject(null);
@@ -82,17 +84,17 @@ export function PrintJobDialog({ isOpen, onClose, printCenter }: PrintJobDialogP
       });
       onClose(); 
     } else { // Offline payment
-      if (!printCenter.offlinePaymentDetails) {
+      if (!printCenter.isOfflinePaymentEnabled || !printCenter.offlinePaymentDetails) {
          toast({
             title: "Offline Payment Not Available",
-            description: `${printCenter.name} has not provided offline payment details. Please choose 'Pay via Platform' or contact the shop directly.`,
+            description: `${printCenter.name} has not enabled offline payments or details are missing. Please choose 'Pay via Platform' or contact the shop directly.`,
             variant: "destructive",
             duration: 7000,
         });
+        setPaymentPreference("platform"); // Revert to platform payment
         return;
       }
       setShowOfflinePaymentDetails(true);
-      // Toast will be shown after confirming payment
     }
   };
 
@@ -104,7 +106,6 @@ export function PrintJobDialog({ isOpen, onClose, printCenter }: PrintJobDialogP
       description: `Your confirmation for offline payment to ${printCenter.name} for printing "${fileName}" has been sent. The shop will verify and process your job.`,
       duration: 7000,
     });
-    // Dialog will now show final message and only "Close" button
   };
 
   if (!printCenter) return null;
@@ -170,18 +171,32 @@ export function PrintJobDialog({ isOpen, onClose, printCenter }: PrintJobDialogP
               defaultValue="platform" 
               value={paymentPreference} 
               onValueChange={setPaymentPreference} 
-              className="flex gap-4"
+              className="flex flex-col sm:flex-row gap-2 sm:gap-4"
           >
               <div className="flex items-center space-x-2">
                   <RadioGroupItem value="platform" id="pay-platform" />
                   <Label htmlFor="pay-platform" className="font-normal">Pay via Platform (Online)</Label>
               </div>
               <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="offline" id="pay-offline" />
-                  <Label htmlFor="pay-offline" className="font-normal">Pay directly to Shop (Offline)</Label>
+                  <RadioGroupItem 
+                    value="offline" 
+                    id="pay-offline" 
+                    disabled={!printCenter.isOfflinePaymentEnabled}
+                  />
+                  <Label 
+                    htmlFor="pay-offline" 
+                    className={printCenter.isOfflinePaymentEnabled ? "font-normal" : "font-normal text-muted-foreground line-through"}
+                  >
+                    Pay directly to Shop (Offline)
+                  </Label>
               </div>
           </RadioGroup>
-          <p className="text-xs text-muted-foreground">
+           {!printCenter.isOfflinePaymentEnabled && (
+            <p className="text-xs text-yellow-600 flex items-center mt-1">
+                <AlertTriangle className="h-3.5 w-3.5 mr-1 shrink-0" /> This shop does not accept direct offline payments.
+            </p>
+           )}
+          <p className="text-xs text-muted-foreground mt-1">
               The shop will provide payment details or a quote based on your selection.
           </p>
       </div>
@@ -240,7 +255,7 @@ export function PrintJobDialog({ isOpen, onClose, printCenter }: PrintJobDialogP
             <DialogDescription>
               {!showOfflinePaymentDetails 
                 ? "Upload your document and provide details for your print request."
-                : !offlinePaymentConfirmed
+                : !offlinePaymentConfirmed 
                 ? `Please make your payment to ${printCenter.name} using the details below and then confirm.`
                 : "Thank you! The shop will be in touch."
               }
@@ -263,7 +278,7 @@ export function PrintJobDialog({ isOpen, onClose, printCenter }: PrintJobDialogP
                 </DialogClose>
             ) : showOfflinePaymentDetails && !offlinePaymentConfirmed ? (
                 <>
-                    <Button type="button" variant="outline" onClick={() => {setShowOfflinePaymentDetails(false); /* Keep other form data */}}>Back to Edit Job</Button>
+                    <Button type="button" variant="outline" onClick={() => {setShowOfflinePaymentDetails(false); }}>Back to Edit Job</Button>
                     <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
                         <CheckCircle className="mr-2 h-4 w-4"/> I've Sent Payment & Confirm
                     </Button>
