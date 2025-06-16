@@ -1,15 +1,15 @@
 
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation"; // Added useRouter, useSearchParams
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, MessageSquare, Paperclip, DollarSign, CheckCircle, Clock, AlertCircle, Check, X } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast"; // Added for toast notifications
-import { useState } from "react"; // Added for managing local state if needed for interactions
+import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react"; 
 
 // Mock task data - in a real app, fetch this based on taskId
 const initialMockTaskDetails = {
@@ -19,13 +19,11 @@ const initialMockTaskDetails = {
     type: "Research", 
     pages: 15, 
     submittedDate: "2024-07-10", 
-    // Status changed to reflect VA has quoted
     status: "VA Quote Received - Action Needed" as TaskStatusStudent, 
     description: "Conduct a comprehensive literature review for the first chapter of the research paper on renewable energy sources. Focus on studies published in the last 5 years. Include at least 20 relevant sources.",
     attachments: [{name: "guidelines.pdf", size: "1.2MB"}, {name: "initial_outline.docx", size:"300KB"}],
-    // This is now the VA's quoted price
     estimatedCost: "₦65.00", 
-    vaName: "Aisha Bello", // Name of VA who quoted
+    vaName: "Aisha Bello", 
     deadline: "2024-07-25",
     comments: [
         {user: "Admin", text: "Task assigned to VA Aisha Bello. Awaiting their quote.", timestamp: "2024-07-10 10:00 AM"},
@@ -62,12 +60,12 @@ const initialMockTaskDetails = {
 
 type TaskStatusStudent = 
   | "Pending Approval" 
-  | "VA Quote Received - Action Needed" // New status for student to see VA's quote
+  | "VA Quote Received - Action Needed" 
   | "Approved - Payment Due" 
   | "In Progress" 
   | "Completed" 
   | "Rejected"
-  | "Quote Rejected"; // Student rejected VA's quote
+  | "Quote Rejected"; 
 
 const studentStatusColors: Record<TaskStatusStudent, string> = {
   "Pending Approval": "bg-yellow-100 text-yellow-700 border-yellow-300",
@@ -81,7 +79,7 @@ const studentStatusColors: Record<TaskStatusStudent, string> = {
 
 const studentStatusIcons: Record<TaskStatusStudent, React.ElementType> = {
   "Pending Approval": Clock,
-  "VA Quote Received - Action Needed": Edit, // Using Edit icon to signify action needed on quote
+  "VA Quote Received - Action Needed": Edit, 
   "Approved - Payment Due": DollarSign,
   "In Progress": Clock,
   "Completed": CheckCircle,
@@ -92,14 +90,29 @@ const studentStatusIcons: Record<TaskStatusStudent, React.ElementType> = {
 
 export default function TaskDetailPage() {
   const paramsFromHook = useParams();
+  const router = useRouter(); // Added router
+  const searchParams = useSearchParams(); // Added searchParams
   const params = { taskId: paramsFromHook.taskId as string };
   const taskId = params.taskId;
   const { toast } = useToast();
 
-  // Use state to manage task details to allow for updates
   const [taskDetails, setTaskDetails] = useState(initialMockTaskDetails);
   // @ts-ignore
   const task = taskDetails[taskId];
+
+  useEffect(() => {
+    // Check for payment_success query param from TaskList page
+    const paymentSuccess = searchParams.get('payment_success');
+    if (paymentSuccess === 'true' && task && task.status !== "In Progress") {
+        // @ts-ignore
+      setTaskDetails(prevDetails => ({
+        ...prevDetails,
+        [taskId]: { ...prevDetails[taskId], status: "In Progress" }
+      }));
+      // Remove query param from URL to avoid re-triggering
+      router.replace(`/dashboard/tasks/${taskId}`, { scroll: false });
+    }
+  }, [searchParams, taskId, task, router]);
 
   const handleAcceptQuote = () => {
     if (!task) return;
@@ -114,8 +127,6 @@ export default function TaskDetailPage() {
       variant: "default",
       duration: 7000,
     });
-    // In a real app, this would trigger backend updates and notify the VA.
-    // For simulation, the VA's task status on their /va/business-tasks page would eventually change.
   };
 
   const handleRejectQuote = () => {
@@ -131,7 +142,27 @@ export default function TaskDetailPage() {
       variant: "destructive",
       duration: 7000,
     });
-    // In a real app, notify VA. VA's task status on their end would change.
+  };
+
+  const handleProceedToPayment = () => {
+    if (!task) return;
+    toast({
+      title: "Initiating Flutterwave Payment...",
+      description: `Preparing payment for task: ${task.title} (Amount: ${task.estimatedCost}). Please wait.`,
+    });
+    // Simulate API call and redirection
+    setTimeout(() => {
+      // @ts-ignore
+      setTaskDetails(prevDetails => ({
+        ...prevDetails,
+        [taskId]: { ...prevDetails[taskId], status: "In Progress" }
+      }));
+      toast({
+        title: "Payment Successful (Simulated)",
+        description: `Payment for ${task.title} processed. Task is now In Progress.`,
+        variant: "default",
+      });
+    }, 2500);
   };
 
 
@@ -212,7 +243,7 @@ export default function TaskDetailPage() {
         <div className="lg:col-span-1 space-y-6">
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="font-headline text-lg">Task Status &amp; Info</CardTitle>
+              <CardTitle className="font-headline text-lg">Task Status & Info</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center">
@@ -236,7 +267,10 @@ export default function TaskDetailPage() {
               )}
             
              {task.status === "Approved - Payment Due" && (
-                <Button className="w-full bg-green-600 hover:bg-green-700 text-white mt-2">
+                <Button 
+                  className="w-full bg-green-600 hover:bg-green-700 text-white mt-2"
+                  onClick={handleProceedToPayment} // Updated onClick
+                >
                   <DollarSign className="mr-2 h-4 w-4" /> Proceed to Payment
                 </Button>
               )}
@@ -260,7 +294,7 @@ export default function TaskDetailPage() {
 
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="font-headline text-lg">Comments &amp; Updates</CardTitle>
+              <CardTitle className="font-headline text-lg">Comments & Updates</CardTitle>
             </CardHeader>
             <CardContent>
               {task.comments && task.comments.length > 0 ? (
@@ -288,4 +322,3 @@ export default function TaskDetailPage() {
     </div>
   );
 }
-

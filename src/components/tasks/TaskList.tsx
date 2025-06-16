@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowRight, MoreHorizontal, CheckCircle, Clock, AlertCircle, DollarSign } from "lucide-react";
+import { ArrowRight, MoreHorizontal, CheckCircle, Clock, AlertCircle, DollarSign, ClipboardList } from "lucide-react"; // Added ClipboardList for empty state
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast"; // Added useToast
+import { useRouter } from "next/navigation"; // Added useRouter
 
 type TaskStatus = "Pending Approval" | "Approved - Payment Due" | "In Progress" | "Completed" | "Rejected";
 
@@ -21,7 +23,7 @@ interface Task {
 }
 
 const mockTasks: Task[] = [
-  { id: "TSK001", title: "Literature Review - Chapter 1", type: "Research", pages: 15, submittedDate: "2024-07-10", status: "Approved - Payment Due", estimatedCost: "$50.00" },
+  { id: "TSK001", title: "Literature Review - Chapter 1", type: "Research", pages: 15, submittedDate: "2024-07-10", status: "Approved - Payment Due", estimatedCost: "₦65.00" }, // Updated cost to match detail page
   { id: "TSK002", title: "Marketing Presentation Q3", type: "Presentation", pages: 20, submittedDate: "2024-07-08", status: "In Progress" },
   { id: "TSK003", title: "Calculus Problem Set", type: "Assignment", pages: 5, submittedDate: "2024-07-05", status: "Completed" },
   { id: "TSK004", title: "History Essay - WW2 Impact", type: "Essay", pages: 8, submittedDate: "2024-07-12", status: "Pending Approval" },
@@ -39,12 +41,34 @@ const statusColors: Record<TaskStatus, string> = {
 const statusIcons: Record<TaskStatus, React.ElementType> = {
   "Pending Approval": Clock,
   "Approved - Payment Due": DollarSign,
-  "In Progress": Clock, // Or a different icon like Activity
+  "In Progress": Clock, 
   "Completed": CheckCircle,
   "Rejected": AlertCircle,
 };
 
 export function TaskList() {
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleProceedToPayment = (taskId: string, taskTitle: string, amount?: string) => {
+    toast({
+      title: "Initiating Flutterwave Payment...",
+      description: `Preparing payment for task: ${taskTitle} (Amount: ${amount || 'N/A'}). Please wait.`,
+    });
+    // Simulate API call and redirection
+    setTimeout(() => {
+      toast({
+        title: "Payment Successful (Simulated)",
+        description: `Payment for ${taskTitle} processed. Task is now In Progress.`,
+        variant: "default",
+      });
+      // Here you would typically navigate or update task status from backend response
+      // For simulation, we can navigate to the task detail page.
+      router.push(`/dashboard/tasks/${taskId}?payment_success=true`);
+    }, 2500);
+  };
+
+
   return (
     <Card className="shadow-xl">
       <CardHeader>
@@ -109,7 +133,10 @@ export function TaskList() {
                             <Link href={`/dashboard/tasks/${task.id}`}>View Details</Link>
                           </DropdownMenuItem>
                           {task.status === "Approved - Payment Due" && (
-                            <DropdownMenuItem className="text-green-600 focus:bg-green-100 focus:text-green-700">
+                            <DropdownMenuItem 
+                              className="text-green-600 focus:bg-green-100 focus:text-green-700"
+                              onClick={() => handleProceedToPayment(task.id, task.title, task.estimatedCost)}
+                            >
                                 <DollarSign className="mr-2 h-4 w-4" /> Proceed to Payment
                             </DropdownMenuItem>
                           )}
