@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Phone, Clock, Star, ExternalLink, PrinterIcon } from "lucide-react";
 import Image from "next/image";
-import { PrintJobDialog } from "./PrintJobDialog"; // Import the new dialog
+import { PrintJobDialog } from "./PrintJobDialog"; 
 
-export interface PrintCenter { // Exporting for use in PrintJobDialog
+export interface PrintCenter {
   id: string;
   name: string;
   county: string;
@@ -21,10 +21,38 @@ export interface PrintCenter { // Exporting for use in PrintJobDialog
   rating?: number;
   services: string[];
   imageUrl?: string;
+  offlinePaymentDetails?: {
+    bankName?: string;
+    accountNumber?: string;
+    accountName?: string;
+    mobileMoneyProvider?: string;
+    mobileMoneyNumber?: string;
+    instructions?: string;
+  };
 }
 
 const mockPrintCenters: PrintCenter[] = [
-  { id: "PC001", name: "Speedy Prints CBD", county: "Nairobi", state: "CBD", location: "Kimathi Street", address: "Reli Co-op House, 2nd Flr", phone: "0712 345678", hours: "Mon-Sat: 8am-6pm", rating: 4.5, services: ["Color Printing", "Binding", "Lamination", "Scanning"], imageUrl: "https://placehold.co/600x400.png?text=Speedy+Prints" },
+  { 
+    id: "PC001", 
+    name: "Speedy Prints CBD", 
+    county: "Nairobi", 
+    state: "CBD", 
+    location: "Kimathi Street", 
+    address: "Reli Co-op House, 2nd Flr", 
+    phone: "0712 345678", 
+    hours: "Mon-Sat: 8am-6pm", 
+    rating: 4.5, 
+    services: ["Color Printing", "Binding", "Lamination", "Scanning"], 
+    imageUrl: "https://placehold.co/600x400.png?text=Speedy+Prints",
+    offlinePaymentDetails: {
+      bankName: "Equity Bank",
+      accountNumber: "0123456789012",
+      accountName: "Speedy Prints Limited",
+      mobileMoneyProvider: "M-Pesa PayBill",
+      mobileMoneyNumber: "123456",
+      instructions: "Use your Order ID (to be provided by shop) as the account number or reference."
+    }
+  },
   { id: "PC002", name: "Westlands Quick Copy", county: "Nairobi", state: "Westlands", location: "The Mall", address: "The Mall, Ground Flr, Shop G12", phone: "0722 987654", hours: "Mon-Sun: 9am-7pm", rating: 4.2, services: ["Photocopy", "Large Format", "Typesetting"], imageUrl: "https://placehold.co/600x400.png?text=Quick+Copy" },
   { id: "PC003", name: "Nyali Print Hub", county: "Mombasa", state: "Nyali", location: "City Mall", address: "City Mall, 1st Flr", hours: "Mon-Sat: 9am-5pm", rating: 4.0, services: ["Color Printing", "Binding"], imageUrl: "https://placehold.co/600x400.png?text=Nyali+Hub" },
 ];
