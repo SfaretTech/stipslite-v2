@@ -1,6 +1,7 @@
 
 "use client";
 
+import Link from "next/link"; // Added import
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -313,7 +314,7 @@ export function TaskSubmissionForm() {
                 <AlertDialogTitle>Virtual Assistant Preference</AlertDialogTitle>
                 <AlertDialogDescription>
                   You can have a Virtual Assistant assigned randomly from our general pool (platform-set price upon approval). 
-                  Alternatively, if you have an active <strong>Expert VA Plan</strong>, you can request a specific VA who will then provide a custom quote for your task.
+                  Alternatively, if you have an active <strong>Expert VA Plan</strong>, you can request a specific VA who will then provide a custom quote for your task. This is a premium feature.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter className="sm:flex-col sm:gap-2"> 
