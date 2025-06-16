@@ -1,3 +1,4 @@
+
 import {
   SidebarProvider,
   Sidebar,
@@ -16,19 +17,21 @@ import { Settings } from "lucide-react";
 type AppLayoutProps = {
   children: React.ReactNode;
   defaultOpen?: boolean;
-  role?: "student" | "admin" | "va";
+  role?: "student" | "admin" | "va" | "print-center";
 };
 
 export function AppLayout({ children, defaultOpen = true, role = "student" }: AppLayoutProps) {
   const getTitle = () => {
     if (role === "admin") return "STIPS Lite Admin";
     if (role === "va") return "STIPS Lite VA";
+    if (role === "print-center") return "STIPS Print Hub";
     return "STIPS Lite";
   };
   
   const getBaseLink = () => {
     if (role === "admin") return "/admin/dashboard";
     if (role === "va") return "/va/dashboard";
+    if (role === "print-center") return "/print-center/dashboard";
     return "/dashboard";
   }
 

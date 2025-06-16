@@ -26,7 +26,9 @@ import {
   Signal, 
   Target, 
   ListChecks,
-  Banknote, // Added for Payouts
+  Banknote, 
+  Store, // New icon for Print Center
+  FileText, // For Print Jobs
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -58,7 +60,7 @@ const studentNavItemsBase = [
   {
     href: "/dashboard/subscription", 
     activeHref: "/dashboard/find-va", 
-    label: "VA Plus", // Student feature to find VAs
+    label: "VA Plus", 
     icon: Star,
     status: "locked" as "locked" | "active",
   },
@@ -67,7 +69,7 @@ const studentNavItemsBase = [
 const accountNavItemsStudent = [
   { href: "/dashboard/profile", label: "Profile", icon: UserCircle },
   { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
-  { href: "/dashboard/subscription", label: "Subscription", icon: CreditCard }, // Student subscription page
+  { href: "/dashboard/subscription", label: "Subscription", icon: CreditCard }, 
   { href: "/dashboard/support", label: "Support Chat", icon: MessageSquare },
 ];
 
@@ -91,14 +93,23 @@ const vaNavItemsBase = [
     status: "locked" as "locked" | "active",
   },
   { href: "/va/profile", label: "My VA Profile", icon: UserCircle },
-  { href: "/va/payouts", label: "Payouts", icon: Banknote }, // New Payouts link
+  { href: "/va/payouts", label: "Payouts", icon: Banknote }, 
   { href: "/va/notifications", label: "Notifications", icon: Bell },
   { href: "/va/subscription", label: "My Subscription", icon: CreditCard }, 
   { href: "/va/support", label: "Support", icon: MessageSquare },
 ];
 
+const printCenterNavItems = [
+  { href: "/print-center/dashboard", label: "PC Dashboard", icon: LayoutDashboard },
+  { href: "/print-center/jobs", label: "Print Jobs", icon: FileText },
+  { href: "/print-center/profile", label: "Shop Profile", icon: Store },
+  { href: "/print-center/earnings", label: "Earnings & Payouts", icon: Banknote },
+  // { href: "/print-center/notifications", label: "Notifications", icon: Bell }, // Consider adding later
+  { href: "/print-center/support", label: "Support", icon: MessageSquare },
+];
 
-export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | "va" }) {
+
+export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | "va" | "print-center" }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { open, isMobile, state: sidebarState } = useSidebar();
@@ -172,9 +183,16 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   const navItemsToRender = 
     role === "admin" ? adminNavItems : 
     role === "va" ? vaNavItems : 
+    role === "print-center" ? printCenterNavItems :
     studentNavItems;
   
   const accountNavItems = role === "student" ? accountNavItemsStudent : [];
+  const logoutHref = 
+    role === "va" ? "/va/login" :
+    role === "print-center" ? "/print-center/login" :
+    role === "admin" ? "/auth/login" : // Assuming admin also uses general auth
+    "/auth/login";
+
 
   return (
     <SidebarMenu className="flex-1">
@@ -232,8 +250,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
               : (item.label === "VA Plus" ? "Find a Virtual Assistant" : item.label);
           }
           
-          // For VA "Payouts" link specifically, adjust target href if needed or it's direct
-          const finalHref = item.label === "Payouts" && role === "va" ? "/va/payouts" : currentHref!;
+          const finalHref = currentHref!;
 
 
           return (
@@ -283,7 +300,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
 
       <Separator className="my-4" />
       <SidebarMenuItem>
-         <Link href={ role === "va" ? "/va/login" : "/auth/login"}>
+         <Link href={logoutHref}>
             <SidebarMenuButton className="justify-start text-red-500 hover:bg-red-100 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900 dark:hover:text-red-300" tooltip="Logout">
                 <LogOut className="h-5 w-5" />
                 <span className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200")}>Logout</span>
