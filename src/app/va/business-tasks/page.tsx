@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Target, CheckCircle, Clock, Eye, MessageSquare, MoreHorizontal, AlertCircle, Check, X, Upload, FileText, Sparkles } from "lucide-react";
+import { Target, CheckCircle, Clock, Eye, MessageSquare, MoreHorizontal, AlertCircle, Check, X, Upload, FileText, Sparkles, Edit, DollarSign } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -31,7 +31,16 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
-type TaskStatusVA = "Pending Acceptance" | "In Progress" | "Submitted - Awaiting Review" | "Revision Requested" | "Completed" | "Cancelled By VA" | "Cancelled By Student";
+type TaskStatusVA = 
+  | "Pending Acceptance" 
+  | "Quote Submitted - Awaiting Student Approval" 
+  | "In Progress" 
+  | "Submitted - Awaiting Review" 
+  | "Revision Requested" 
+  | "Completed" 
+  | "Cancelled By VA" 
+  | "Cancelled By Student"
+  | "Quote Rejected by Student";
 
 interface BusinessServiceTask {
   id: string;
@@ -41,39 +50,43 @@ interface BusinessServiceTask {
   assignedDate: string; 
   deadline: string; 
   status: TaskStatusVA;
-  payoutAmount: string;
+  payoutAmount: string; // This will store the VA's quoted price
   brief: string;
-  studentFeedback?: string; // For revision requests
-  attachments?: { name: string, url: string }[]; // Student attachments
-  vaAvailabilityAtAssignment?: boolean; // For simulation
+  studentFeedback?: string; 
+  attachments?: { name: string, url: string }[]; 
+  vaAvailabilityAtAssignment?: boolean; 
 }
 
 const mockBusinessServiceTasksInitial: BusinessServiceTask[] = [
-  { id: "BST001", title: "Dissertation Chapter 3 Methodology", studentName: "Sarah Researcher", submittedDate: "2024-07-20", assignedDate: "2024-07-21", deadline: "2024-07-28", status: "Pending Acceptance", payoutAmount: "₦150.00", brief: "Develop the methodology chapter for a PhD dissertation on climate change impact on agriculture in Sub-Saharan Africa. Must include quantitative and qualitative research design.", attachments: [{name: "research_proposal.pdf", url: "#"}, {name: "data_collection_plan.docx", url: "#"}], vaAvailabilityAtAssignment: true },
+  { id: "BST001", title: "Dissertation Chapter 3 Methodology", studentName: "Sarah Researcher", submittedDate: "2024-07-20", assignedDate: "2024-07-21", deadline: "2024-07-28", status: "Pending Acceptance", payoutAmount: "To Be Quoted", brief: "Develop the methodology chapter for a PhD dissertation on climate change impact on agriculture in Sub-Saharan Africa. Must include quantitative and qualitative research design.", attachments: [{name: "research_proposal.pdf", url: "#"}, {name: "data_collection_plan.docx", url: "#"}], vaAvailabilityAtAssignment: true },
   { id: "BST002", title: "Advanced Financial Modeling", studentName: "Mike Finance", submittedDate: "2024-07-18", assignedDate: "2024-07-19", deadline: "2024-07-25", status: "In Progress", payoutAmount: "₦200.00", brief: "Create a 5-year financial projection model for a tech startup. Include sensitivity analysis and valuation.", attachments: [{name: "company_deck.pptx", url: "#"}], vaAvailabilityAtAssignment: true },
   { id: "BST003", title: "Legal Case Brief - Contract Law", studentName: "Laura Lawyer", submittedDate: "2024-07-15", assignedDate: "2024-07-16", deadline: "2024-07-20", status: "Submitted - Awaiting Review", payoutAmount: "₦100.00", brief: "Prepare a detailed case brief for Smith v. Jones (2022), focusing on breach of contract elements.", vaAvailabilityAtAssignment: true },
   { id: "BST004", title: "Statistical Analysis for Thesis", studentName: "Ken Stats", submittedDate: "2024-07-12", assignedDate: "2024-07-13", deadline: "2024-07-19", status: "Revision Requested", payoutAmount: "₦180.00", brief: "Perform ANOVA and regression analysis on the provided dataset. Student requires clarification on the interpretation of p-values.", studentFeedback: "Please elaborate on the significance of the p-values for each variable and provide a clearer interpretation in the context of the research questions.", attachments: [{name: "dataset.xlsx", url: "#"}], vaAvailabilityAtAssignment: true },
-  { id: "BST005", title: "Machine Learning Model Development", studentName: "Alex AI", submittedDate: "2024-07-22", assignedDate: "2024-07-23", deadline: "2024-08-05", status: "Pending Acceptance", payoutAmount: "₦250.00", brief: "Develop a sentiment analysis model using Python and TensorFlow/Keras for customer reviews. Dataset provided.", attachments: [{name: "review_dataset.csv", url: "#"}, {name: "project_requirements.pdf", url: "#"}], vaAvailabilityAtAssignment: false }, // Example of task assigned when VA was "offline"
+  { id: "BST005", title: "Machine Learning Model Development", studentName: "Alex AI", submittedDate: "2024-07-22", assignedDate: "2024-07-23", deadline: "2024-08-05", status: "Pending Acceptance", payoutAmount: "To Be Quoted", brief: "Develop a sentiment analysis model using Python and TensorFlow/Keras for customer reviews. Dataset provided.", attachments: [{name: "review_dataset.csv", url: "#"}, {name: "project_requirements.pdf", url: "#"}], vaAvailabilityAtAssignment: false }, 
 ];
 
 const vaStatusColors: Record<TaskStatusVA, string> = {
   "Pending Acceptance": "bg-orange-100 text-orange-700 border-orange-300",
+  "Quote Submitted - Awaiting Student Approval": "bg-teal-100 text-teal-700 border-teal-300",
   "In Progress": "bg-blue-100 text-blue-700 border-blue-300",
   "Submitted - Awaiting Review": "bg-purple-100 text-purple-700 border-purple-300",
   "Revision Requested": "bg-yellow-100 text-yellow-700 border-yellow-300",
   "Completed": "bg-green-100 text-green-700 border-green-300",
   "Cancelled By VA": "bg-red-100 text-red-700 border-red-300",
   "Cancelled By Student": "bg-gray-100 text-gray-700 border-gray-300",
+  "Quote Rejected by Student": "bg-pink-100 text-pink-700 border-pink-300",
 };
 
 const vaStatusIcons: Record<TaskStatusVA, React.ElementType> = {
   "Pending Acceptance": AlertCircle,
+  "Quote Submitted - Awaiting Student Approval": Edit,
   "In Progress": Clock,
   "Submitted - Awaiting Review": Eye,
   "Revision Requested": MessageSquare,
   "Completed": CheckCircle,
   "Cancelled By VA": X,
   "Cancelled By Student": X,
+  "Quote Rejected by Student": X,
 };
 
 
@@ -83,6 +96,7 @@ export default function VaBusinessTasksPage() {
   const [isDeclineSectionVisible, setIsDeclineSectionVisible] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
   const [submissionNotes, setSubmissionNotes] = useState("");
+  const [quotePriceInput, setQuotePriceInput] = useState("");
   const { toast } = useToast();
   const router = useRouter();
 
@@ -91,12 +105,22 @@ export default function VaBusinessTasksPage() {
     setIsDeclineSectionVisible(false); 
     setDeclineReason(""); 
     setSubmissionNotes(""); 
+    setQuotePriceInput(task.status === "Pending Acceptance" || !task.payoutAmount || task.payoutAmount === "To Be Quoted" ? "" : task.payoutAmount.replace('₦', ''));
   };
 
-  const handleAcceptTask = () => {
-    if (!selectedTask) return;
-    setTasks(prev => prev.map(t => t.id === selectedTask.id ? {...t, status: "In Progress"} : t));
-    toast({ title: "Task Accepted", description: `You have accepted business task: ${selectedTask.title}. It is now 'In Progress'.` });
+  const handleSetPriceAndAccept = () => {
+    if (!selectedTask || !quotePriceInput.trim()) {
+      toast({ title: "Price Required", description: "Please set your price for this task.", variant: "destructive"});
+      return;
+    }
+    const priceNum = parseFloat(quotePriceInput);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      toast({ title: "Invalid Price", description: "Please enter a valid positive price.", variant: "destructive"});
+      return;
+    }
+
+    setTasks(prev => prev.map(t => t.id === selectedTask.id ? {...t, status: "Quote Submitted - Awaiting Student Approval", payoutAmount: `₦${priceNum.toFixed(2)}` } : t));
+    toast({ title: "Quote Submitted", description: `Your quote of ₦${priceNum.toFixed(2)} for task "${selectedTask.title}" has been sent to the student for approval.` });
     setSelectedTask(null); 
   };
 
@@ -105,7 +129,7 @@ export default function VaBusinessTasksPage() {
       toast({ title: "Reason Required", description: "Please provide a reason for declining the task.", variant: "destructive"});
       return;
     }
-    setTasks(prev => prev.map(t => t.id === selectedTask.id ? {...t, status: "Cancelled By VA" } : t)); // Changed to Cancelled By VA
+    setTasks(prev => prev.map(t => t.id === selectedTask.id ? {...t, status: "Cancelled By VA" } : t));
     toast({ title: "Task Declined", description: `Business task ${selectedTask.title} declined. Reason: ${declineReason}` });
     setSelectedTask(null); 
     setDeclineReason("");
@@ -136,7 +160,7 @@ export default function VaBusinessTasksPage() {
     <div className="space-y-8">
       <PageHeader 
         title="Business Service Tasks"
-        description="Manage tasks directly assigned to you by students. These are typically for VAs with an active 'Professional Business VA' subscription and 'Available for Direct Assignment' status."
+        description="Manage tasks directly assigned to you by students. Set your price for new tasks and track their progress."
         icon={Target}
       />
       <Dialog open={!!selectedTask} onOpenChange={(isOpen) => !isOpen && setSelectedTask(null)}>
@@ -146,7 +170,8 @@ export default function VaBusinessTasksPage() {
                 <DialogHeader>
                     <DialogTitle className="flex items-center"><Sparkles className="h-5 w-5 mr-2 text-primary" />{selectedTask.title} (ID: {selectedTask.id})</DialogTitle>
                     <DialogDescription>
-                    Student: {selectedTask.studentName} | Deadline: {selectedTask.deadline} | Payout: {selectedTask.payoutAmount}
+                    Student: {selectedTask.studentName} | Deadline: {selectedTask.deadline} 
+                    {selectedTask.status !== "Pending Acceptance" && selectedTask.payoutAmount && selectedTask.payoutAmount !== "To Be Quoted" && ` | Quoted Payout: ${selectedTask.payoutAmount}`}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
@@ -154,7 +179,7 @@ export default function VaBusinessTasksPage() {
                         <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 flex items-start">
                             <AlertCircle className="h-5 w-5 mr-2 mt-0.5 shrink-0"/>
                             <p className="text-sm">
-                                Note: This task was assigned while your "Available for Direct Assignment" status was OFF. You can still choose to accept it.
+                                Note: This task was assigned while your "Available for Direct Assignment" status was OFF. You can still set a price and accept.
                             </p>
                         </div>
                     )}
@@ -186,6 +211,25 @@ export default function VaBusinessTasksPage() {
                         <div className="space-y-1 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                             <Label className="font-semibold text-yellow-700">Revision Notes from Student:</Label>
                             <p className="text-sm text-yellow-600 whitespace-pre-wrap">{selectedTask.studentFeedback}</p>
+                        </div>
+                    )}
+
+                    {selectedTask.status === "Pending Acceptance" && (
+                        <div className="space-y-2 pt-2 border-t mt-2">
+                            <Label htmlFor="quotePrice" className="font-semibold text-accent">Set Your Price (NGN):</Label>
+                            <div className="relative">
+                                <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
+                                <Input 
+                                    id="quotePrice" 
+                                    type="number"
+                                    value={quotePriceInput}
+                                    onChange={(e) => setQuotePriceInput(e.target.value)}
+                                    placeholder="e.g., 150.00"
+                                    className="pl-8"
+                                    min="0.01"
+                                    step="0.01"
+                                />
+                            </div>
                         </div>
                     )}
 
@@ -234,6 +278,21 @@ export default function VaBusinessTasksPage() {
                         </div>
                     </>
                     )}
+                    {selectedTask.status === "Quote Submitted - Awaiting Student Approval" && (
+                        <div className="p-3 bg-teal-50 border border-teal-200 rounded-md text-teal-700">
+                            <p className="text-sm font-medium">
+                                Your quote of {selectedTask.payoutAmount} has been submitted to the student. Awaiting their approval.
+                            </p>
+                        </div>
+                    )}
+                     {selectedTask.status === "Quote Rejected by Student" && (
+                        <div className="p-3 bg-pink-50 border border-pink-200 rounded-md text-pink-700">
+                            <p className="text-sm font-medium">
+                                The student has rejected your quote of {selectedTask.payoutAmount}.
+                            </p>
+                             <p className="text-xs mt-1">You may contact the student via support to discuss further, or this task might be reassigned.</p>
+                        </div>
+                    )}
                 </div>
                 <DialogFooter className="border-t pt-4">
                     <DialogClose asChild>
@@ -245,8 +304,8 @@ export default function VaBusinessTasksPage() {
                         <Button onClick={() => setIsDeclineSectionVisible(true)} variant="destructive" className="bg-red-600 hover:bg-red-700">
                             <X className="mr-2 h-4 w-4" />Decline Task
                         </Button>
-                        <Button onClick={handleAcceptTask} className="bg-green-600 hover:bg-green-700 text-white">
-                            <Check className="mr-2 h-4 w-4" />Accept Task
+                        <Button onClick={handleSetPriceAndAccept} className="bg-green-600 hover:bg-green-700 text-white" disabled={!quotePriceInput.trim()}>
+                            <DollarSign className="mr-2 h-4 w-4" />Set Price &amp; Accept Task
                         </Button>
                         </>
                     )}
@@ -288,7 +347,7 @@ export default function VaBusinessTasksPage() {
                   <TableHead>Title</TableHead>
                   <TableHead>Student</TableHead>
                   <TableHead>Deadline</TableHead>
-                  <TableHead>Payout</TableHead>
+                  <TableHead>Quoted Payout</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -318,13 +377,13 @@ export default function VaBusinessTasksPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => handleOpenDialog(task)}>
-                                  <Eye className="mr-2 h-4 w-4" />View Details & Actions
+                                  <Eye className="mr-2 h-4 w-4" />View Details &amp; Actions
                                 </DropdownMenuItem>
                               {task.status === "Pending Acceptance" && (
                                 <>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-green-600 focus:text-green-700 focus:bg-green-50" onClick={() => {setSelectedTask(task); handleAcceptTask();}}>
-                                    <Check className="mr-2 h-4 w-4" />Quick Accept Task
+                                  <DropdownMenuItem className="text-green-600 focus:text-green-700 focus:bg-green-50" onClick={() => {handleOpenDialog(task);}}>
+                                    <DollarSign className="mr-2 h-4 w-4" />Set Price &amp; Accept
                                   </DropdownMenuItem>
                                   <DropdownMenuItem className="text-red-600 focus:text-red-700 focus:bg-red-50" onClick={() => {handleOpenDialog(task); setIsDeclineSectionVisible(true);}}>
                                     <X className="mr-2 h-4 w-4" />Decline Task
