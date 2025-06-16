@@ -16,14 +16,17 @@ interface Referral {
   id: string;
   referredUser: string;
   date: string;
-  status: "Pending" | "Completed" | "Earned";
+  status: "Signup Reward Earned" | "Subscribed (Yearly) - Reward Earned" | "Signed Up, Awaiting Activity" | "Pending First Task";
+  eventType: "signup" | "yearly_subscription" | "pending_activity";
   earnings: string;
 }
 
 const mockReferrals: Referral[] = [
-  { id: "REF001", referredUser: "Alice Wonderland", date: "2024-07-01", status: "Completed", earnings: "₦5.00" },
-  { id: "REF002", referredUser: "Bob The Builder", date: "2024-07-05", status: "Earned", earnings: "₦5.00" },
-  { id: "REF003", referredUser: "Charlie Brown", date: "2024-07-10", status: "Pending", earnings: "₦0.00" },
+  { id: "REF001", referredUser: "Alice Wonderland", date: "2024-07-01", eventType: "signup", status: "Signup Reward Earned", earnings: "₦100.00" },
+  { id: "REF002", referredUser: "Bob The Builder", date: "2024-07-05", eventType: "yearly_subscription", status: "Subscribed (Yearly) - Reward Earned", earnings: "₦1000.00" },
+  { id: "REF003", referredUser: "Charlie Brown", date: "2024-07-10", eventType: "signup", status: "Signed Up, Awaiting Activity", earnings: "₦0.00" },
+  { id: "REF004", referredUser: "Diana Prince", date: "2024-07-12", eventType: "pending_activity", status: "Pending First Task", earnings: "₦0.00" },
+  { id: "REF005", referredUser: "Edward Scissorhands", date: "2024-07-15", eventType: "signup", status: "Signup Reward Earned", earnings: "₦100.00" },
 ];
 
 const mobileMoneyPlatforms = [
@@ -37,7 +40,31 @@ export function ReferralDashboard() {
   const referralLink = "https://stips.lite/ref/YOUR_CODE_XYZ"; // Placeholder
   const { toast } = useToast();
   const [withdrawalAmount, setWithdrawalAmount] = useState(""); 
-  const currentBalance = 10.00; // Mock balance
+  
+  const calculateCurrentBalance = () => {
+    return mockReferrals.reduce((acc, ref) => {
+      if (ref.status.includes("Earned")) {
+        return acc + parseFloat(ref.earnings.replace('₦', ''));
+      }
+      return acc;
+    }, 0);
+  };
+  const currentBalance = calculateCurrentBalance();
+
+  const calculatePendingEarnings = () => {
+    return mockReferrals.reduce((acc, ref) => {
+      if (ref.status === "Signed Up, Awaiting Activity") { // Potential NGN 100 for signup + NGN 1000 for yearly sub
+        return acc + 100 + 1000; 
+      }
+      if (ref.status === "Pending First Task") { // Assuming first task implies potential signup reward for old rule, adjust if needed
+          // For now, let's assume new rules apply and first task implies signup
+          return acc + 100;
+      }
+      return acc;
+    }, 0);
+  }
+  const pendingBalance = calculatePendingEarnings();
+
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
@@ -71,6 +98,11 @@ export function ReferralDashboard() {
         });
         return;
     }
+     if (amountToWithdraw < 100) { // New minimum based on NGN 100 signup reward
+        toast({ title: "Minimum Withdrawal", description: `Minimum withdrawal amount is ₦100.00.`, variant: "destructive" });
+        return;
+    }
+
 
     toast({
       title: "Withdrawal Request Submitted",
@@ -92,9 +124,9 @@ export function ReferralDashboard() {
   return (
     <div className="space-y-8">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Total Referrals" value="3" icon={Users} description="Successful user sign-ups." />
-        <StatCard title="Total Earnings" value={`₦${currentBalance.toFixed(2)}`} icon={DollarSign} description="From completed referrals." />
-        <StatCard title="Pending Earnings" value="₦0.00" icon={Gift} description="Potential earnings from pending referrals." />
+        <StatCard title="Total Referrals" value={mockReferrals.filter(r => r.eventType === "signup" || r.eventType === "yearly_subscription").length.toString()} icon={Users} description="Friends who joined or subscribed." />
+        <StatCard title="Total Earnings" value={`₦${currentBalance.toFixed(2)}`} icon={DollarSign} description="From completed referral actions." />
+        <StatCard title="Pending Earnings" value={`₦${pendingBalance.toFixed(2)}`} icon={Gift} description="Potential earnings from referrals." />
       </div>
 
       <Card className="shadow-xl">
@@ -110,7 +142,7 @@ export function ReferralDashboard() {
           </Button>
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
-          You earn ₦5.00 for each friend who signs up and completes their first task.
+          You earn ₦100 for each friend who signs up. Earn an additional ₦1000 if they subscribe to a yearly plan!
         </CardFooter>
       </Card>
 
@@ -136,7 +168,9 @@ export function ReferralDashboard() {
                   <TableCell>{ref.date}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium
-                      ${ref.status === 'Completed' || ref.status === 'Earned' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                      ${ref.status.includes('Earned') ? 'bg-green-100 text-green-700' : 
+                        ref.status.includes('Subscribed') ? 'bg-blue-100 text-blue-700' :
+                        'bg-yellow-100 text-yellow-700'}`}>
                       {ref.status}
                     </span>
                   </TableCell>
@@ -191,7 +225,7 @@ export function ReferralDashboard() {
                 <Smartphone className="mr-2 h-4 w-4" /> Save Wallet Details
             </Button>
             <p className="text-xs text-muted-foreground pt-2">
-                Ensure your mobile number and name are correct to avoid withdrawal issues. Minimum withdrawal amount is ₦10.00.
+                Ensure your mobile number and name are correct to avoid withdrawal issues. Minimum withdrawal amount is ₦100.00.
             </p>
         </CardContent>
       </Card>
@@ -211,7 +245,7 @@ export function ReferralDashboard() {
                     <Input 
                         id="withdrawalAmount" 
                         type="number" 
-                        placeholder="e.g., 10.00" 
+                        placeholder="e.g., 100.00" 
                         className="pl-8"
                         value={withdrawalAmount}
                         onChange={(e) => setWithdrawalAmount(e.target.value)}
@@ -226,7 +260,7 @@ export function ReferralDashboard() {
                onClick={handleWithdrawFunds}
                variant="outline"
                className="w-full"
-               disabled={currentBalance < 10} // Example: disable if balance is less than min withdrawal
+               disabled={currentBalance < 100 || !withdrawalAmount} // Updated min withdrawal check
              >
                 <Send className="mr-2 h-4 w-4" /> Request Withdrawal
             </Button>
@@ -236,3 +270,6 @@ export function ReferralDashboard() {
     </div>
   );
 }
+
+
+    
