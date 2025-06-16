@@ -310,4 +310,3 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
     </SidebarMenu>
   );
 }
-
