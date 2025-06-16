@@ -35,8 +35,8 @@ const mockVaNotifications = [
 ];
 
 const mockPrintCenterNotifications = [
-  { id: "PCN001", title: "New Print Job Received", description: "From Student John D. - 'Math_Assignment.pdf'", timestamp: "30 mins ago", read: false, link: "/print-center/jobs/JOB001", icon: Printer },
-  { id: "PCN002", title: "Admin Message: Holiday Schedule", description: "Please update your holiday hours.", timestamp: "2 days ago", read: true, link: "/print-center/support", icon: Settings },
+  { id: "PCN001", title: "New Print Job Received", description: "From Student John D. - 'Math_Assignment.pdf'", timestamp: "30 mins ago", read: false, link: "/printcenter/jobs/JOB001", icon: Printer },
+  { id: "PCN002", title: "Admin Message: Holiday Schedule", description: "Please update your holiday hours.", timestamp: "2 days ago", read: true, link: "/printcenter/support", icon: Settings },
 ];
 
 
@@ -73,11 +73,11 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
   } else if (role === "print-center") {
     userName = "Print Shop Owner";
     userEmail = "shop@example.com";
-    profileLink = "/print-center/profile";
-    notificationsLink = "/print-center/dashboard"; // Or a dedicated notifications page later
-    subscriptionSettingsLink = "/print-center/profile"; // Shop settings might be in profile
-    supportLink = "/print-center/support";
-    logoutLink = "/print-center/login";
+    profileLink = "/printcenter/profile";
+    notificationsLink = "/printcenter/dashboard"; // Or a dedicated notifications page later
+    subscriptionSettingsLink = "/printcenter/profile"; // Shop settings might be in profile
+    supportLink = "/printcenter/support";
+    logoutLink = "/printcenter/login";
     currentNotifications = mockPrintCenterNotifications;
   }
   

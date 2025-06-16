@@ -19,7 +19,7 @@ export function PrintCenterForgotPasswordForm() {
       title: "Print Center Password Reset Email Sent",
       description: "If a Print Center account exists for this email, you will receive password reset instructions.",
     });
-    router.push("/print-center/login");
+    router.push("/printcenter/login");
   };
 
   return (
@@ -33,7 +33,7 @@ export function PrintCenterForgotPasswordForm() {
       </Button>
       <p className="text-center text-sm text-muted-foreground">
         Remembered your password?{" "}
-        <Link href="/print-center/login" className="font-semibold text-primary hover:underline">
+        <Link href="/printcenter/login" className="font-semibold text-primary hover:underline">
           Login to Print Center Portal
         </Link>
       </p>

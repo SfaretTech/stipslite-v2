@@ -23,7 +23,7 @@ export function PrintCenterRegisterForm() {
       variant: "default",
       duration: 7000,
     });
-    router.push("/print-center/login");
+    router.push("/printcenter/login");
   };
 
   return (
@@ -68,7 +68,7 @@ export function PrintCenterRegisterForm() {
       </Button>
       <p className="text-center text-sm text-muted-foreground">
         Already have a Print Center account?{" "}
-        <Link href="/print-center/login" className="font-semibold text-primary hover:underline">
+        <Link href="/printcenter/login" className="font-semibold text-primary hover:underline">
           Login
         </Link>
       </p>

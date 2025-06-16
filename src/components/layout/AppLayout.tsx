@@ -31,7 +31,7 @@ export function AppLayout({ children, defaultOpen = true, role = "student" }: Ap
   const getBaseLink = () => {
     if (role === "admin") return "/admin/dashboard";
     if (role === "va") return "/va/dashboard";
-    if (role === "print-center") return "/print-center/dashboard";
+    if (role === "print-center") return "/printcenter/dashboard";
     return "/dashboard";
   }
 

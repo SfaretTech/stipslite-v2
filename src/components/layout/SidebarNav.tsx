@@ -100,12 +100,12 @@ const vaNavItemsBase = [
 ];
 
 const printCenterNavItems = [
-  { href: "/print-center/dashboard", label: "PC Dashboard", icon: LayoutDashboard },
-  { href: "/print-center/jobs", label: "Print Jobs", icon: FileText },
-  { href: "/print-center/profile", label: "Shop Profile", icon: Store },
-  { href: "/print-center/earnings", label: "Earnings & Payouts", icon: Banknote },
-  // { href: "/print-center/notifications", label: "Notifications", icon: Bell }, // Consider adding later
-  { href: "/print-center/support", label: "Support", icon: MessageSquare },
+  { href: "/printcenter/dashboard", label: "PC Dashboard", icon: LayoutDashboard },
+  { href: "/printcenter/jobs", label: "Print Jobs", icon: FileText },
+  { href: "/printcenter/profile", label: "Shop Profile", icon: Store },
+  { href: "/printcenter/earnings", label: "Earnings & Payouts", icon: Banknote },
+  // { href: "/printcenter/notifications", label: "Notifications", icon: Bell }, // Consider adding later
+  { href: "/printcenter/support", label: "Support", icon: MessageSquare },
 ];
 
 
@@ -189,7 +189,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   const accountNavItems = role === "student" ? accountNavItemsStudent : [];
   const logoutHref = 
     role === "va" ? "/va/login" :
-    role === "print-center" ? "/print-center/login" :
+    role === "print-center" ? "/printcenter/login" :
     role === "admin" ? "/auth/login" : // Assuming admin also uses general auth
     "/auth/login";
 

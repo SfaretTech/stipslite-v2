@@ -20,7 +20,7 @@ export function PrintCenterLoginForm() {
       title: "Print Center Login Successful",
       description: "Redirecting to your Print Center dashboard...",
     });
-    router.push("/print-center/dashboard");
+    router.push("/printcenter/dashboard");
   };
 
   return (
@@ -32,7 +32,7 @@ export function PrintCenterLoginForm() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="pc-password">Password</Label>
-          <Link href="/print-center/forgot-password" className="text-sm text-primary hover:underline">
+          <Link href="/printcenter/forgot-password" className="text-sm text-primary hover:underline">
             Forgot password?
           </Link>
         </div>
@@ -49,7 +49,7 @@ export function PrintCenterLoginForm() {
       </Button>
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have a Print Center account?{" "}
-        <Link href="/print-center/register" className="font-semibold text-primary hover:underline">
+        <Link href="/printcenter/signup" className="font-semibold text-primary hover:underline">
           Register Your Shop
         </Link>
       </p>
