@@ -1,28 +1,38 @@
 
 "use client";
 
+import { useState } from "react"; // Added useState
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Using Avatar for logo placeholder
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UploadCloud, Save, Store, List, Clock, Banknote, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { Switch } from "@/components/ui/switch"; // Added Switch import
 
-// Mock data for initial form values (in a real app, this would come from backend)
+const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+// Updated mock data for initial form values
 const mockShopProfileData = {
   shopName: "Speedy Prints CBD",
   email: "contact@speedyprints.com",
   phone: "0712 345678",
   address: "Reli Co-op House, 2nd Flr, Kimathi Street, Nairobi, Kenya",
   description: "Your one-stop shop for all printing, copying, and binding needs in the heart of Nairobi. We offer fast turnarounds and high-quality prints.",
-  logoUrl: "https://placehold.co/150x150.png?text=Shop+Logo", // Placeholder for logo
-  bannerUrl: "https://placehold.co/800x200.png?text=Shop+Banner", // Placeholder for banner
+  logoUrl: "https://placehold.co/150x150.png?text=Shop+Logo",
+  bannerUrl: "https://placehold.co/800x200.png?text=Shop+Banner",
   services: "Color Printing, Black & White Printing, Photocopying, Binding (Spiral, Comb, Perfect), Lamination, Scanning, Typesetting, Large Format Printing",
-  operatingHours: "Monday - Friday: 8:00 AM - 6:00 PM\nSaturday: 9:00 AM - 4:00 PM\nSunday & Public Holidays: Closed",
+  operatingHoursConfig: daysOfWeek.map(day => ({
+    day,
+    isOpen: !["Saturday", "Sunday"].includes(day), // Default Mon-Fri open
+    from: "09:00",
+    to: "17:00"
+  })),
+  specialClosuresNote: "Closed on all public holidays unless otherwise specified. Special hours for Christmas week will be announced.",
   offlineBankName: "Equity Bank",
   offlineAccountNumber: "0123456789012",
   offlineAccountName: "Speedy Prints Limited",
@@ -33,6 +43,15 @@ const mockShopProfileData = {
 
 export default function PrintCenterProfilePage() {
   const { toast } = useToast();
+  const [operatingHours, setOperatingHours] = useState(mockShopProfileData.operatingHoursConfig);
+
+  const handleOperatingHoursChange = (day: string, field: 'isOpen' | 'from' | 'to', value: string | boolean) => {
+    setOperatingHours(currentHours =>
+      currentHours.map(h =>
+        h.day === day ? { ...h, [field]: value } : h
+      )
+    );
+  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -127,13 +146,50 @@ export default function PrintCenterProfilePage() {
             <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="font-headline flex items-center"><Clock className="mr-2 h-5 w-5 text-primary"/>Operating Hours</CardTitle>
-                  <CardDescription>Let customers know when you are open.</CardDescription>
+                  <CardDescription>Set your weekly shop opening hours.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="space-y-1.5">
-                        <Label htmlFor="operatingHours">Operating Hours Description</Label>
-                        <Textarea id="operatingHours" defaultValue={mockShopProfileData.operatingHours} placeholder="e.g., Mon-Fri: 8am-6pm, Sat: 9am-1pm, Sun: Closed" rows={4} />
+                <CardContent className="space-y-4">
+                  {operatingHours.map(hourConfig => (
+                    <div key={hourConfig.day} className="grid grid-cols-1 sm:grid-cols-[100px_auto_1fr] items-center gap-3 p-3 border rounded-md">
+                      <Label htmlFor={`open-${hourConfig.day}`} className="font-semibold col-span-1 sm:col-auto">{hourConfig.day}</Label>
+                      <Switch
+                        checked={hourConfig.isOpen}
+                        onCheckedChange={(checked) => handleOperatingHoursChange(hourConfig.day, 'isOpen', checked)}
+                        id={`open-${hourConfig.day}`}
+                        aria-label={`Toggle ${hourConfig.day} open status`}
+                      />
+                      {hourConfig.isOpen ? (
+                        <div className="flex items-center gap-2 flex-grow col-span-1 sm:col-auto">
+                          <Input
+                            type="time"
+                            value={hourConfig.from}
+                            onChange={(e) => handleOperatingHoursChange(hourConfig.day, 'from', e.target.value)}
+                            className="w-full"
+                            aria-label={`${hourConfig.day} open from`}
+                          />
+                          <span className="text-muted-foreground">-</span>
+                          <Input
+                            type="time"
+                            value={hourConfig.to}
+                            onChange={(e) => handleOperatingHoursChange(hourConfig.day, 'to', e.target.value)}
+                            className="w-full"
+                             aria-label={`${hourConfig.day} open until`}
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground italic col-span-1 sm:col-auto">Closed</span>
+                      )}
                     </div>
+                  ))}
+                   <div className="space-y-1.5 pt-4 border-t mt-4">
+                    <Label htmlFor="specialClosures">Special Closures / Holiday Notes</Label>
+                    <Textarea 
+                      id="specialClosures" 
+                      defaultValue={mockShopProfileData.specialClosuresNote || ""} 
+                      placeholder="e.g., Closed on Christmas Day (Dec 25th). Open half-day on New Year's Eve." 
+                      rows={3} 
+                    />
+                  </div>
                 </CardContent>
             </Card>
 
