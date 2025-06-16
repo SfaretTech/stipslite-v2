@@ -26,6 +26,7 @@ import {
   Signal, 
   Target, 
   ListChecks,
+  Banknote, // Added for Payouts
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -83,15 +84,16 @@ const vaNavItemsBase = [
   { href: "/va/live-tasks", label: "Live Tasks", icon: Signal },
   { href: "/va/my-tasks", label: "My Tasks", icon: ListChecks },
   { 
-    href: "/va/subscription", // Locked state directs to VA subscription page
+    href: "/va/subscription", 
     activeHref: "/va/business-tasks", 
     label: "Business Service Tasks", 
     icon: Target,
     status: "locked" as "locked" | "active",
   },
   { href: "/va/profile", label: "My VA Profile", icon: UserCircle },
+  { href: "/va/payouts", label: "Payouts", icon: Banknote }, // New Payouts link
   { href: "/va/notifications", label: "Notifications", icon: Bell },
-  { href: "/va/subscription", label: "My Subscription", icon: CreditCard }, // VA subscription page
+  { href: "/va/subscription", label: "My Subscription", icon: CreditCard }, 
   { href: "/va/support", label: "Support", icon: MessageSquare },
 ];
 
@@ -110,11 +112,11 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   useEffect(() => {
     setHasMounted(true);
     if (typeof window !== 'undefined') {
-      const studentPlanStatus = localStorage.getItem('stipsLiteVaPlanActive'); // Student's plan to find VAs
+      const studentPlanStatus = localStorage.getItem('stipsLiteVaPlanActive'); 
       if (studentPlanStatus === 'true') {
         setIsSubscribedToStudentVaPlan(true);
       }
-      const vaProPlanStatus = localStorage.getItem('stipsLiteVaProPlanActive'); // VA's own pro plan
+      const vaProPlanStatus = localStorage.getItem('stipsLiteVaProPlanActive'); 
       if (vaProPlanStatus === 'true') {
         setIsVaSubscribedToProPlan(true);
       }
@@ -128,13 +130,12 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
 
     const planActivatedQuery = searchParams.get('plan_activated');
     
-    // Student VA Plus Plan Logic (for /dashboard/find-va)
     const isStudentVaPlanCurrentlyActive = 
-      planActivatedQuery === 'expert_va' || // This ID is from student-facing plans
+      planActivatedQuery === 'expert_va' || 
       pathname.startsWith('/dashboard/find-va') ||
       isSubscribedToStudentVaPlan;
 
-    if (planActivatedQuery === 'expert_va') { // Check specific student plan activation
+    if (planActivatedQuery === 'expert_va') { 
         if (!isSubscribedToStudentVaPlan) setIsSubscribedToStudentVaPlan(true);
         if (typeof window !== 'undefined' && localStorage.getItem('stipsLiteVaPlanActive') !== 'true') {
             localStorage.setItem('stipsLiteVaPlanActive', 'true');
@@ -147,9 +148,8 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
       )
     );
 
-    // VA Professional Business Plan Logic (for /va/business-tasks)
     const isVaProPlanCurrentlyActive =
-        planActivatedQuery === 'va_professional_business' || // Check for VA's plan activation
+        planActivatedQuery === 'va_professional_business' || 
         pathname.startsWith('/va/business-tasks') ||
         isVaSubscribedToProPlan;
     
@@ -231,12 +231,16 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
               ? `Subscribe to unlock ${item.label}`
               : (item.label === "VA Plus" ? "Find a Virtual Assistant" : item.label);
           }
+          
+          // For VA "Payouts" link specifically, adjust target href if needed or it's direct
+          const finalHref = item.label === "Payouts" && role === "va" ? "/va/payouts" : currentHref!;
+
 
           return (
             <SidebarMenuItem key={item.label}>
-              <Link href={currentHref!}>
+              <Link href={finalHref}>
                 <SidebarMenuButton
-                  isActive={pathname === currentHref && !(isDynamicStatusItem && isItemLocked)} 
+                  isActive={pathname === finalHref && !(isDynamicStatusItem && isItemLocked)} 
                   className={cn(
                     "justify-start w-full",
                     isDynamicStatusItem && isItemLocked && "opacity-70 hover:bg-sidebar-accent/70"

@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, CheckCircle2, Clock, DollarSign, Bell, UserCircle, ArrowRight, LayoutDashboard, MessageSquare, Signal, Target, ListChecks } from "lucide-react"; 
+import { Briefcase, CheckCircle2, Clock, DollarSign, Bell, UserCircle, ArrowRight, LayoutDashboard, MessageSquare, Signal, Target, ListChecks, Banknote } from "lucide-react"; 
 import Link from "next/link";
 
 export default function VaDashboardPage() {
@@ -35,9 +35,9 @@ export default function VaDashboardPage() {
           description="Directly assigned tasks in progress" 
         />
         <StatCard 
-          title="Pending Payouts" 
+          title="Withdrawable Balance" 
           value="₦15,000" 
-          icon={DollarSign} 
+          icon={Banknote} // Changed icon to Banknote for balance
           description="Earnings awaiting withdrawal"
           trend="+ ₦5,000 this week"
           trendColor="green"
@@ -88,6 +88,9 @@ export default function VaDashboardPage() {
             <Button variant="outline" className="w-full justify-start" asChild>
               <Link href="/va/business-tasks"><Target className="mr-2 h-4 w-4" /> Manage Business Tasks</Link>
             </Button>
+             <Button variant="outline" className="w-full justify-start" asChild>
+              <Link href="/va/payouts"><Banknote className="mr-2 h-4 w-4" /> Manage Payouts</Link>
+            </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
               <Link href="/va/profile"><UserCircle className="mr-2 h-4 w-4" /> Update My Profile</Link>
             </Button>
@@ -110,4 +113,3 @@ export default function VaDashboardPage() {
     </div>
   );
 }
-
