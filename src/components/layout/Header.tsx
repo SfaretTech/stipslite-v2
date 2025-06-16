@@ -14,7 +14,7 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye, Briefcase, Printer } from "lucide-react";
+import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye, Briefcase, Printer, MessageSquare as MessageSquareIcon, AlertCircle as AlertCircleIcon } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AiSearchDialog } from "@/components/ai/AiSearchDialog";
 import { Badge } from "@/components/ui/badge";
@@ -35,8 +35,10 @@ const mockVaNotifications = [
 ];
 
 const mockPrintCenterNotifications = [
-  { id: "PCN001", title: "New Print Job Received", description: "From Student John D. - 'Math_Assignment.pdf'", timestamp: "30 mins ago", read: false, link: "/printcenter/jobs/JOB001", icon: Printer },
-  { id: "PCN002", title: "Admin Message: Holiday Schedule", description: "Please update your holiday hours.", timestamp: "2 days ago", read: true, link: "/printcenter/support", icon: Settings },
+  { id: "PCN001", title: "New Print Job Received: #JOB123", description: "From Student John Doe - 'Math_Assignment.pdf'", timestamp: "30 mins ago", read: false, link: "/printcenter/jobs/JOB123", icon: Printer },
+  { id: "PCN002", title: "Payment Confirmed for Job #JOB120", description: "Student Alice S. has paid ₦50.00.", timestamp: "2 hours ago", read: false, link: "/printcenter/jobs/JOB120", icon: DollarIcon },
+  { id: "PCN003", title: "Admin Message: Holiday Schedule", description: "Please update your holiday hours in your profile.", timestamp: "2 days ago", read: true, link: "/printcenter/profile", icon: MessageSquareIcon },
+  { id: "PCN004", title: "Low Paper Stock Alert", description: "Your A4 paper stock seems low.", timestamp: "3 days ago", read: true, category: "Shop Alert", icon: AlertCircleIcon },
 ];
 
 
@@ -74,8 +76,8 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     userName = "Print Shop Owner";
     userEmail = "shop@example.com";
     profileLink = "/printcenter/profile";
-    notificationsLink = "/printcenter/dashboard"; // Or a dedicated notifications page later
-    subscriptionSettingsLink = "/printcenter/profile"; // Shop settings might be in profile
+    notificationsLink = "/printcenter/notifications"; 
+    subscriptionSettingsLink = "/printcenter/profile"; 
     supportLink = "/printcenter/support";
     logoutLink = "/printcenter/login";
     currentNotifications = mockPrintCenterNotifications;
@@ -186,11 +188,11 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
                 </Link>
                 </DropdownMenuItem>
             )}
-             { role === 'admin' && (
+             { (role === 'admin' || role === 'print-center') && (
                 <DropdownMenuItem asChild>
-                <Link href={subscriptionSettingsLink}>
+                <Link href={subscriptionSettingsLink}> {/* For print-center, this links to profile; for admin, to settings */}
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>Platform Settings</span>
+                    <span>{role === 'print-center' ? 'Shop Settings' : 'Platform Settings'}</span>
                 </Link>
                 </DropdownMenuItem>
             )}
@@ -213,3 +215,4 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     </header>
   );
 }
+

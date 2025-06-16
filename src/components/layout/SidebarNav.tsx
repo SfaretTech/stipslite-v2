@@ -27,8 +27,8 @@ import {
   Target, 
   ListChecks,
   Banknote, 
-  Store, // New icon for Print Center
-  FileText, // For Print Jobs
+  Store, 
+  FileText, 
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -104,7 +104,7 @@ const printCenterNavItems = [
   { href: "/printcenter/jobs", label: "Print Jobs", icon: FileText },
   { href: "/printcenter/profile", label: "Shop Profile", icon: Store },
   { href: "/printcenter/earnings", label: "Earnings & Payouts", icon: Banknote },
-  // { href: "/printcenter/notifications", label: "Notifications", icon: Bell }, // Consider adding later
+  { href: "/printcenter/notifications", label: "Notifications", icon: Bell },
   { href: "/printcenter/support", label: "Support", icon: MessageSquare },
 ];
 
@@ -190,7 +190,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   const logoutHref = 
     role === "va" ? "/va/login" :
     role === "print-center" ? "/printcenter/login" :
-    role === "admin" ? "/auth/login" : // Assuming admin also uses general auth
+    role === "admin" ? "/auth/login" : 
     "/auth/login";
 
 
@@ -310,3 +310,4 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
     </SidebarMenu>
   );
 }
+
