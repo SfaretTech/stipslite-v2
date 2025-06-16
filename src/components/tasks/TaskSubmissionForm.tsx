@@ -59,6 +59,32 @@ const durationOptions = [
   { value: "1_month", label: "1 Month" },
 ];
 
+const taskTypeOptions = [
+  { value: "assignment", label: "Assignment" },
+  { value: "term_paper", label: "Term Paper" },
+  { value: "project_work", label: "Project Work" },
+  { value: "research_paper", label: "Research Paper" },
+  { value: "essay_writing", label: "Essay Writing" },
+  { value: "thesis", label: "Thesis" },
+  { value: "dissertation", label: "Dissertation" },
+  { value: "coursework", label: "Coursework" },
+  { value: "group_project", label: "Group Project" },
+  { value: "book_article_review", label: "Book/Article Review" },
+  { value: "annotated_bibliography", label: "Annotated Bibliography" },
+  { value: "literature_review", label: "Literature Review" },
+  { value: "field_work_report", label: "Field Work Report" },
+  { value: "seminar_paper", label: "Seminar Paper" },
+  { value: "internship_report", label: "Internship Report" },
+  { value: "position_paper", label: "Position Paper" },
+  { value: "concept_note_proposal", label: "Concept Note / Proposal Writing" },
+  { value: "abstract_writing", label: "Abstract Writing" },
+  { value: "business_plan_feasibility", label: "Business Plan / Feasibility Study" },
+  { value: "academic_debate_prep", label: "Academic Debate Preparation" },
+  { value: "mock_exam_questions", label: "Mock/ Exam Questions setup" },
+  { value: "other", label: "Other" },
+];
+
+
 interface SelectableVa {
   id: string;
   name: string;
@@ -146,12 +172,11 @@ export function TaskSubmissionForm() {
                   <SelectValue placeholder="Select task type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="essay">Essay</SelectItem>
-                  <SelectItem value="report">Report</SelectItem>
-                  <SelectItem value="presentation">Presentation</SelectItem>
-                  <SelectItem value="research">Research Paper</SelectItem>
-                  <SelectItem value="coding">Coding Assignment</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  {taskTypeOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -269,7 +294,7 @@ export function TaskSubmissionForm() {
               <div>
                 <h4 className="font-semibold text-primary">Payment Information</h4>
                 <p className="text-sm text-muted-foreground">
-                  If a specific VA is requested (Expert VA Plan feature), they will provide a quote. Otherwise, an estimated cost will be provided upon task approval for randomly assigned VAs. Payment will be required to start processing.
+                  If a specific VA is requested (an <Link href="/dashboard/subscription" className="font-medium text-accent hover:underline">Expert VA Plan</Link> feature), they will provide a quote. Otherwise, an estimated cost will be provided upon task approval for randomly assigned VAs. Payment will be required to start processing.
                 </p>
               </div>
             </div>
@@ -398,4 +423,3 @@ export function TaskSubmissionForm() {
     </>
   );
 }
-
