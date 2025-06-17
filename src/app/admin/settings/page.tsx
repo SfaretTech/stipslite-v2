@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Settings, Save, DollarSign, Percent, Gift, Users2, Building, Briefcase, ClipboardList } from "lucide-react";
+import { Settings, Save, DollarSign, Percent, Gift, Users2, Building, Briefcase, ClipboardList, Radio } from "lucide-react";
 
 const DEFAULT_TASK_PRICING_CONFIG = [
   {
@@ -46,7 +46,7 @@ const DEFAULT_TASK_PRICING_CONFIG = [
     notes: ""
   },
   {
-    taskTypeName: "Assignment (Type 2)", // Differentiated from the first "Assignment"
+    taskTypeName: "Assignment (Type 2)",
     feeRangeNGN: "1000 - 2000",
     feeRangeUSD: "2-4",
     pricingModel: "per_page",
@@ -150,7 +150,7 @@ const DEFAULT_TASK_PRICING_CONFIG = [
     feeRangeUSD: "10",
     pricingModel: "fixed",
     pricePerPageNGN: null,
-    fixedPriceNGN: 1000, // Using lower end of range or as specified
+    fixedPriceNGN: 1000,
     notes: ""
   },
   {
@@ -168,7 +168,7 @@ const DEFAULT_TASK_PRICING_CONFIG = [
     feeRangeUSD: "20",
     pricingModel: "fixed",
     pricePerPageNGN: null,
-    fixedPriceNGN: 2000, // Using lower end of range or as specified
+    fixedPriceNGN: 2000,
     notes: ""
   },
   {
@@ -202,7 +202,7 @@ const DEFAULT_TASK_PRICING_CONFIG = [
     taskTypeName: "Mock/ Exam Questions setup",
     feeRangeNGN: "1000",
     feeRangeUSD: "",
-    pricingModel: "per_page", // Based on "NGN 500" per page
+    pricingModel: "per_page",
     pricePerPageNGN: 500,
     fixedPriceNGN: null,
     notes: ""
@@ -215,7 +215,7 @@ export default function AdminSettingsPage() {
     <div className="space-y-8">
       <PageHeader 
         title="Platform Settings"
-        description="Configure general settings, payment parameters, and referral program rules for students, VAs, and print centers."
+        description="Configure general settings, payment parameters, referral program rules, and ad management."
         icon={Settings}
       />
       
@@ -384,6 +384,41 @@ export default function AdminSettingsPage() {
                     <Input id="minWithdrawalGlobal" type="number" defaultValue="100.00" className="pl-8" />
                 </div>
                  <p className="text-xs text-muted-foreground">This applies to all referral earnings withdrawals.</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center"><Radio className="mr-2 h-5 w-5 text-primary"/>Ads Management</CardTitle>
+            <CardDescription>Configure platform-wide advertising settings.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-1.5">
+              <Label htmlFor="adsApiUrl">Ads API URL (e.g., Google AdSense)</Label>
+              <Input id="adsApiUrl" type="url" placeholder="https://your-ads-provider.com/api/endpoint" />
+               <p className="text-xs text-muted-foreground">Enter the API endpoint for your ads provider.</p>
+            </div>
+            
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="enableAdsPlatformWide" className="text-base">Enable Ads Platform-Wide</Label>
+                <p className="text-sm text-muted-foreground">
+                  Toggle to show or hide ads for all users across the platform.
+                </p>
+              </div>
+              <Switch id="enableAdsPlatformWide" defaultChecked aria-label="Toggle platform-wide ads" />
+            </div>
+
+            <div className="text-sm text-muted-foreground p-3 bg-muted/30 border rounded-md">
+              <p>
+                When enabled, ads will be displayed to Student, VA, and Print Center accounts.
+                Ads can be hidden for specific users if they have an active "Ads Blocker" subscription 
+                (this would be a separate subscription feature, managed per user or via subscription tiers).
+              </p>
+              <p className="mt-1">
+                The "Ads Blocker" subscription would typically last for one month and remove ads for that duration.
+              </p>
             </div>
           </CardContent>
         </Card>
