@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BookUser, Search, Edit3, Trash2, ShieldAlert, ShieldCheck, Eye, PlusCircle, MoreHorizontal, UserCircle2, CalendarDays, Mail, Smartphone, Verified, XCircle, AlertTriangle } from "lucide-react";
+import { BookUser, Search, Edit3, Trash2, ShieldAlert, ShieldCheck, Eye, PlusCircle, MoreHorizontal, UserCircle2, CalendarDays, Mail, Smartphone, Verified, XCircle, AlertTriangle, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
