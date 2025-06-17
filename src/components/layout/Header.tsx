@@ -14,7 +14,7 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye, Briefcase, Printer, MessageSquare as MessageSquareIcon, AlertCircle as AlertCircleIcon, Gift, LayoutDashboard } from "lucide-react";
+import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye, Briefcase, Printer, MessageSquare as MessageSquareIcon, AlertCircle as AlertCircleIcon, Gift, LayoutDashboard, Activity } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AiSearchDialog } from "@/components/ai/AiSearchDialog";
 import { Badge } from "@/components/ui/badge";
@@ -78,10 +78,10 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     userName = "Admin User";
     userEmail = "admin@stipslite.com"; 
     profileLink = "/admin/settings"; 
-    notificationsLink = "/admin/dashboard"; 
+    notificationsLink = "/admin/notifications"; // Changed from /admin/dashboard
     subscriptionSettingsLink = ""; 
     supportLink = "/admin/dashboard"; 
-    logoutLink = "/admin/login"; // Updated admin logout link
+    logoutLink = "/admin/login";
     referralsLink = "/admin/settings"; 
     currentNotifications = mockAdminNotifications; 
   } else if (role === "print-center") {
@@ -198,9 +198,9 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
             )}
              <DropdownMenuItem asChild>
               <Link href={notificationsLink}>
-                <Bell className="mr-2 h-4 w-4" />
-                <span>Notifications</span>
-                {unreadNotificationsCount > 0 && <Badge variant="destructive" className="ml-auto">{unreadNotificationsCount}</Badge>}
+                {role === 'admin' ? <Activity className="mr-2 h-4 w-4" /> : <Bell className="mr-2 h-4 w-4" />}
+                <span>{role === 'admin' ? 'Activity Log' : 'Notifications'}</span>
+                {unreadNotificationsCount > 0 && role !== 'admin' && <Badge variant="destructive" className="ml-auto">{unreadNotificationsCount}</Badge>}
               </Link>
             </DropdownMenuItem>
             { (role === 'student' || role === 'va') && subscriptionSettingsLink && (

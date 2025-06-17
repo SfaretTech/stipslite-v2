@@ -30,6 +30,7 @@ import {
   Store, 
   FileText, 
   Gift,
+  Activity, // Added Activity icon
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -79,7 +80,8 @@ const adminNavItems = [
    { href: "/admin/approvals", label: "Account Approvals", icon: ShieldCheck },
    { href: "/admin/tasks", label: "Task Approvals", icon: ClipboardList },
    { href: "/admin/users", label: "Manage Users", icon: BookUser },
-   { href: "/admin/settings", label: "Platform Settings", icon: Settings }, // Changed label for clarity
+   { href: "/admin/notifications", label: "Notifications", icon: Activity }, // Changed icon
+   { href: "/admin/settings", label: "Platform Settings", icon: Settings },
 ];
 
 const vaNavItemsBase = [
@@ -193,7 +195,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   const logoutHref = 
     role === "va" ? "/va/login" :
     role === "print-center" ? "/printcenter/login" :
-    role === "admin" ? "/auth/login" : // Admin logout can go to general login
+    role === "admin" ? "/admin/login" : // Admin logout goes to admin login
     "/auth/login";
 
 
