@@ -27,6 +27,13 @@ interface ChatMessage {
   timestamp: string;
 }
 
+const AZUMA_AI_WELCOME_MESSAGE: ChatMessage = {
+  id: "azuma-welcome",
+  sender: "ai",
+  text: "Hello! I'm AZUMA AI, your friendly assistant. How can I help you today?",
+  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+};
+
 export function AiSearchDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMessage, setCurrentMessage] = useState("");
@@ -41,6 +48,13 @@ export function AiSearchDialog() {
       scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, [conversationHistory]);
+
+  useEffect(() => {
+    if (isOpen && conversationHistory.length === 0) {
+      setConversationHistory([AZUMA_AI_WELCOME_MESSAGE]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]); // Only re-run if isOpen changes
 
   const handleSendMessage = async () => {
     if (!currentMessage.trim()) return;
@@ -86,10 +100,12 @@ export function AiSearchDialog() {
   const handleOpenChange = (openState: boolean) => {
     setIsOpen(openState);
     if (!openState) {
-      // Optionally reset state when dialog closes
-      // setConversationHistory([]);
-      // setCurrentMessage("");
-      // setError(null);
+      // Optionally reset more state when dialog closes, or just clear error.
+      // For now, conversation history persists across closes within the same session.
+      // setError(null); 
+    } else if (openState && conversationHistory.length === 0) {
+      // If opening and history is empty (e.g. first open or cleared history)
+      setConversationHistory([AZUMA_AI_WELCOME_MESSAGE]);
     }
   }
 
@@ -98,17 +114,17 @@ export function AiSearchDialog() {
       <DialogTrigger asChild>
         <Button variant="outline" size="icon" className="rounded-full">
           <Sparkles className="h-5 w-5" />
-          <span className="sr-only">AI Chat</span>
+          <span className="sr-only">AZUMA AI Chat</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle className="flex items-center">
             <Sparkles className="h-6 w-6 mr-2 text-primary" />
-            AI Chat Assistant
+            AZUMA AI
           </DialogTitle>
           <DialogDescription>
-            Ask questions and get informative responses from our AI assistant.
+            Ask questions and get informative responses from AZUMA AI.
           </DialogDescription>
         </DialogHeader>
         
@@ -124,7 +140,7 @@ export function AiSearchDialog() {
               >
                 {msg.sender === "ai" && (
                   <Avatar className="h-8 w-8 border">
-                    <AvatarImage src="https://placehold.co/40x40.png?text=AI" alt="AI Avatar" data-ai-hint="robot avatar" />
+                    <AvatarImage src="https://placehold.co/40x40.png?text=AZ" alt="AZUMA AI Avatar" data-ai-hint="robot ai avatar" />
                     <AvatarFallback><Bot size={18}/></AvatarFallback>
                   </Avatar>
                 )}
@@ -147,10 +163,10 @@ export function AiSearchDialog() {
                 )}
               </div>
             ))}
-            {isPending && conversationHistory.some(m => m.sender === 'user') && (
+            {isPending && conversationHistory.some(m => m.sender === 'user' && m.id !== AZUMA_AI_WELCOME_MESSAGE.id) && (
               <div className="flex items-end space-x-2">
                 <Avatar className="h-8 w-8 border">
-                  <AvatarImage src="https://placehold.co/40x40.png?text=AI" alt="AI Avatar" data-ai-hint="robot avatar" />
+                  <AvatarImage src="https://placehold.co/40x40.png?text=AZ" alt="AZUMA AI Avatar" data-ai-hint="robot ai avatar" />
                   <AvatarFallback><Bot size={18}/></AvatarFallback>
                 </Avatar>
                 <div className="max-w-[75%] rounded-lg px-3 py-2 text-sm shadow-sm bg-muted text-foreground rounded-bl-none">
@@ -176,7 +192,7 @@ export function AiSearchDialog() {
           <div className="flex w-full gap-2 items-center">
             <Input
               id="ai-chat-message"
-              placeholder="Type your message..."
+              placeholder="Type your message to AZUMA AI..."
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
               className="flex-grow"
@@ -193,3 +209,4 @@ export function AiSearchDialog() {
     </Dialog>
   );
 }
+
