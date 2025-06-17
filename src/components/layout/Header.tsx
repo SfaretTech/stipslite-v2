@@ -63,6 +63,9 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
   let logoutLink = "/auth/login";
   let referralsLink = "/dashboard/referrals";
   let currentNotifications = mockStudentNotifications;
+  let notificationsLinkText = "Notifications";
+  let notificationsLinkIcon = Bell;
+
 
   if (role === "va") {
     userName = "VA Name";
@@ -78,12 +81,14 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     userName = "Admin User";
     userEmail = "admin@stipslite.com"; 
     profileLink = "/admin/settings"; 
-    notificationsLink = "/admin/notifications"; // Changed from /admin/dashboard
+    notificationsLink = "/admin/notifications"; 
     subscriptionSettingsLink = ""; 
     supportLink = "/admin/dashboard"; 
     logoutLink = "/admin/login";
     referralsLink = "/admin/settings"; 
     currentNotifications = mockAdminNotifications; 
+    notificationsLinkText = "Activity Log";
+    notificationsLinkIcon = Activity;
   } else if (role === "print-center") {
     userName = "Print Shop Owner";
     userEmail = "shop@example.com";
@@ -198,8 +203,8 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
             )}
              <DropdownMenuItem asChild>
               <Link href={notificationsLink}>
-                {role === 'admin' ? <Activity className="mr-2 h-4 w-4" /> : <Bell className="mr-2 h-4 w-4" />}
-                <span>{role === 'admin' ? 'Activity Log' : 'Notifications'}</span>
+                <notificationsLinkIcon className="mr-2 h-4 w-4" />
+                <span>{notificationsLinkText}</span>
                 {unreadNotificationsCount > 0 && role !== 'admin' && <Badge variant="destructive" className="ml-auto">{unreadNotificationsCount}</Badge>}
               </Link>
             </DropdownMenuItem>
@@ -256,3 +261,4 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     </header>
   );
 }
+
