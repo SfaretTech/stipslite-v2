@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
-  DialogTrigger, // Added DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,8 +29,8 @@ import { useToast } from "@/hooks/use-toast";
 interface Message {
   id: string;
   text: string;
-  sender: "user" | "support" | "va" | "admin";
-  senderName?: string; // For displaying "Student" or "VA Name"
+  sender: "user" | "support" | "va" | "admin" | "student"; // Added "student" sender type
+  senderName?: string; 
   timestamp: string;
   avatar?: string;
 }
@@ -40,10 +40,11 @@ interface Ticket {
   subject: string;
   status: "New" | "Ongoing" | "Resolved";
   lastUpdate: string;
-  category: "new" | "ongoing" | "old"; // For tab filtering
-  from?: string; // e.g., "Student John Doe", "Admin", "VA Aisha B."
-  to?: string; // e.g., "Admin Support", "VA Aisha B."
-  taskId?: string; // If task-specific
+  category: "new" | "ongoing" | "old"; 
+  from?: string; 
+  to?: string; 
+  taskId?: string; 
+  jobId?: string; // Added for print center job ID
 }
 
 const getMockStudentTickets = (): Ticket[] => [
@@ -61,11 +62,21 @@ const getMockVaTickets = (): Ticket[] => [
     { id: "TKT_V004", subject: "Issue with Student (Task TSK099)", status: "Resolved", lastUpdate: "2 days ago", category: "old", from: "You", to: "Admin Support", taskId: "TSK099"},
 ];
 
-const getMockMessagesForTicket = (ticketId: string, userRole: 'student' | 'va'): Message[] => {
+const getMockPrintCenterTickets = (): Ticket[] => [
+    { id: "TKT_PC001", subject: "Query from Student (Job JOB123)", status: "New", lastUpdate: "30 mins ago", category: "new", from: "Student John D.", to: "You (Shop)", jobId: "JOB123" },
+    { id: "TKT_PC002", subject: "Shop Payout Query - July", status: "Ongoing", lastUpdate: "Today 11:00 AM", category: "ongoing", from: "You (Shop)", to: "Admin Support" },
+    { id: "TKT_PC003", subject: "Admin Info: Upcoming Maintenance", status: "New", lastUpdate: "2 hours ago", category: "new", from: "Admin", to: "You (Shop)" },
+    { id: "TKT_PC004", subject: "Issue with Job JOB100 Payment", status: "Resolved", lastUpdate: "1 day ago", category: "old", from: "You (Shop)", to: "Admin Support", jobId: "JOB100"},
+];
+
+
+const getMockMessagesForTicket = (ticketId: string, userRole: 'student' | 'va' | 'print-center'): Message[] => {
     const commonSupportAvatar = "https://placehold.co/40x40.png?text=S";
     const userAvatar = "https://placehold.co/40x40.png?text=U";
     const vaAvatar = "https://placehold.co/40x40.png?text=VA";
     const adminAvatar = "https://placehold.co/40x40.png?text=AD";
+    const studentAvatar = "https://placehold.co/40x40.png?text=ST"; // For when PC/VA are talking to student
+    const printCenterAvatar = "https://placehold.co/40x40.png?text=PC";
 
     if (userRole === 'student') {
         if (ticketId === "TKT_S001") return [
@@ -83,7 +94,7 @@ const getMockMessagesForTicket = (ticketId: string, userRole: 'student' | 'va'):
     }
     if (userRole === 'va') {
          if (ticketId === "TKT_V001") return [
-            { id: "v1m1", text: "Hi VA, I have a question about the deadline for task TSK102 you are working on. Can it be extended by a day?", sender: "support", senderName: "Student Chinedu O.", timestamp: "1 hour ago", avatar: userAvatar }, // Simulating student messaged VA
+            { id: "v1m1", text: "Hi VA, I have a question about the deadline for task TSK102 you are working on. Can it be extended by a day?", sender: "student", senderName: "Student Chinedu O.", timestamp: "1 hour ago", avatar: studentAvatar }, 
             { id: "v1m2", text: "Hello Chinedu, I'll check if an extension is possible and let you know. What's the reason for the request?", sender: "user", senderName: "VA (You)", timestamp: "55 mins ago", avatar: vaAvatar },
         ];
         if (ticketId === "TKT_V002") return [
@@ -95,16 +106,34 @@ const getMockMessagesForTicket = (ticketId: string, userRole: 'student' | 'va'):
             { id: "v3m2", text: "Okay, thanks for the update.", sender: "user", senderName: "VA (You)", timestamp: "This morning", avatar: vaAvatar },
         ];
     }
+    if (userRole === 'print-center') {
+        if (ticketId === "TKT_PC001") return [
+            { id: "pc1m1", text: "Hi Shop, I submitted job JOB123 but haven't received a quote yet. Can you check?", sender: "student", senderName: "Student John D.", timestamp: "30 mins ago", avatar: studentAvatar },
+            { id: "pc1m2", text: "Hello John, apologies for the delay. We're a bit busy. The quote for JOB123 will be sent in the next 15 minutes. Thanks for your patience!", sender: "user", senderName: "Print Center (You)", timestamp: "25 mins ago", avatar: printCenterAvatar },
+        ];
+        if (ticketId === "TKT_PC002") return [
+            { id: "pc2m1", text: "Hi Admin, my payout for July seems lower than expected. Can you clarify?", sender: "user", senderName: "Print Center (You)", timestamp: "11:00 AM", avatar: printCenterAvatar },
+            { id: "pc2m2", text: "Hi Print Center, we'll review your July earnings statement and get back to you by EOD. Could you provide specific job IDs if you have concerns about particular ones?", sender: "admin", senderName: "Admin Support", timestamp: "11:15 AM", avatar: adminAvatar },
+        ];
+        if (ticketId === "TKT_PC003") return [
+            { id: "pc3m1", text: "Dear Print Centers, there will be a short platform maintenance on July 30th from 2 AM to 3 AM. Services might be briefly unavailable.", sender: "admin", senderName: "Admin", timestamp: "2 hours ago", avatar: adminAvatar },
+            { id: "pc3m2", text: "Noted, thank you for the heads up!", sender: "user", senderName: "Print Center (You)", timestamp: "1 hour ago", avatar: printCenterAvatar },
+        ];
+    }
     return [{ id: "fallback", text: `No messages found for ticket ${ticketId} or role ${userRole}. Select another ticket or create a new one.`, sender: "support", timestamp: "N/A", avatar: commonSupportAvatar }];
 };
 
 
-export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' }) {
+export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' | 'print-center' }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
-  const initialTickets = userRole === 'student' ? getMockStudentTickets() : getMockVaTickets();
+  const initialTickets = 
+    userRole === 'student' ? getMockStudentTickets() : 
+    userRole === 'va' ? getMockVaTickets() : 
+    getMockPrintCenterTickets();
+
   const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(
     initialTickets.find(t => t.category === 'new' && t.from !== "You")?.id || initialTickets.find(t => t.category === 'ongoing')?.id || initialTickets[0]?.id || null
@@ -116,6 +145,9 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
   const [studentQueryType, setStudentQueryType] = useState<string | undefined>();
   const [relevantTaskId, setRelevantTaskId] = useState("");
   const [vaQueryType, setVaQueryType] = useState<string | undefined>();
+  const [printCenterQueryType, setPrintCenterQueryType] = useState<string | undefined>();
+  const [relevantJobId, setRelevantJobId] = useState("");
+
 
   const { toast } = useToast();
 
@@ -128,7 +160,6 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
   }, [activeTicketId, userRole]);
 
   useEffect(() => {
-    // This effect handles pre-filling the "Create New Ticket" dialog for VAs contacting students.
     if (userRole === 'va' && typeof window !== 'undefined') {
         const contactTaskId = localStorage.getItem('stipsLiteContactStudentTaskId');
         const contactStudentName = localStorage.getItem('stipsLiteContactStudentName');
@@ -136,14 +167,24 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
         if (contactTaskId && contactStudentName) {
             setIsCreateTicketDialogOpen(true);
             setNewTicketSubject(`Query re: Task ${contactTaskId} for Student ${contactStudentName}`);
-            setVaQueryType('communication_to_student'); // Set the query type
-            
+            setVaQueryType('communication_to_student'); 
             localStorage.removeItem('stipsLiteContactStudentTaskId');
             localStorage.removeItem('stipsLiteContactStudentName');
         }
+    } else if (userRole === 'print-center' && typeof window !== 'undefined') {
+        const contactStudentJobId = localStorage.getItem('stipsLiteContactStudentJobId'); // Potentially a new key for this context
+        const contactStudentNameForJob = localStorage.getItem('stipsLiteContactStudentNameForJob');
+
+        if (contactStudentJobId && contactStudentNameForJob) {
+            setIsCreateTicketDialogOpen(true);
+            setNewTicketSubject(`Regarding Print Job ${contactStudentJobId} for Student ${contactStudentNameForJob}`);
+            setPrintCenterQueryType('communication_to_student_job'); // New query type for this scenario
+            localStorage.removeItem('stipsLiteContactStudentJobId');
+            localStorage.removeItem('stipsLiteContactStudentNameForJob');
+        }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userRole]); // Run only when userRole changes (effectively on mount for a given role)
+  }, [userRole]); 
 
 
   useEffect(() => {
@@ -163,7 +204,7 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
       id: String(Date.now()),
       text: newMessage,
       sender: "user", 
-      senderName: userRole === 'student' ? "Student (You)" : "VA (You)",
+      senderName: userRole === 'student' ? "Student (You)" : userRole === 'va' ? "VA (You)" : "Print Center (You)",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       avatar: "https://placehold.co/40x40.png?text=U"
     };
@@ -173,7 +214,7 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
     // Simulate a reply
     setTimeout(() => {
       let replyText = "Thanks for your message. We are looking into it.";
-      let replySender: "support" | "admin" | "va" = "support";
+      let replySender: "support" | "admin" | "va" | "student" = "support";
       let replySenderName = "Support";
       let replyAvatar = "https://placehold.co/40x40.png?text=S";
 
@@ -183,30 +224,47 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
             replySender = "va";
             replySenderName = currentTicket.to || "Assigned VA";
             replyAvatar = "https://placehold.co/40x40.png?text=VA";
-        } else { // To Admin Support
+        } else { 
             replyText = `An admin is reviewing your query for ticket ${activeTicketId}.`;
             replySender = "admin";
             replySenderName = "Admin Support";
             replyAvatar = "https://placehold.co/40x40.png?text=AD";
         }
-      } else { // userRole === 'va'
-         if (currentTicket.to?.includes("Student")) { // VA is replying to a student or a ticket initiated by admin about a student
+      } else if (userRole === 'va') {
+         if (currentTicket.to?.includes("Student")) {
             replyText = `Your reply to ${currentTicket.from} regarding task ${currentTicket.taskId || ''} has been sent.`;
-            replySender = "support"; // System message confirming send
-            replySenderName = "System"; // Or simulate student's name if replying directly
-         } else if (currentTicket.subject.startsWith("Query re: Task") && currentTicket.subject.includes("for Student")){ // VA initiated contact to student (via Admin)
+            replySender = "support"; 
+            replySenderName = "System";
+         } else if (currentTicket.subject.startsWith("Query re: Task") && currentTicket.subject.includes("for Student")){ 
             replyText = `Your message for student regarding task ${currentTicket.taskId || 'ID_UNKNOWN'} has been noted (simulated send via Admin).`;
-            replySender = "admin"; // System message confirming send via admin
+            replySender = "admin"; 
             replySenderName = "Admin Relay";
             replyAvatar = "https://placehold.co/40x40.png?text=AD";
          }
-         else { // VA's query to Admin
+         else { 
             replyText = `Your message to Admin Support for ticket ${activeTicketId} has been received.`;
             replySender = "admin"; 
             replySenderName = "Admin Support";
             replyAvatar = "https://placehold.co/40x40.png?text=AD";
          }
+      } else if (userRole === 'print-center') {
+          if (currentTicket.to?.includes("Student")) { // Print Center replying to a student query
+            replyText = `Your reply to ${currentTicket.from} regarding job ${currentTicket.jobId || ''} has been sent.`;
+            replySender = "support"; 
+            replySenderName = "System";
+          } else if (currentTicket.subject.startsWith("Regarding Print Job") && currentTicket.subject.includes("for Student")) { // PC initiated contact to student
+             replyText = `Your message for student regarding job ${currentTicket.jobId || 'ID_UNKNOWN'} has been noted (simulated send via Admin).`;
+            replySender = "admin"; 
+            replySenderName = "Admin Relay";
+            replyAvatar = "https://placehold.co/40x40.png?text=AD";
+          } else { // Print Center's query to Admin
+            replyText = `Your message to Admin Support for ticket ${activeTicketId} has been received.`;
+            replySender = "admin"; 
+            replySenderName = "Admin Support";
+            replyAvatar = "https://placehold.co/40x40.png?text=AD";
+          }
       }
+
 
       const replyMsg: Message = {
         id: String(Date.now() + 1),
@@ -234,6 +292,8 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
     let recipient = "Admin Support";
     let toastMessage = `Your new ticket "${newTicketSubject}" has been submitted to Admin Support.`;
     let ticketTaskId: string | undefined = undefined;
+    let ticketJobId: string | undefined = undefined;
+
 
     if (userRole === 'student') {
         if (!studentQueryType) {
@@ -243,13 +303,9 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
         if (studentQueryType === "task_specific") {
             recipient = `VA for Task ${relevantTaskId || 'General VA Queue'}`; 
             toastMessage = `Your query about Task ${relevantTaskId || 'N/A'} has been sent to the assigned VA.`;
-            ticketTaskId = relevantTaskId || undefined; // ensure it's undefined if empty
-        } else if (studentQueryType === "task_specific" && !relevantTaskId) {
-            // This case might be redundant if recipient defaults or handled above
-            // For now, let it proceed to Admin or a general VA queue as per recipient logic.
-            toast({ title: "Task ID Optional", description: "Task ID not provided, query will be general if no VA can be matched.", variant: "default", duration: 4000 });
+            ticketTaskId = relevantTaskId || undefined; 
         }
-    } else { // userRole === 'va'
+    } else if (userRole === 'va') { 
         if (!vaQueryType) {
             toast({ title: "Query Type Required", description: "Please select a query type for your ticket.", variant: "destructive"});
             return;
@@ -259,14 +315,30 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
             const taskIdMatch = newTicketSubject.match(/Task (\S+)/);
             const studentName = studentNameMatch ? studentNameMatch[1] : "Student";
             ticketTaskId = taskIdMatch ? taskIdMatch[1] : undefined;
-            recipient = `Student ${studentName} (Task: ${ticketTaskId || 'N/A'}) via Admin`; // To make it clear it's relayed
+            recipient = `Student ${studentName} (Task: ${ticketTaskId || 'N/A'}) via Admin`; 
             toastMessage = `Your message for Student ${studentName} regarding task ${ticketTaskId || 'N/A'} is being processed (simulated send via Admin).`;
-        } else { // VA's query to Admin
+        } else { 
             toastMessage = `Your ticket "${newTicketSubject}" regarding '${vaQueryType.replace(/_/g, ' ')}' has been sent to Admin Support.`;
+        }
+    } else if (userRole === 'print-center') {
+        if (!printCenterQueryType) {
+            toast({ title: "Query Type Required", description: "Please select a query type for your ticket.", variant: "destructive"});
+            return;
+        }
+        if (printCenterQueryType === 'communication_to_student_job') {
+            const studentNameMatch = newTicketSubject.match(/for Student (.*?)(?:\)| re:|$)/);
+            const jobIdMatch = newTicketSubject.match(/Job (\S+)/);
+            const studentName = studentNameMatch ? studentNameMatch[1] : "Student";
+            ticketJobId = jobIdMatch ? jobIdMatch[1] : undefined;
+            recipient = `Student ${studentName} (Job: ${ticketJobId || 'N/A'}) via Admin`;
+            toastMessage = `Your message for Student ${studentName} regarding print job ${ticketJobId || 'N/A'} is being processed (simulated send via Admin).`;
+        } else {
+            toastMessage = `Your ticket "${newTicketSubject}" regarding '${printCenterQueryType.replace(/_/g, ' ')}' has been sent to Admin Support.`;
         }
     }
 
-    const newTicketId = `${userRole === 'student' ? 'S' : 'V'}${String(Date.now()).slice(-5)}`;
+
+    const newTicketId = `${userRole.substring(0,1).toUpperCase()}${String(Date.now()).slice(-5)}`;
     const newGeneratedTicket: Ticket = {
       id: newTicketId,
       subject: newTicketSubject,
@@ -276,6 +348,7 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
       from: "You",
       to: recipient,
       taskId: ticketTaskId,
+      jobId: ticketJobId,
     };
     setTickets(prevTickets => [newGeneratedTicket, ...prevTickets]);
 
@@ -283,11 +356,10 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
       id: String(Date.now()),
       text: newTicketMessage,
       sender: "user",
-      senderName: userRole === 'student' ? "Student (You)" : "VA (You)",
+      senderName: userRole === 'student' ? "Student (You)" : userRole === 'va' ? "VA (You)" : "Print Center (You)",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       avatar: "https://placehold.co/40x40.png?text=U",
     };
-    // Simulate sending the first message from the user in the new ticket
      const firstReply: Message = {
       id: String(Date.now() + 1),
       text: `Thanks for creating ticket ${newTicketId}. We'll get back to you soon.`,
@@ -304,6 +376,8 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
     setStudentQueryType(undefined);
     setRelevantTaskId("");
     setVaQueryType(undefined);
+    setPrintCenterQueryType(undefined);
+    setRelevantJobId("");
     setIsCreateTicketDialogOpen(false);
 
     toast({
@@ -483,6 +557,34 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
                                                 <SelectItem value="other_admin">Other (to Admin)</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                    </div>
+                                )}
+                                {userRole === 'print-center' && (
+                                     <div className="space-y-2">
+                                        <Label htmlFor="pc-query-type">Query Type</Label>
+                                        <Select onValueChange={setPrintCenterQueryType} value={printCenterQueryType}>
+                                            <SelectTrigger id="pc-query-type">
+                                                <SelectValue placeholder="Select query type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="communication_to_student_job">Message to Student (re: Print Job)</SelectItem>
+                                                <SelectItem value="platform_issue_pc">Platform Issue (to Admin)</SelectItem>
+                                                <SelectItem value="payment_query_pc">Shop Payout Query (to Admin)</SelectItem>
+                                                <SelectItem value="student_dispute_pc">Student Dispute (to Admin)</SelectItem>
+                                                <SelectItem value="other_admin_pc">Other (to Admin)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+                                {userRole === 'print-center' && printCenterQueryType === 'communication_to_student_job' && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="relevant-job-id">Relevant Print Job ID (Optional)</Label>
+                                        <Input 
+                                            id="relevant-job-id" 
+                                            placeholder="e.g., JOB123" 
+                                            value={relevantJobId}
+                                            onChange={(e) => setRelevantJobId(e.target.value)}
+                                        />
                                     </div>
                                 )}
                                 <div className="space-y-2">
