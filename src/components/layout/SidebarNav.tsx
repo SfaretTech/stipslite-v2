@@ -30,7 +30,8 @@ import {
   Store, 
   FileText, 
   Gift,
-  Activity, // Added Activity icon
+  Activity,
+  UserCog, // Added UserCog
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -80,7 +81,8 @@ const adminNavItems = [
    { href: "/admin/approvals", label: "Account Approvals", icon: ShieldCheck },
    { href: "/admin/tasks", label: "Task Approvals", icon: ClipboardList },
    { href: "/admin/users", label: "Manage Users", icon: BookUser },
-   { href: "/admin/notifications", label: "Notifications", icon: Activity }, // Changed icon
+   { href: "/admin/manage-admins", label: "Manage Admins", icon: UserCog }, // Added Manage Admins
+   { href: "/admin/notifications", label: "Notifications", icon: Activity },
    { href: "/admin/settings", label: "Platform Settings", icon: Settings },
 ];
 
@@ -128,8 +130,8 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   useEffect(() => {
     setHasMounted(true);
     if (typeof window !== 'undefined') {
-      const studentPlanStatus = localStorage.getItem('stipsLiteVaPlanActive'); 
-      if (studentPlanStatus === 'true') {
+      const studentPlanStatus = localStorage.getItem('stipsLiteActivePlanId'); 
+      if (studentPlanStatus === 'expert_va') {
         setIsSubscribedToStudentVaPlan(true);
       }
       const vaProPlanStatus = localStorage.getItem('stipsLiteVaProPlanActive'); 
@@ -195,7 +197,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   const logoutHref = 
     role === "va" ? "/va/login" :
     role === "print-center" ? "/printcenter/login" :
-    role === "admin" ? "/admin/login" : // Admin logout goes to admin login
+    role === "admin" ? "/admin/login" : 
     "/auth/login";
 
 
