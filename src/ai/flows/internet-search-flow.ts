@@ -1,9 +1,10 @@
+
 'use server';
 
 /**
- * @fileOverview AI-powered general internet search flow.
+ * @fileOverview AI-powered general internet search and conversational assistant flow.
  *
- * - internetSearch - A function that allows users to search the internet for information using natural language.
+ * - internetSearch - A function that allows users to interact with an AI assistant for information.
  * - InternetSearchInput - The input type for the internetSearch function.
  * - InternetSearchOutput - The return type for the internetSearch function.
  */
@@ -12,12 +13,12 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const InternetSearchInputSchema = z.object({
-  query: z.string().describe('The search query from the user, using keywords or natural language.'),
+  query: z.string().describe('The user query or message to the AI assistant.'),
 });
 export type InternetSearchInput = z.infer<typeof InternetSearchInputSchema>;
 
 const InternetSearchOutputSchema = z.object({
-  answer: z.string().describe('A comprehensive answer or summary of information found on the internet related to the user query.'),
+  answer: z.string().describe('A comprehensive and conversational answer from the AI assistant related to the user query.'),
 });
 export type InternetSearchOutput = z.infer<typeof InternetSearchOutputSchema>;
 
@@ -29,11 +30,7 @@ const prompt = ai.definePrompt({
   name: 'internetSearchPrompt',
   input: {schema: InternetSearchInputSchema},
   output: {schema: InternetSearchOutputSchema},
-  prompt: `You are an AI assistant acting as a general internet search engine. Your goal is to understand the user's query, search the internet for relevant information, and provide a comprehensive answer or summary. Focus on providing factual and helpful information. If the query appears to be educational in nature, prioritize information from reliable educational sources if possible.
-
-Query: {{{query}}}
-
-Provide a detailed and informative answer based on your search.
+  prompt: `You are a helpful AI assistant. The user says: {{{query}}}. Respond to the user concisely and informatively. If the query seems to be a general knowledge question or request for explanation, provide a comprehensive answer. If it is a casual statement, respond in a friendly conversational manner.
 `,
 });
 
