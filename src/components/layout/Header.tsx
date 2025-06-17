@@ -64,7 +64,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
   let referralsLink = "/dashboard/referrals";
   let currentNotifications = mockStudentNotifications;
   let notificationsLinkText = "Notifications";
-  let notificationsLinkIcon = Bell;
+  let NotificationsLinkIconComponent = Bell;
 
 
   if (role === "va") {
@@ -77,6 +77,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     logoutLink = "/va/login";
     referralsLink = "/va/referrals";
     currentNotifications = mockVaNotifications;
+    NotificationsLinkIconComponent = Bell;
   } else if (role === "admin") {
     userName = "Admin User";
     userEmail = "admin@stipslite.com"; 
@@ -88,7 +89,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     referralsLink = "/admin/settings"; 
     currentNotifications = mockAdminNotifications; 
     notificationsLinkText = "Activity Log";
-    notificationsLinkIcon = Activity;
+    NotificationsLinkIconComponent = Activity;
   } else if (role === "print-center") {
     userName = "Print Shop Owner";
     userEmail = "shop@example.com";
@@ -99,6 +100,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     logoutLink = "/printcenter/login";
     referralsLink = "/printcenter/referrals";
     currentNotifications = mockPrintCenterNotifications;
+    NotificationsLinkIconComponent = Bell;
   }
   
   const unreadNotificationsCount = currentNotifications.filter(n => !n.read).length;
@@ -203,7 +205,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
             )}
              <DropdownMenuItem asChild>
               <Link href={notificationsLink}>
-                <notificationsLinkIcon className="mr-2 h-4 w-4" />
+                <NotificationsLinkIconComponent className="mr-2 h-4 w-4" />
                 <span>{notificationsLinkText}</span>
                 {unreadNotificationsCount > 0 && role !== 'admin' && <Badge variant="destructive" className="ml-auto">{unreadNotificationsCount}</Badge>}
               </Link>
@@ -261,4 +263,3 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     </header>
   );
 }
-
