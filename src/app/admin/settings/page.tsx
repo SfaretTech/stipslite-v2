@@ -6,7 +6,209 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Settings, Save, DollarSign, Percent, Gift, Users2, Building, Briefcase } from "lucide-react"; // Added Briefcase
+import { Settings, Save, DollarSign, Percent, Gift, Users2, Building, Briefcase, ClipboardList } from "lucide-react";
+
+const DEFAULT_TASK_PRICING_CONFIG = [
+  {
+    taskTypeName: "Assignment",
+    feeRangeNGN: "2000",
+    feeRangeUSD: "5",
+    pricingModel: "per_page",
+    pricePerPageNGN: 200,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Term Paper",
+    feeRangeNGN: "3000 - 5000",
+    feeRangeUSD: "5-8",
+    pricingModel: "per_page",
+    pricePerPageNGN: 200,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Project Work",
+    feeRangeNGN: "7000 - 15000",
+    feeRangeUSD: "",
+    pricingModel: "per_page",
+    pricePerPageNGN: 200,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Research Paper",
+    feeRangeNGN: "2000 - 4000",
+    feeRangeUSD: "3-6",
+    pricingModel: "per_page",
+    pricePerPageNGN: 200,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Assignment (Type 2)", // Differentiated from the first "Assignment"
+    feeRangeNGN: "1000 - 2000",
+    feeRangeUSD: "2-4",
+    pricingModel: "per_page",
+    pricePerPageNGN: 200,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Essay Writing",
+    feeRangeNGN: "2000",
+    feeRangeUSD: "5",
+    pricingModel: "per_page",
+    pricePerPageNGN: 200,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Thesis",
+    feeRangeNGN: "15000 - 40000",
+    feeRangeUSD: "30",
+    pricingModel: "per_page",
+    pricePerPageNGN: 300,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Dissertation",
+    feeRangeNGN: "7000 - 15000",
+    feeRangeUSD: "",
+    pricingModel: "per_page",
+    pricePerPageNGN: 200,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Coursework",
+    feeRangeNGN: "2000 - 4000",
+    feeRangeUSD: "3-6",
+    pricingModel: "per_page",
+    pricePerPageNGN: 200,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Group Project",
+    feeRangeNGN: "1000 - 2000",
+    feeRangeUSD: "2-4",
+    pricingModel: "per_page",
+    pricePerPageNGN: 200,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Book/Article Review",
+    feeRangeNGN: "2000",
+    feeRangeUSD: "3-6",
+    pricingModel: "per_page",
+    pricePerPageNGN: 200,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Annotated Bibliography",
+    feeRangeNGN: "2000",
+    feeRangeUSD: "5",
+    pricingModel: "per_page",
+    pricePerPageNGN: 200,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Literature Review",
+    feeRangeNGN: "3000 - 5000",
+    feeRangeUSD: "5-8",
+    pricingModel: "per_page",
+    pricePerPageNGN: 200,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Field Work Report",
+    feeRangeNGN: "7000 - 15000",
+    feeRangeUSD: "",
+    pricingModel: "per_page",
+    pricePerPageNGN: 200,
+    fixedPriceNGN: null,
+    notes: ""
+  },
+  {
+    taskTypeName: "Seminar Paper",
+    feeRangeNGN: "1000",
+    feeRangeUSD: "",
+    pricingModel: "fixed",
+    pricePerPageNGN: null,
+    fixedPriceNGN: 1000,
+    notes: ""
+  },
+  {
+    taskTypeName: "Internship Report",
+    feeRangeNGN: "1000 - 2000",
+    feeRangeUSD: "10",
+    pricingModel: "fixed",
+    pricePerPageNGN: null,
+    fixedPriceNGN: 1000, // Using lower end of range or as specified
+    notes: ""
+  },
+  {
+    taskTypeName: "Position Paper",
+    feeRangeNGN: "2000",
+    feeRangeUSD: "5",
+    pricingModel: "fixed",
+    pricePerPageNGN: null,
+    fixedPriceNGN: 2000,
+    notes: ""
+  },
+  {
+    taskTypeName: "Concept Note / Proposal Writing",
+    feeRangeNGN: "2000 - 7000",
+    feeRangeUSD: "20",
+    pricingModel: "fixed",
+    pricePerPageNGN: null,
+    fixedPriceNGN: 2000, // Using lower end of range or as specified
+    notes: ""
+  },
+  {
+    taskTypeName: "Abstract Writing",
+    feeRangeNGN: "1000",
+    feeRangeUSD: "2-4",
+    pricingModel: "fixed",
+    pricePerPageNGN: null,
+    fixedPriceNGN: 1000,
+    notes: ""
+  },
+  {
+    taskTypeName: "Business Plan / Feasibility Study",
+    feeRangeNGN: "25000",
+    feeRangeUSD: "30-60",
+    pricingModel: "fixed",
+    pricePerPageNGN: null,
+    fixedPriceNGN: 25000,
+    notes: ""
+  },
+  {
+    taskTypeName: "Academic Debate Preparation",
+    feeRangeNGN: "Coming soon",
+    feeRangeUSD: "",
+    pricingModel: "fixed",
+    pricePerPageNGN: null,
+    fixedPriceNGN: 0,
+    notes: "Pricing coming soon"
+  },
+  {
+    taskTypeName: "Mock/ Exam Questions setup",
+    feeRangeNGN: "1000",
+    feeRangeUSD: "",
+    pricingModel: "per_page", // Based on "NGN 500" per page
+    pricePerPageNGN: 500,
+    fixedPriceNGN: null,
+    notes: ""
+  }
+];
+
 
 export default function AdminSettingsPage() {
   return (
@@ -46,7 +248,7 @@ export default function AdminSettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Payment & Subscription Settings</CardTitle>
+            <CardTitle className="font-headline">Payment &amp; Subscription Settings</CardTitle>
             <CardDescription>Manage currency, task pricing, and subscription tiers.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -74,6 +276,27 @@ export default function AdminSettingsPage() {
               className="font-code"
               />
               <p className="text-xs text-muted-foreground">Define subscription plans and their pricing. Requires restart to apply changes.</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center"><ClipboardList className="mr-2 h-5 w-5 text-primary"/>Task Pricing &amp; Configuration</CardTitle>
+            <CardDescription>Define pricing models, fee ranges, and per-page/fixed costs for various student task types.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="taskPricingConfig">Task Pricing Configuration (JSON)</Label>
+              <Textarea 
+                id="taskPricingConfig" 
+                rows={15} 
+                defaultValue={JSON.stringify(DEFAULT_TASK_PRICING_CONFIG, null, 2)} 
+                className="font-code text-xs leading-relaxed" 
+              />
+              <p className="text-xs text-muted-foreground">
+                Structure: {`{"taskTypeName": "...", "feeRangeNGN": "...", "feeRangeUSD": "...", "pricingModel": "per_page" | "fixed", "pricePerPageNGN": ..., "fixedPriceNGN": ..., "notes": "..."}`}. Requires app logic to parse and apply.
+              </p>
             </div>
           </CardContent>
         </Card>
