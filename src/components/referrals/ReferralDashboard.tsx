@@ -10,7 +10,7 @@ import { Copy, DollarSign, Users, Gift, Smartphone, Send } from "lucide-react";
 import { StatCard } from "@/components/shared/StatCard";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react"; 
+import { useState, useEffect } from "react"; 
 
 interface Referral {
   id: string;
@@ -41,23 +41,21 @@ export function ReferralDashboard() {
   const { toast } = useToast();
   const [withdrawalAmount, setWithdrawalAmount] = useState(""); 
   
-  const calculateCurrentBalance = () => {
-    return mockReferrals.reduce((acc, ref) => {
+  const initialBalance = mockReferrals.reduce((acc, ref) => {
       if (ref.status.includes("Earned")) {
         return acc + parseFloat(ref.earnings.replace('₦', ''));
       }
       return acc;
     }, 0);
-  };
-  const currentBalance = calculateCurrentBalance();
+  const [currentBalance, setCurrentBalance] = useState(initialBalance);
+
 
   const calculatePendingEarnings = () => {
     return mockReferrals.reduce((acc, ref) => {
-      if (ref.status === "Signed Up, Awaiting Activity") { // Potential NGN 100 for signup + NGN 1000 for yearly sub
+      if (ref.status === "Signed Up, Awaiting Activity") { 
         return acc + 100 + 1000; 
       }
-      if (ref.status === "Pending First Task") { // Assuming first task implies potential signup reward for old rule, adjust if needed
-          // For now, let's assume new rules apply and first task implies signup
+      if (ref.status === "Pending First Task") { 
           return acc + 100;
       }
       return acc;
@@ -72,7 +70,6 @@ export function ReferralDashboard() {
   };
 
   const handleSaveWalletDetails = () => {
-    // UI-only: Simulate saving details
     toast({
       title: "Wallet Details Saved!",
       description: "Your mobile money wallet information has been updated (simulation).",
@@ -80,7 +77,6 @@ export function ReferralDashboard() {
   };
 
   const handleWithdrawFunds = () => {
-    // UI-only: Simulate withdrawal request
     const amountToWithdraw = parseFloat(withdrawalAmount);
     if (isNaN(amountToWithdraw) || amountToWithdraw <= 0) {
         toast({
@@ -98,11 +94,12 @@ export function ReferralDashboard() {
         });
         return;
     }
-     if (amountToWithdraw < 100) { // New minimum based on NGN 100 signup reward
+     if (amountToWithdraw < 100) { 
         toast({ title: "Minimum Withdrawal", description: `Minimum withdrawal amount is ₦100.00.`, variant: "destructive" });
         return;
     }
 
+    setCurrentBalance(prevBalance => prevBalance - amountToWithdraw);
 
     toast({
       title: "Withdrawal Request Submitted",
@@ -117,7 +114,7 @@ export function ReferralDashboard() {
         duration: 5000, 
     });
     console.log(`SIMULATION: Admin notified for withdrawal of ₦${amountToWithdraw.toFixed(2)}. User: [Current User], Wallet Details: [Details from form]`);
-    setWithdrawalAmount(""); // Clear input after submission
+    setWithdrawalAmount(""); 
   };
 
 
@@ -260,7 +257,7 @@ export function ReferralDashboard() {
                onClick={handleWithdrawFunds}
                variant="outline"
                className="w-full"
-               disabled={currentBalance < 100 || !withdrawalAmount} // Updated min withdrawal check
+               disabled={currentBalance < 100 || !withdrawalAmount} 
              >
                 <Send className="mr-2 h-4 w-4" /> Request Withdrawal
             </Button>
@@ -270,6 +267,3 @@ export function ReferralDashboard() {
     </div>
   );
 }
-
-
-    

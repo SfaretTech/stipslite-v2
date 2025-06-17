@@ -23,25 +23,31 @@ interface PayoutHistoryItem {
   accountLast4: string;
 }
 
-const mockPayoutHistory: PayoutHistoryItem[] = [
+const mockPayoutHistoryInitial: PayoutHistoryItem[] = [
   { id: "PAY001", date: "2024-07-15", amount: "₦10,000.00", status: "Processed", transactionId: "TRX12345ABC", bankName: "Zenith Bank", accountLast4: "7890" },
   { id: "PAY002", date: "2024-06-28", amount: "₦8,500.00", status: "Processed", transactionId: "TRX67890DEF", bankName: "GTBank", accountLast4: "1234" },
   { id: "PAY003", date: "2024-06-10", amount: "₦12,200.00", status: "Processed", transactionId: "TRX24680GHI", bankName: "Zenith Bank", accountLast4: "7890" },
 ];
 
-// Mock VA bank details (would usually come from profile)
 const mockVaBankDetails = {
     bankName: "Zenith Bank",
-    accountNumber: "********7890", // Masked
+    accountNumber: "********7890", 
     accountName: "Aisha Bello VA"
 };
+
+const initialCurrentBalance = 15000.00; 
+const initialTotalEarned = 55700.00; 
+const initialLastPayoutAmount = 10000.00; 
 
 export default function VaPayoutsPage() {
   const { toast } = useToast();
   const [withdrawalAmount, setWithdrawalAmount] = useState("");
-  const currentBalance = 15000.00; // Mock current balance in NGN
-  const totalEarned = 55700.00; // Mock total earned
-  const lastPayoutAmount = 10000.00; // Mock last payout amount
+  const [currentBalance, setCurrentBalance] = useState(initialCurrentBalance);
+  const [lastPayoutAmount, setLastPayoutAmount] = useState(initialLastPayoutAmount);
+  const [payoutHistory, setPayoutHistory] = useState<PayoutHistoryItem[]>(mockPayoutHistoryInitial);
+  // totalEarned can remain a const for this UI simulation if it represents an overall lifetime earning not directly reduced by withdrawals
+  const totalEarned = initialTotalEarned; 
+
 
   const handleRequestWithdrawal = () => {
     const amount = parseFloat(withdrawalAmount);
@@ -53,18 +59,32 @@ export default function VaPayoutsPage() {
       toast({ title: "Insufficient Balance", description: `Cannot withdraw more than your current balance of ₦${currentBalance.toFixed(2)}.`, variant: "destructive" });
       return;
     }
-    // Minimum withdrawal limit (example)
-    if (amount < 1000) {
+    if (amount < 1000) { 
          toast({ title: "Minimum Withdrawal", description: `Minimum withdrawal amount is ₦1,000.00.`, variant: "destructive" });
         return;
     }
+
+    setCurrentBalance(prevBalance => prevBalance - amount);
+    setLastPayoutAmount(amount);
+
+    // Add to payout history (simulated)
+    const newPayout: PayoutHistoryItem = {
+        id: `PAY${String(Date.now()).slice(-3)}`,
+        date: new Date().toISOString().split('T')[0], // Today's date
+        amount: `₦${amount.toFixed(2)}`,
+        status: "Pending", // New withdrawals are pending
+        transactionId: `TRX_PENDING_${String(Date.now()).slice(-4)}`,
+        bankName: mockVaBankDetails.bankName,
+        accountLast4: mockVaBankDetails.accountNumber.slice(-4),
+    };
+    setPayoutHistory(prevHistory => [newPayout, ...prevHistory]);
+
 
     toast({
       title: "Withdrawal Request Submitted",
       description: `Your request to withdraw ₦${amount.toFixed(2)} to ${mockVaBankDetails.bankName} (******${mockVaBankDetails.accountNumber.slice(-4)}) is pending admin approval.`,
     });
-    setWithdrawalAmount(""); // Clear input
-    // In a real app, update balances and add to pending payouts
+    setWithdrawalAmount(""); 
   };
 
   const handleDownloadCsv = () => {
@@ -72,7 +92,6 @@ export default function VaPayoutsPage() {
       title: "CSV Download Simulated",
       description: "Your payout history CSV download has started (simulation).",
     });
-    // Actual CSV generation and download logic would go here
   };
 
   return (
@@ -141,7 +160,7 @@ export default function VaPayoutsPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          {mockPayoutHistory.length === 0 ? (
+          {payoutHistory.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
                 <CalendarDays className="mx-auto h-12 w-12 mb-3" />
                 <p>No payout history available yet.</p>
@@ -159,14 +178,17 @@ export default function VaPayoutsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockPayoutHistory.map(payout => (
+                  {payoutHistory.map(payout => (
                     <TableRow key={payout.id}>
                       <TableCell>{payout.date}</TableCell>
                       <TableCell className="font-medium">{payout.amount}</TableCell>
                       <TableCell>
                         <Badge 
                             variant={payout.status === "Processed" ? "default" : payout.status === "Pending" ? "secondary" : "destructive"}
-                            className={payout.status === "Processed" ? "bg-green-500 text-white" : ""}
+                            className={
+                                payout.status === "Processed" ? "bg-green-500 text-white" :
+                                payout.status === "Pending" ? "bg-yellow-500 text-white" : ""
+                            }
                         >
                             {payout.status}
                         </Badge>

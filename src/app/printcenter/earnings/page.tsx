@@ -23,7 +23,7 @@ interface PayoutHistoryItem {
   accountLast4: string;
 }
 
-const mockShopPayoutHistory: PayoutHistoryItem[] = [
+const mockShopPayoutHistoryInitial: PayoutHistoryItem[] = [
   { id: "SPAY001", date: "2024-07-20", amount: "₦15,500.00", status: "Processed", transactionId: "STRX98765", bankName: "Equity Bank", accountLast4: "0123" },
   { id: "SPAY002", date: "2024-07-05", amount: "₦12,000.00", status: "Processed", transactionId: "STRX54321", bankName: "Equity Bank", accountLast4: "0123" },
 ];
@@ -34,12 +34,17 @@ const mockShopBankDetails = {
     accountName: "Speedy Prints CBD Ltd"
 };
 
+const initialCurrentBalanceShop = 23500.00; 
+const initialTotalEarnedShop = 150750.00; 
+const initialLastPayoutAmountShop = 15500.00; 
+
 export default function PrintCenterEarningsPage() {
   const { toast } = useToast();
   const [withdrawalAmount, setWithdrawalAmount] = useState("");
-  const currentBalance = 23500.00; 
-  const totalEarned = 150750.00; 
-  const lastPayoutAmount = 15500.00; 
+  const [currentBalance, setCurrentBalance] = useState(initialCurrentBalanceShop);
+  const [lastPayoutAmount, setLastPayoutAmount] = useState(initialLastPayoutAmountShop);
+  const [payoutHistory, setPayoutHistory] = useState<PayoutHistoryItem[]>(mockShopPayoutHistoryInitial);
+  const totalEarned = initialTotalEarnedShop; 
 
   const handleRequestWithdrawal = () => {
     const amount = parseFloat(withdrawalAmount);
@@ -55,6 +60,20 @@ export default function PrintCenterEarningsPage() {
          toast({ title: "Minimum Withdrawal", description: `Minimum withdrawal amount is ₦1,000.00.`, variant: "destructive" });
         return;
     }
+
+    setCurrentBalance(prevBalance => prevBalance - amount);
+    setLastPayoutAmount(amount);
+
+    const newPayout: PayoutHistoryItem = {
+        id: `SPAY${String(Date.now()).slice(-3)}`,
+        date: new Date().toISOString().split('T')[0],
+        amount: `₦${amount.toFixed(2)}`,
+        status: "Pending",
+        transactionId: `STRX_PENDING_${String(Date.now()).slice(-4)}`,
+        bankName: mockShopBankDetails.bankName,
+        accountLast4: mockShopBankDetails.accountNumber.slice(-4),
+    };
+    setPayoutHistory(prevHistory => [newPayout, ...prevHistory]);
 
     toast({
       title: "Withdrawal Request Submitted",
@@ -136,7 +155,7 @@ export default function PrintCenterEarningsPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          {mockShopPayoutHistory.length === 0 ? (
+          {payoutHistory.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
                 <CalendarDays className="mx-auto h-12 w-12 mb-3" />
                 <p>No payout history available yet.</p>
@@ -154,14 +173,17 @@ export default function PrintCenterEarningsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockShopPayoutHistory.map(payout => (
+                  {payoutHistory.map(payout => (
                     <TableRow key={payout.id}>
                       <TableCell>{payout.date}</TableCell>
                       <TableCell className="font-medium">{payout.amount}</TableCell>
                       <TableCell>
                         <Badge 
                             variant={payout.status === "Processed" ? "default" : payout.status === "Pending" ? "secondary" : "destructive"}
-                            className={payout.status === "Processed" ? "bg-green-500 text-white" : ""}
+                            className={
+                                payout.status === "Processed" ? "bg-green-500 text-white" :
+                                payout.status === "Pending" ? "bg-yellow-500 text-white" : ""
+                            }
                         >
                             {payout.status}
                         </Badge>
