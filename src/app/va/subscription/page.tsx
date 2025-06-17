@@ -8,10 +8,10 @@ import { SubscriptionCard } from "@/components/subscription/SubscriptionCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Briefcase, Star } from "lucide-react"; 
+import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Briefcase, Star, ShieldOff } from "lucide-react"; 
 import { useToast } from "@/hooks/use-toast";
 
-const vaSubscriptionPlans = [ 
+const vaSubscriptionPlansInitial = [ 
   {
     id: "va_professional_business", 
     name: "Professional Business VA Plan",
@@ -29,7 +29,23 @@ const vaSubscriptionPlans = [
     ],
     isCurrent: false,
     isPopular: true, 
-    description: "Tailored for established VA businesses and agencies seeking maximum visibility, advanced tools, and to showcase their professional services with enhanced credibility and client assurance."
+    description: "Tailored for established VA businesses and agencies seeking maximum visibility, advanced tools, and to showcase their professional services with enhanced credibility and client assurance.",
+    icon: Briefcase,
+  },
+  {
+    id: "ads_blocker_va", // Unique ID for VA ads blocker
+    name: "Ads Blocker (VA)",
+    priceMonthly: "₦200",
+    priceYearly: "₦2000",
+    features: [
+      "Enjoy an ad-free experience across STIPS Lite.",
+      "No more interruptions from advertisements while you work.",
+      "Supports the platform development.",
+    ],
+    isCurrent: false,
+    isPopular: false,
+    description: "Remove all advertisements for a cleaner browsing and working experience.",
+    icon: ShieldOff,
   },
 ];
 
@@ -38,22 +54,26 @@ export default function VaSubscriptionPage() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly"); 
   const { toast } = useToast();
   const router = useRouter(); 
-  const [plans, setPlans] = useState(vaSubscriptionPlans.map(p => ({...p}))); 
+  const [plans, setPlans] = useState(vaSubscriptionPlansInitial.map(p => ({...p}))); 
+  const [isAdsBlockerActive, setIsAdsBlockerActive] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const activeVaPlanId = localStorage.getItem('stipsLiteActiveVaPlanId'); 
       const activeVaPlanCycle = localStorage.getItem('stipsLiteActiveVaPlanCycle') as "monthly" | "yearly" | null; 
+      const vaAdsBlockerActive = localStorage.getItem('stipsLiteVaAdsBlockerActive') === 'true';
+      setIsAdsBlockerActive(vaAdsBlockerActive);
       
-      if (activeVaPlanId) {
-        setPlans(prevPlans => prevPlans.map(p => {
-          return { 
-            ...p, 
-            isCurrent: p.id === activeVaPlanId, 
-            billingCycle: activeVaPlanCycle || billingCycle 
-          };
-        }));
-      }
+      setPlans(prevPlans => prevPlans.map(p => {
+        let isCurrentPlan = p.id === activeVaPlanId;
+        if (vaAdsBlockerActive && p.id === 'ads_blocker_va') isCurrentPlan = true;
+
+        return { 
+          ...p, 
+          isCurrent: isCurrentPlan, 
+          billingCycle: activeVaPlanCycle || billingCycle 
+        };
+      }));
     }
   }, [billingCycle]);
 
@@ -64,24 +84,31 @@ export default function VaSubscriptionPage() {
 
     let toastTitle = `Processing ${chosenPlan.name} (${cycle})...`;
     let toastDescription = "Your VA subscription selection is being updated.";
-    let redirectPath = "/va/business-tasks"; 
+    let redirectPath = "/va/dashboard"; 
 
     toast({ title: "Initiating Flutterwave Payment...", description: `Preparing payment for ${chosenPlan.name} (${cycle}). Please wait.` });
 
     setTimeout(() => {
       if (typeof window !== 'undefined') {
-          localStorage.setItem('stipsLiteActiveVaPlanId', planId); 
-          localStorage.setItem('stipsLiteActiveVaPlanCycle', cycle); 
-
-          if (planId === 'va_professional_business') {
+          if (planId === 'ads_blocker_va') {
+            localStorage.setItem('stipsLiteVaAdsBlockerActive', 'true');
+            setIsAdsBlockerActive(true);
+            toastDescription = "Ads Blocker for VAs is now active. Enjoy an ad-free experience!";
+            redirectPath = `/va/subscription?plan_activated=${planId}`;
+          } else if (planId === 'va_professional_business') {
+              localStorage.setItem('stipsLiteActiveVaPlanId', planId); 
+              localStorage.setItem('stipsLiteActiveVaPlanCycle', cycle); 
               localStorage.setItem('stipsLiteVaProPlanActive', 'true'); 
               toastDescription = "Your Professional Business VA Plan is active. You can now manage Business Service Tasks and enjoy premium features.";
               redirectPath = `/va/business-tasks?plan_activated=${planId}`;
+          } else {
+              localStorage.setItem('stipsLiteActiveVaPlanId', planId); 
+              localStorage.setItem('stipsLiteActiveVaPlanCycle', cycle); 
           }
       }
       
       setPlans(prevPlans => prevPlans.map(p => 
-          p.id === planId ? { ...p, isCurrent: true, billingCycle: cycle } : { ...p, isCurrent: false }
+          p.id === planId ? { ...p, isCurrent: true, billingCycle: cycle } : { ...p, isCurrent: p.id === 'ads_blocker_va' ? isAdsBlockerActive : false }
       ));
 
       toast({
@@ -94,9 +121,11 @@ export default function VaSubscriptionPage() {
     }, 2500); 
   };
 
-  const currentPlan = plans.find(p => p.isCurrent);
+  const currentPlan = plans.find(p => p.isCurrent && p.id !== 'ads_blocker_va');
+  const currentAdsBlockerPlan = plans.find(p => p.id === 'ads_blocker_va' && isAdsBlockerActive);
 
-  const handleFlutterwavePaymentForPlanId = (planIdToActivate: string) => { // Renamed for clarity
+
+  const handleFlutterwavePaymentForPlanId = (planIdToActivate: string) => { 
     const planToActivate = plans.find(p => p.id === planIdToActivate);
     if (!planToActivate) {
         toast({ title: "Error", description: "Selected plan not found for payment.", variant: "destructive"});
@@ -104,7 +133,7 @@ export default function VaSubscriptionPage() {
     }
 
     let toastPaymentDescription = `Processing payment for ${planToActivate.name} (${billingCycle}) via Flutterwave...`;
-    let redirectPath = "/va/business-tasks"; 
+    let redirectPath = "/va/dashboard"; 
 
     toast({ 
         title: "Flutterwave Payment Initiated (VA - Simulated)", 
@@ -113,14 +142,21 @@ export default function VaSubscriptionPage() {
     
     setTimeout(() => {
         setPlans(prevPlans => prevPlans.map(p => 
-            p.id === planIdToActivate ? { ...p, isCurrent: true, billingCycle: billingCycle } : { ...p, isCurrent: false }
+            p.id === planIdToActivate ? { ...p, isCurrent: true, billingCycle: billingCycle } : { ...p, isCurrent: p.id === 'ads_blocker_va' ? isAdsBlockerActive : (p.isCurrent && p.id !== planIdToActivate ? p.isCurrent : false) }
         ));
         if (typeof window !== 'undefined') {
-            localStorage.setItem('stipsLiteActiveVaPlanId', planIdToActivate); 
-            localStorage.setItem('stipsLiteActiveVaPlanCycle', billingCycle); 
-            if (planIdToActivate === 'va_professional_business') {
+            if (planIdToActivate === 'ads_blocker_va') {
+                localStorage.setItem('stipsLiteVaAdsBlockerActive', 'true');
+                setIsAdsBlockerActive(true);
+                redirectPath = `/va/subscription?plan_activated=${planIdToActivate}`;
+            } else if (planIdToActivate === 'va_professional_business') {
+                localStorage.setItem('stipsLiteActiveVaPlanId', planIdToActivate); 
+                localStorage.setItem('stipsLiteActiveVaPlanCycle', billingCycle); 
                 localStorage.setItem('stipsLiteVaProPlanActive', 'true'); 
                 redirectPath = `/va/business-tasks?plan_activated=${planIdToActivate}`;
+            } else {
+                localStorage.setItem('stipsLiteActiveVaPlanId', planIdToActivate); 
+                localStorage.setItem('stipsLiteActiveVaPlanCycle', billingCycle); 
             }
         }
          toast({
@@ -132,17 +168,21 @@ export default function VaSubscriptionPage() {
     }, 2500); 
   };
 
-  const handleCancelSubscription = () => {
+  const handleCancelSubscription = (planIdToCancel: string) => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('stipsLiteVaProPlanActive'); 
-      localStorage.removeItem('stipsLiteActiveVaPlanId'); 
-      localStorage.removeItem('stipsLiteActiveVaPlanCycle'); 
+      if (planIdToCancel === 'ads_blocker_va') {
+        localStorage.removeItem('stipsLiteVaAdsBlockerActive');
+        setIsAdsBlockerActive(false);
+        setPlans(prevPlans => prevPlans.map(p => p.id === 'ads_blocker_va' ? { ...p, isCurrent: false } : p));
+        toast({ title: "Ads Blocker (VA) Cancelled", description: "Ads may now be displayed."});
+      } else {
+        localStorage.removeItem('stipsLiteVaProPlanActive'); 
+        localStorage.removeItem('stipsLiteActiveVaPlanId'); 
+        localStorage.removeItem('stipsLiteActiveVaPlanCycle'); 
+        setPlans(prevPlans => prevPlans.map(p => (p.id === planIdToCancel || p.id === 'va_professional_business') ? { ...p, isCurrent: false } : p));
+        toast({ title: "VA Subscription Cancelled (Simulated)", description: "Your VA subscription has been cancelled. Premium VA features are now locked."});
+      }
     }
-    setPlans(prevPlans => prevPlans.map(p => ({ ...p, isCurrent: false })));
-    toast({
-      title: "VA Subscription Cancelled (Simulated)",
-      description: "Your VA subscription has been cancelled. Premium VA features are now locked.",
-    });
   };
 
 
@@ -150,7 +190,7 @@ export default function VaSubscriptionPage() {
     <div className="space-y-8">
       <PageHeader 
         title="Manage Your VA Subscription"
-        description="Subscribe to the 'Professional Business VA Plan' to list your services, access Business Service Tasks, and unlock premium features."
+        description="Subscribe to the 'Professional Business VA Plan' or 'Ads Blocker' to enhance your experience and unlock features."
         icon={CreditCard}
       />
 
@@ -167,9 +207,10 @@ export default function VaSubscriptionPage() {
         {plans.map(plan => (
           <div key={plan.id} className="w-full">
             <SubscriptionCard 
-              plan={plan} 
-              onChoosePlan={handleChoosePlan} // This now simulates payment directly
+              plan={{...plan, isCurrent: plan.id === 'ads_blocker_va' ? isAdsBlockerActive : plan.isCurrent}}
+              onChoosePlan={handleChoosePlan}
               currentBillingCycle={billingCycle}
+              icon={plan.icon}
             />
           </div>
         ))}
@@ -178,26 +219,39 @@ export default function VaSubscriptionPage() {
         )}
       </div>
 
-      {currentPlan && (
+      {(currentPlan || currentAdsBlockerPlan) && (
         <Card className="shadow-lg max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="font-headline">Current VA Subscription Details</CardTitle>
-            <CardDescription>Overview of your active VA plan and billing information.</CardDescription>
+            <CardDescription>Overview of your active VA plan(s) and billing information.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-md">
-              <div>
-                <p className="text-lg font-semibold">{currentPlan.name} ({currentPlan.billingCycle || billingCycle})</p>
-                <p className="text-sm text-muted-foreground">
-                  Price: {(currentPlan.billingCycle || billingCycle) === 'yearly' ? currentPlan.priceYearly : currentPlan.priceMonthly} / {(currentPlan.billingCycle || billingCycle) === 'yearly' ? 'year' : 'month'}
-                </p>
+             {currentPlan && (
+                <div className="flex justify-between items-center p-4 bg-muted/50 rounded-md mb-3">
+                <div>
+                    <p className="text-lg font-semibold">{currentPlan.name} ({currentPlan.billingCycle || billingCycle})</p>
+                    <p className="text-sm text-muted-foreground">
+                    Price: {(currentPlan.billingCycle || billingCycle) === 'yearly' ? currentPlan.priceYearly : currentPlan.priceMonthly} / {(currentPlan.billingCycle || billingCycle) === 'yearly' ? 'year' : 'month'}
+                    </p>
+                </div>
+                    {currentPlan.id === "va_professional_business" && (
+                    <Button variant="outline" size="sm" onClick={() => router.push('/va/business-tasks')}>
+                        Manage Business Tasks
+                    </Button>
+                )}
+                </div>
+            )}
+             {currentAdsBlockerPlan && (
+              <div className="flex justify-between items-center p-4 bg-muted/50 rounded-md">
+                <div>
+                  <p className="text-lg font-semibold">{currentAdsBlockerPlan.name} ({currentAdsBlockerPlan.billingCycle || billingCycle})</p>
+                  <p className="text-sm text-muted-foreground">
+                    Status: Active
+                  </p>
+                </div>
+                  <Button variant="destructive" size="sm" onClick={() => handleCancelSubscription('ads_blocker_va')}>Cancel Ads Blocker</Button>
               </div>
-                {currentPlan.id === "va_professional_business" && (
-                 <Button variant="outline" size="sm" onClick={() => router.push('/va/business-tasks')}>
-                    Manage Business Tasks
-                  </Button>
-               )}
-            </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -218,33 +272,48 @@ export default function VaSubscriptionPage() {
                 </p>
             </div>
           </CardContent>
-          <CardFooter className="border-t pt-4 flex justify-end">
-            <Button variant="destructive" className="bg-red-600 hover:bg-red-700" onClick={handleCancelSubscription}>Cancel Subscription</Button>
-          </CardFooter>
+          {currentPlan && (
+            <CardFooter className="border-t pt-4 flex justify-end">
+                <Button variant="destructive" className="bg-red-600 hover:bg-red-700" onClick={() => handleCancelSubscription(currentPlan.id)}>Cancel {currentPlan.name}</Button>
+            </CardFooter>
+          )}
         </Card>
       )}
 
        <Card className="shadow-lg max-w-2xl mx-auto">
             <CardHeader>
                 <CardTitle className="font-headline">Flutterwave Payment (VA Plans)</CardTitle>
-                <CardDescription>Simulated payment section for VA subscriptions. Choose a plan by clicking its "Choose Plan" button above. That button now directly simulates the payment and activation process.</CardDescription>
+                <CardDescription>Simulated payment section for VA subscriptions. Choose a plan by clicking its "Choose Plan" button above.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-center">
                 {plans.find(p => p.id === "va_professional_business") && (
                     <Button 
                         size="lg" 
-                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        className="bg-purple-600 hover:bg-purple-700 text-white mr-2"
                         onClick={() => handleFlutterwavePaymentForPlanId("va_professional_business")} 
                         disabled={plans.some(p => p.isCurrent && p.id === "va_professional_business")} 
                     >
-                        <Briefcase className="mr-2 h-5 w-5" /> Pay with Flutterwave (Professional Business VA Plan)
+                        <Briefcase className="mr-2 h-5 w-5" /> Pay for Professional Business VA Plan
+                    </Button>
+                )}
+                 {plans.find(p => p.id === "ads_blocker_va") && (
+                    <Button 
+                        size="lg" 
+                        className="bg-teal-500 hover:bg-teal-600 text-white"
+                        onClick={() => handleFlutterwavePaymentForPlanId("ads_blocker_va")} 
+                        disabled={isAdsBlockerActive} 
+                    >
+                        <ShieldOff className="mr-2 h-5 w-5" /> Pay for Ads Blocker (VA)
                     </Button>
                 )}
                 <p className="text-xs text-muted-foreground mt-2">
-                    The "Choose Plan" buttons on the VA plan cards above provide the primary way to simulate plan activation. This button is an alternative.
+                    The "Choose Plan" buttons on the VA plan cards above provide the primary way to simulate plan activation.
                 </p>
             </CardContent>
         </Card>
     </div>
   );
 }
+
+
+    

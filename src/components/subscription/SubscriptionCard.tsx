@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, XCircle, Zap, Briefcase, Star } from "lucide-react"; 
+import { CheckCircle2, XCircle, Zap, Briefcase, Star, ShieldOff, type LucideIcon } from "lucide-react"; 
 import { cn } from "@/lib/utils";
 
 interface SubscriptionPlan {
@@ -14,9 +14,10 @@ interface SubscriptionPlan {
   isPopular?: boolean;
   billingCycle?: "monthly" | "yearly";
   description?: string; 
+  icon?: LucideIcon; // Added icon prop
 }
 
-export function SubscriptionCard({ plan, onChoosePlan, currentBillingCycle }: { plan: SubscriptionPlan, onChoosePlan: (planId: string, cycle: "monthly" | "yearly") => void, currentBillingCycle: "monthly" | "yearly" }) {
+export function SubscriptionCard({ plan, onChoosePlan, currentBillingCycle, icon }: { plan: SubscriptionPlan, onChoosePlan: (planId: string, cycle: "monthly" | "yearly") => void, currentBillingCycle: "monthly" | "yearly", icon?: LucideIcon }) {
   const price = currentBillingCycle === "yearly" && plan.priceYearly ? plan.priceYearly : plan.priceMonthly;
   const cycleText = currentBillingCycle === "yearly" ? "/year" : "/month";
   
@@ -33,7 +34,8 @@ export function SubscriptionCard({ plan, onChoosePlan, currentBillingCycle }: { 
     }
   }
 
-  const PlanIcon = plan.id === "expert_va" ? Star : Briefcase;
+  const PlanIconComponent = icon || (plan.id.includes("ads_blocker") ? ShieldOff : plan.id.includes("expert_va") ? Star : Briefcase);
+
 
   return (
     <Card className={cn("shadow-lg hover:shadow-xl transition-shadow flex flex-col h-full", plan.isPopular ? "border-2 border-primary ring-2 ring-primary/20" : "")}>
@@ -45,7 +47,7 @@ export function SubscriptionCard({ plan, onChoosePlan, currentBillingCycle }: { 
       <CardHeader className="pb-4">
         <CardTitle className="font-headline text-2xl flex items-center justify-between">
           <span className="flex items-center">
-            <PlanIcon className="h-6 w-6 mr-2 text-primary/80" />
+            <PlanIconComponent className="h-6 w-6 mr-2 text-primary/80" />
             {plan.name}
           </span>
           {plan.isCurrent && <Zap className="h-6 w-6 text-green-500 fill-green-200" />}
@@ -69,13 +71,6 @@ export function SubscriptionCard({ plan, onChoosePlan, currentBillingCycle }: { 
               <span>{feature}</span>
             </li>
           ))}
-          {/* Example of a disabled feature for a basic plan (if we had one)
-           plan.name === "Basic" && ( 
-             <li className="flex items-start text-muted-foreground">
-              <XCircle className="h-5 w-5 text-red-400 mr-2 shrink-0 mt-0.5" />
-              <span>Advanced AI search features</span>
-            </li>
-          )*/}
         </ul>
       </CardContent>
       <CardFooter className="mt-auto pt-6 border-t">
@@ -93,3 +88,6 @@ export function SubscriptionCard({ plan, onChoosePlan, currentBillingCycle }: { 
     </Card>
   );
 }
+
+
+    

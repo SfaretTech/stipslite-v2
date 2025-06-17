@@ -8,10 +8,10 @@ import { SubscriptionCard } from "@/components/subscription/SubscriptionCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Users, Sparkles, Briefcase, Star } from "lucide-react"; 
+import { CreditCard, AlertTriangle, CalendarDays, RefreshCcw, Users, Sparkles, Briefcase, Star, ShieldOff } from "lucide-react"; 
 import { useToast } from "@/hooks/use-toast";
 
-const studentFocusedPlans = [ 
+const studentFocusedPlansInitial = [ 
   {
     id: "expert_va", 
     name: "Expert VA Plan", 
@@ -25,7 +25,23 @@ const studentFocusedPlans = [
     ],
     isCurrent: false, 
     isPopular: true, 
-    description: "Ideal for students seeking to hire specific VAs for their tasks."
+    description: "Ideal for students seeking to hire specific VAs for their tasks.",
+    icon: Star,
+  },
+  {
+    id: "ads_blocker",
+    name: "Ads Blocker",
+    priceMonthly: "₦200",
+    priceYearly: "₦2000",
+    features: [
+      "Enjoy an ad-free experience across STIPS Lite.",
+      "No more interruptions from advertisements.",
+      "Supports the platform development.",
+    ],
+    isCurrent: false,
+    isPopular: false,
+    description: "Remove all advertisements for a cleaner browsing experience.",
+    icon: ShieldOff,
   },
 ];
 
@@ -34,22 +50,24 @@ export default function SubscriptionPage() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly"); 
   const { toast } = useToast();
   const router = useRouter(); 
-  const [plans, setPlans] = useState(studentFocusedPlans.map(p => ({...p}))); 
+  const [plans, setPlans] = useState(studentFocusedPlansInitial.map(p => ({...p}))); 
+  const [isAdsBlockerActive, setIsAdsBlockerActive] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const studentVaPlanActive = localStorage.getItem('stipsLiteVaPlanActive') === 'true';
       const activeStudentPlanId = localStorage.getItem('stipsLiteActivePlanId'); 
       const activeStudentPlanCycle = localStorage.getItem('stipsLiteActivePlanCycle') as "monthly" | "yearly" | null;
+      const studentAdsBlockerActive = localStorage.getItem('stipsLiteStudentAdsBlockerActive') === 'true';
+      setIsAdsBlockerActive(studentAdsBlockerActive);
 
-      if (activeStudentPlanId) { 
-        setPlans(prevPlans => prevPlans.map(p => {
-          let isCurrentPlan = p.id === activeStudentPlanId;
-          if (studentVaPlanActive && p.id === 'expert_va') isCurrentPlan = true;
-          
-          return { ...p, isCurrent: isCurrentPlan, billingCycle: activeStudentPlanCycle || billingCycle };
-        }));
-      }
+      setPlans(prevPlans => prevPlans.map(p => {
+        let isCurrentPlan = p.id === activeStudentPlanId;
+        if (studentVaPlanActive && p.id === 'expert_va') isCurrentPlan = true;
+        if (studentAdsBlockerActive && p.id === 'ads_blocker') isCurrentPlan = true;
+        
+        return { ...p, isCurrent: isCurrentPlan, billingCycle: activeStudentPlanCycle || billingCycle };
+      }));
     }
   }, [billingCycle]);
 
@@ -66,18 +84,25 @@ export default function SubscriptionPage() {
 
     setTimeout(() => {
       if (typeof window !== 'undefined') {
-          localStorage.setItem('stipsLiteActivePlanId', planId); 
-          localStorage.setItem('stipsLiteActivePlanCycle', cycle);
-
-          if (planId === 'expert_va') {
+          if (planId === 'ads_blocker') {
+            localStorage.setItem('stipsLiteStudentAdsBlockerActive', 'true');
+            setIsAdsBlockerActive(true);
+            toastDescription = "Ads Blocker is now active. Enjoy an ad-free experience!";
+            redirectPath = `/dashboard/subscription?plan_activated=${planId}`;
+          } else if (planId === 'expert_va') {
+              localStorage.setItem('stipsLiteActivePlanId', planId); 
+              localStorage.setItem('stipsLiteActivePlanCycle', cycle);
               localStorage.setItem('stipsLiteVaPlanActive', 'true'); 
-              toastDescription = "You can now search for and request specific Virtual Assistants.";
+              toastDescription = "Expert VA Plan activated. You can now search for and request specific Virtual Assistants.";
               redirectPath = `/dashboard/find-va?plan_activated=${planId}`;
+          } else {
+            localStorage.setItem('stipsLiteActivePlanId', planId); 
+            localStorage.setItem('stipsLiteActivePlanCycle', cycle);
           }
       }
       
       setPlans(prevPlans => prevPlans.map(p => 
-          p.id === planId ? { ...p, isCurrent: true, billingCycle: cycle } : { ...p, isCurrent: false }
+          p.id === planId ? { ...p, isCurrent: true, billingCycle: cycle } : { ...p, isCurrent: p.id === 'ads_blocker' ? isAdsBlockerActive : false } // Keep ads blocker active if it was
       ));
 
       toast({
@@ -90,9 +115,11 @@ export default function SubscriptionPage() {
     }, 2500); 
   };
 
-  const currentPlan = plans.find(p => p.isCurrent);
+  const currentPlan = plans.find(p => p.isCurrent && p.id !== 'ads_blocker'); // Main functional plan
+  const currentAdsBlockerPlan = plans.find(p => p.id === 'ads_blocker' && isAdsBlockerActive);
 
-  const handleFlutterwavePaymentForPlanId = (planIdToActivate: string) => { // Renamed for clarity
+
+  const handleFlutterwavePaymentForPlanId = (planIdToActivate: string) => {
     const planToActivate = plans.find(p => p.id === planIdToActivate);
     if (!planToActivate) {
         toast({ title: "Error", description: "Selected plan not found for payment.", variant: "destructive"});
@@ -109,14 +136,21 @@ export default function SubscriptionPage() {
     
     setTimeout(() => {
         setPlans(prevPlans => prevPlans.map(p => 
-            p.id === planIdToActivate ? { ...p, isCurrent: true, billingCycle: billingCycle } : { ...p, isCurrent: false }
+            p.id === planIdToActivate ? { ...p, isCurrent: true, billingCycle: billingCycle } : { ...p, isCurrent: p.id === 'ads_blocker' ? isAdsBlockerActive : (p.isCurrent && p.id !== planIdToActivate ? p.isCurrent : false) }
         ));
         if (typeof window !== 'undefined') {
-            localStorage.setItem('stipsLiteActivePlanId', planIdToActivate);
-            localStorage.setItem('stipsLiteActivePlanCycle', billingCycle);
-            if (planIdToActivate === 'expert_va') {
+            if (planIdToActivate === 'ads_blocker') {
+                localStorage.setItem('stipsLiteStudentAdsBlockerActive', 'true');
+                setIsAdsBlockerActive(true);
+                redirectPath = `/dashboard/subscription?plan_activated=${planIdToActivate}`;
+            } else if (planIdToActivate === 'expert_va') {
+                localStorage.setItem('stipsLiteActivePlanId', planIdToActivate);
+                localStorage.setItem('stipsLiteActivePlanCycle', billingCycle);
                 localStorage.setItem('stipsLiteVaPlanActive', 'true');
                 redirectPath = `/dashboard/find-va?plan_activated=${planIdToActivate}`;
+            } else {
+                 localStorage.setItem('stipsLiteActivePlanId', planIdToActivate);
+                 localStorage.setItem('stipsLiteActivePlanCycle', billingCycle);
             }
         }
         toast({
@@ -128,17 +162,22 @@ export default function SubscriptionPage() {
     }, 2500); 
   };
 
-  const handleCancelSubscription = () => {
+  const handleCancelSubscription = (planIdToCancel: string) => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('stipsLiteVaPlanActive'); 
-      localStorage.removeItem('stipsLiteActivePlanId'); 
-      localStorage.removeItem('stipsLiteActivePlanCycle');
+      if (planIdToCancel === 'ads_blocker') {
+        localStorage.removeItem('stipsLiteStudentAdsBlockerActive');
+        setIsAdsBlockerActive(false);
+        setPlans(prevPlans => prevPlans.map(p => p.id === 'ads_blocker' ? { ...p, isCurrent: false } : p));
+        toast({ title: "Ads Blocker Cancelled (Simulated)", description: "Ads may now be displayed."});
+      } else {
+        localStorage.removeItem('stipsLiteVaPlanActive'); 
+        localStorage.removeItem('stipsLiteActivePlanId'); 
+        localStorage.removeItem('stipsLiteActivePlanCycle');
+        setPlans(prevPlans => prevPlans.map(p => (p.id === planIdToCancel || p.id === 'expert_va') ? { ...p, isCurrent: false } : p));
+        toast({ title: "Subscription Cancelled (Simulated)", description: "Your subscription has been cancelled. Premium features are now locked."});
+      }
     }
-    setPlans(prevPlans => prevPlans.map(p => ({ ...p, isCurrent: false })));
-    toast({
-      title: "Subscription Cancelled (Simulated)",
-      description: "Your subscription has been cancelled. Premium features are now locked.",
-    });
+    
   };
 
 
@@ -146,7 +185,7 @@ export default function SubscriptionPage() {
     <div className="space-y-8">
       <PageHeader 
         title="Manage Your Subscription (Student)"
-        description="Students: Activate the 'Expert VA Plan' to find and request specific VAs. Other platform feature subscriptions may appear here."
+        description="Students: Activate 'Expert VA Plan' or 'Ads Blocker'. Other platform feature subscriptions may appear here."
         icon={CreditCard}
       />
 
@@ -163,9 +202,10 @@ export default function SubscriptionPage() {
         {plans.map(plan => (
           <div key={plan.id} className="w-full">
             <SubscriptionCard 
-              plan={plan} 
-              onChoosePlan={handleChoosePlan} // This now simulates payment directly
+              plan={{...plan, isCurrent: plan.id === 'ads_blocker' ? isAdsBlockerActive : plan.isCurrent}} // Ensure ads_blocker reflects its own state
+              onChoosePlan={handleChoosePlan}
               currentBillingCycle={billingCycle}
+              icon={plan.icon}
             />
           </div>
         ))}
@@ -174,26 +214,39 @@ export default function SubscriptionPage() {
         )}
       </div>
 
-      {currentPlan && (
+      {(currentPlan || currentAdsBlockerPlan) && (
         <Card className="shadow-lg max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="font-headline">Current Subscription Details</CardTitle>
-            <CardDescription>Overview of your active plan and billing information.</CardDescription>
+            <CardDescription>Overview of your active plan(s) and billing information.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-md">
-              <div>
-                <p className="text-lg font-semibold">{currentPlan.name} ({currentPlan.billingCycle || billingCycle})</p>
-                <p className="text-sm text-muted-foreground">
-                  Price: {(currentPlan.billingCycle || billingCycle) === 'yearly' ? currentPlan.priceYearly : currentPlan.priceMonthly} / {(currentPlan.billingCycle || billingCycle) === 'yearly' ? 'year' : 'month'}
-                </p>
-              </div>
-               {currentPlan.id === "expert_va" && ( 
-                 <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/find-va')}>
-                    Find an Expert VA
+            {currentPlan && (
+              <div className="flex justify-between items-center p-4 bg-muted/50 rounded-md mb-3">
+                <div>
+                  <p className="text-lg font-semibold">{currentPlan.name} ({currentPlan.billingCycle || billingCycle})</p>
+                  <p className="text-sm text-muted-foreground">
+                    Price: {(currentPlan.billingCycle || billingCycle) === 'yearly' ? currentPlan.priceYearly : currentPlan.priceMonthly} / {(currentPlan.billingCycle || billingCycle) === 'yearly' ? 'year' : 'month'}
+                  </p>
+                </div>
+                {currentPlan.id === "expert_va" && ( 
+                  <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/find-va')}>
+                      Find an Expert VA
                   </Button>
-               )}
-            </div>
+                )}
+              </div>
+            )}
+             {currentAdsBlockerPlan && (
+              <div className="flex justify-between items-center p-4 bg-muted/50 rounded-md">
+                <div>
+                  <p className="text-lg font-semibold">{currentAdsBlockerPlan.name} ({currentAdsBlockerPlan.billingCycle || billingCycle})</p>
+                  <p className="text-sm text-muted-foreground">
+                    Status: Active
+                  </p>
+                </div>
+                  <Button variant="destructive" size="sm" onClick={() => handleCancelSubscription('ads_blocker')}>Cancel Ads Blocker</Button>
+              </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -214,9 +267,11 @@ export default function SubscriptionPage() {
                 </p>
             </div>
           </CardContent>
-          <CardFooter className="border-t pt-4 flex justify-end">
-            <Button variant="destructive" className="bg-red-600 hover:bg-red-700" onClick={handleCancelSubscription}>Cancel Subscription</Button>
-          </CardFooter>
+          {currentPlan && (
+            <CardFooter className="border-t pt-4 flex justify-end">
+              <Button variant="destructive" className="bg-red-600 hover:bg-red-700" onClick={() => handleCancelSubscription(currentPlan.id)}>Cancel {currentPlan.name}</Button>
+            </CardFooter>
+          )}
         </Card>
       )}
 
@@ -229,18 +284,31 @@ export default function SubscriptionPage() {
                 {plans.find(p => p.id === "expert_va") && (
                     <Button 
                         size="lg" 
-                        className="bg-orange-500 hover:bg-orange-600 text-white"
+                        className="bg-orange-500 hover:bg-orange-600 text-white mr-2"
                         onClick={() => handleFlutterwavePaymentForPlanId("expert_va")} 
                         disabled={plans.some(p => p.isCurrent && p.id === "expert_va")} 
                     >
-                        <Sparkles className="mr-2 h-5 w-5" /> Pay with Flutterwave (Expert VA Plan)
+                        <Sparkles className="mr-2 h-5 w-5" /> Pay for Expert VA Plan
+                    </Button>
+                )}
+                 {plans.find(p => p.id === "ads_blocker") && (
+                    <Button 
+                        size="lg" 
+                        className="bg-teal-500 hover:bg-teal-600 text-white"
+                        onClick={() => handleFlutterwavePaymentForPlanId("ads_blocker")} 
+                        disabled={isAdsBlockerActive} 
+                    >
+                        <ShieldOff className="mr-2 h-5 w-5" /> Pay for Ads Blocker
                     </Button>
                 )}
                 <p className="text-xs text-muted-foreground mt-2">
-                    The "Choose Plan" buttons on the cards above provide the primary way to simulate plan activation. This button is an alternative way to simulate payment for the Expert VA plan if available.
+                    The "Choose Plan" buttons on the cards above provide the primary way to simulate plan activation.
                 </p>
             </CardContent>
         </Card>
     </div>
   );
 }
+
+
+    

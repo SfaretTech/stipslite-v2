@@ -83,10 +83,10 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     userEmail = "admin@stipslite.com"; 
     profileLink = "/admin/settings"; 
     notificationsLink = "/admin/notifications"; 
-    subscriptionSettingsLink = ""; 
-    supportLink = "/admin/dashboard"; 
+    subscriptionSettingsLink = ""; // Admin does not have personal subscription page
+    supportLink = "/admin/dashboard"; // Admin support may lead to general dashboard or specific tool
     logoutLink = "/admin/login";
-    referralsLink = "/admin/settings"; 
+    referralsLink = "/admin/settings"; // Admin manages referral settings
     currentNotifications = mockAdminNotifications; 
     notificationsLinkText = "Activity Log";
     NotificationsLinkIconComponent = Activity;
@@ -95,7 +95,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     userEmail = "shop@example.com";
     profileLink = "/printcenter/profile";
     notificationsLink = "/printcenter/notifications"; 
-    subscriptionSettingsLink = ""; 
+    subscriptionSettingsLink = "/printcenter/subscription"; // Added subscription link for PC
     supportLink = "/printcenter/support";
     logoutLink = "/printcenter/login";
     referralsLink = "/printcenter/referrals";
@@ -166,7 +166,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href={notificationsLink} className="flex items-center justify-center text-primary hover:underline">
-                <Eye className="mr-2 h-4 w-4" /> View All Notifications
+                <Eye className="mr-2 h-4 w-4" /> View All {notificationsLinkText}
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -210,7 +210,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
                 {unreadNotificationsCount > 0 && role !== 'admin' && <Badge variant="destructive" className="ml-auto">{unreadNotificationsCount}</Badge>}
               </Link>
             </DropdownMenuItem>
-            { (role === 'student' || role === 'va') && subscriptionSettingsLink && (
+            {subscriptionSettingsLink && ( // Conditionally render subscription link
                 <DropdownMenuItem asChild>
                 <Link href={subscriptionSettingsLink}>
                     <CreditCard className="mr-2 h-4 w-4" />
@@ -228,7 +228,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
             )}
              {role === 'admin' && ( // Admin specific link for referral settings
                 <DropdownMenuItem asChild>
-                <Link href="/admin/settings"> 
+                <Link href="/admin/settings#referralProgramActive"> {/* Link to section in settings */}
                     <Gift className="mr-2 h-4 w-4" />
                     <span>Referral Settings</span>
                 </Link>
@@ -263,3 +263,6 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     </header>
   );
 }
+
+
+    
