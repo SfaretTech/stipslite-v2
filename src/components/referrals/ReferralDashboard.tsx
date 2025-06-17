@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Copy, DollarSign, Users, Gift, Smartphone, Send } from "lucide-react";
+import { Copy, DollarSign, Users, Gift, Smartphone, Send, Users2, Building } from "lucide-react"; // Added Users2, Building
 import { StatCard } from "@/components/shared/StatCard";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,19 +14,21 @@ import { useState, useEffect } from "react";
 
 interface Referral {
   id: string;
-  referredUser: string;
+  referredEntityName: string; // e.g., "Alice Wonderland" or "Speedy Prints"
+  referredEntityType: "Student" | "Print Center";
   date: string;
-  status: "Signup Reward Earned" | "Subscribed (Yearly) - Reward Earned" | "Signed Up, Awaiting Activity" | "Pending First Task";
-  eventType: "signup" | "yearly_subscription" | "pending_activity";
+  status: string; // e.g., "Student Signed Up - Reward Earned", "Print Center Registered - Reward Pending"
   earnings: string;
 }
 
+// More diverse mock data for demonstration
 const mockReferrals: Referral[] = [
-  { id: "REF001", referredUser: "Alice Wonderland", date: "2024-07-01", eventType: "signup", status: "Signup Reward Earned", earnings: "₦100.00" },
-  { id: "REF002", referredUser: "Bob The Builder", date: "2024-07-05", eventType: "yearly_subscription", status: "Subscribed (Yearly) - Reward Earned", earnings: "₦1000.00" },
-  { id: "REF003", referredUser: "Charlie Brown", date: "2024-07-10", eventType: "signup", status: "Signed Up, Awaiting Activity", earnings: "₦0.00" },
-  { id: "REF004", referredUser: "Diana Prince", date: "2024-07-12", eventType: "pending_activity", status: "Pending First Task", earnings: "₦0.00" },
-  { id: "REF005", referredUser: "Edward Scissorhands", date: "2024-07-15", eventType: "signup", status: "Signup Reward Earned", earnings: "₦100.00" },
+  { id: "REF001", referredEntityName: "Alice W.", referredEntityType: "Student", date: "2024-07-01", status: "Student Signed Up - Reward Earned", earnings: "₦100.00" },
+  { id: "REF002", referredEntityName: "Speedy Prints", referredEntityType: "Print Center", date: "2024-07-03", status: "Print Center Registered - Reward Pending", earnings: "₦0.00" },
+  { id: "REF003", referredEntityName: "Bob The Builder", referredEntityType: "Student", date: "2024-07-05", status: "Student Subscribed Yearly - Reward Earned", earnings: "₦1000.00" },
+  { id: "REF004", referredEntityName: "Charlie Brown", referredEntityType: "Student", date: "2024-07-10", status: "Student Signed Up - Awaiting Activity", earnings: "₦0.00" },
+  { id: "REF005", referredEntityName: "Quick Copy Ltd", referredEntityType: "Print Center", date: "2024-07-12", status: "Print Center Active - Reward Earned", earnings: "₦500.00" },
+  { id: "REF006", referredEntityName: "Diana Prince", referredEntityType: "Student", date: "2024-07-15", status: "Student Pending First Task", earnings: "₦0.00" },
 ];
 
 const mobileMoneyPlatforms = [
@@ -36,8 +38,16 @@ const mobileMoneyPlatforms = [
   { value: "palmpay", label: "PalmPay" },
 ];
 
-export function ReferralDashboard() {
-  const referralLink = "https://stips.lite/ref/YOUR_CODE_XYZ"; // Placeholder
+interface ReferralDashboardProps {
+  userRole: 'student' | 'va' | 'print-center';
+}
+
+export function ReferralDashboard({ userRole }: ReferralDashboardProps) {
+  const referralLinkBase = "https://stips.lite/ref/";
+  // In a real app, this userSpecificCode would come from the backend for the logged-in user
+  const userSpecificCode = userRole === 'student' ? "STUDENT_XYZ" : userRole === 'va' ? "VA_ABC" : "PC_123";
+  const referralLink = `${referralLinkBase}${userSpecificCode}`; 
+  
   const { toast } = useToast();
   const [withdrawalAmount, setWithdrawalAmount] = useState(""); 
   
@@ -49,14 +59,12 @@ export function ReferralDashboard() {
     }, 0);
   const [currentBalance, setCurrentBalance] = useState(initialBalance);
 
-
   const calculatePendingEarnings = () => {
+    // This is a simplified calculation. Real logic would depend on specific rules.
     return mockReferrals.reduce((acc, ref) => {
-      if (ref.status === "Signed Up, Awaiting Activity") { 
-        return acc + 100 + 1000; 
-      }
-      if (ref.status === "Pending First Task") { 
-          return acc + 100;
+      if (ref.status.includes("Pending") || ref.status.includes("Awaiting")) {
+        if (ref.referredEntityType === "Student") return acc + 100; // Example pending student reward
+        if (ref.referredEntityType === "Print Center") return acc + 250; // Example pending PC reward
       }
       return acc;
     }, 0);
@@ -64,9 +72,9 @@ export function ReferralDashboard() {
   const pendingBalance = calculatePendingEarnings();
 
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(referralLink);
-    toast({ title: "Referral Link Copied!", description: "Your referral link has been copied to the clipboard." });
+  const copyToClipboard = (linkToCopy: string, linkType: string) => {
+    navigator.clipboard.writeText(linkToCopy);
+    toast({ title: `${linkType} Referral Link Copied!`, description: `Your ${linkType.toLowerCase()} referral link has been copied.` });
   };
 
   const handleSaveWalletDetails = () => {
@@ -109,11 +117,11 @@ export function ReferralDashboard() {
     
     toast({
         title: "Admin Notification (Simulated)",
-        description: `Admin would be notified of a withdrawal request for ₦${amountToWithdraw.toFixed(2)}. User: [Current User], Wallet Details: [Details from form]`,
+        description: `Admin would be notified of a withdrawal request for ₦${amountToWithdraw.toFixed(2)}. User: [Current User - ${userRole}], Wallet Details: [Details from form]`,
         variant: "default",
         duration: 5000, 
     });
-    console.log(`SIMULATION: Admin notified for withdrawal of ₦${amountToWithdraw.toFixed(2)}. User: [Current User], Wallet Details: [Details from form]`);
+    console.log(`SIMULATION: Admin notified for withdrawal of ₦${amountToWithdraw.toFixed(2)}. User: [Current User - ${userRole}], Wallet Details: [Details from form]`);
     setWithdrawalAmount(""); 
   };
 
@@ -121,25 +129,44 @@ export function ReferralDashboard() {
   return (
     <div className="space-y-8">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Total Referrals" value={mockReferrals.filter(r => r.eventType === "signup" || r.eventType === "yearly_subscription").length.toString()} icon={Users} description="Friends who joined or subscribed." />
-        <StatCard title="Total Earnings" value={`₦${currentBalance.toFixed(2)}`} icon={DollarSign} description="From completed referral actions." />
-        <StatCard title="Pending Earnings" value={`₦${pendingBalance.toFixed(2)}`} icon={Gift} description="Potential earnings from referrals." />
+        <StatCard title="Total Successful Referrals" value={mockReferrals.filter(r => r.status.includes("Earned")).length.toString()} icon={Users} description="Successful student & print center referrals." />
+        <StatCard title="Total Referral Earnings" value={`₦${currentBalance.toFixed(2)}`} icon={DollarSign} description="From completed referral actions." />
+        <StatCard title="Potential Pending Earnings" value={`₦${pendingBalance.toFixed(2)}`} icon={Gift} description="From referrals in progress." />
       </div>
 
       <Card className="shadow-xl">
         <CardHeader>
-          <CardTitle className="font-headline text-xl">Your Referral Link</CardTitle>
-          <CardDescription>Share this link with your friends to earn rewards.</CardDescription>
+          <CardTitle className="font-headline text-xl">Your Referral Links</CardTitle>
+          <CardDescription>Share these links to earn rewards. Reward amounts are set by Admin.</CardDescription>
         </CardHeader>
-        <CardContent className="flex items-center space-x-3">
-          <Input type="text" value={referralLink} readOnly className="bg-muted/50" />
-          <Button onClick={copyToClipboard} variant="outline" size="icon">
-            <Copy className="h-4 w-4" />
-            <span className="sr-only">Copy Link</span>
-          </Button>
+        <CardContent className="space-y-4">
+            <div>
+                <Label htmlFor="studentReferralLink" className="font-medium flex items-center mb-1">
+                    <Users2 className="h-5 w-5 mr-2 text-primary"/> Refer a New Student
+                </Label>
+                <div className="flex items-center space-x-3">
+                    <Input id="studentReferralLink" type="text" value={`${referralLink}&type=student`} readOnly className="bg-muted/50" />
+                    <Button onClick={() => copyToClipboard(`${referralLink}&type=student`, "Student")} variant="outline" size="icon">
+                        <Copy className="h-4 w-4" />
+                        <span className="sr-only">Copy Student Referral Link</span>
+                    </Button>
+                </div>
+            </div>
+             <div>
+                <Label htmlFor="pcReferralLink" className="font-medium flex items-center mb-1">
+                    <Building className="h-5 w-5 mr-2 text-primary"/> Refer a New Print Center
+                </Label>
+                <div className="flex items-center space-x-3">
+                    <Input id="pcReferralLink" type="text" value={`${referralLink}&type=printcenter`} readOnly className="bg-muted/50" />
+                    <Button onClick={() => copyToClipboard(`${referralLink}&type=printcenter`, "Print Center")} variant="outline" size="icon">
+                        <Copy className="h-4 w-4" />
+                        <span className="sr-only">Copy Print Center Referral Link</span>
+                    </Button>
+                </div>
+            </div>
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
-          You earn ₦100 for each friend who signs up. Earn an additional ₦1000 if they subscribe to a yearly plan!
+          Referral rewards vary for students and print centers. Check with admin for current program details.
         </CardFooter>
       </Card>
 
@@ -152,7 +179,8 @@ export function ReferralDashboard() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Referred User</TableHead>
+                <TableHead>Referred Entity</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Earnings</TableHead>
@@ -161,7 +189,12 @@ export function ReferralDashboard() {
             <TableBody>
               {mockReferrals.map(ref => (
                 <TableRow key={ref.id}>
-                  <TableCell>{ref.referredUser}</TableCell>
+                  <TableCell>{ref.referredEntityName}</TableCell>
+                  <TableCell>
+                     <Badge variant={ref.referredEntityType === "Student" ? "secondary" : "outline"} className={ref.referredEntityType === "Print Center" ? "border-primary text-primary" : ""}>
+                        {ref.referredEntityType}
+                     </Badge>
+                  </TableCell>
                   <TableCell>{ref.date}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium
@@ -176,7 +209,7 @@ export function ReferralDashboard() {
               ))}
                {mockReferrals.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     No referral history yet.
                   </TableCell>
                 </TableRow>
@@ -188,7 +221,7 @@ export function ReferralDashboard() {
       
       <Card className="shadow-xl">
         <CardHeader>
-          <CardTitle className="font-headline text-xl">Add mobile money</CardTitle>
+          <CardTitle className="font-headline text-xl">Add Mobile Money for Payouts</CardTitle>
           <CardDescription>Set up your mobile wallet details to withdraw your earnings.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

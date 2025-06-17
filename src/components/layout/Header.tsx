@@ -14,7 +14,7 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye, Briefcase, Printer, MessageSquare as MessageSquareIcon, AlertCircle as AlertCircleIcon } from "lucide-react";
+import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye, Briefcase, Printer, MessageSquare as MessageSquareIcon, AlertCircle as AlertCircleIcon, Gift } from "lucide-react"; // Added Gift
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AiSearchDialog } from "@/components/ai/AiSearchDialog";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ const mockStudentNotifications = [
 const mockVaNotifications = [
   { id: "VAN001", title: "New Task Assigned", timestamp: "1 hour ago", read: false, link: "/va/business-tasks/BST001", icon: Briefcase },
   { id: "VAN002", title: "Payment Processed", timestamp: "2 days ago", read: true, link: "/va/payouts", icon: DollarIcon }, 
+  { id: "VAN003", title: "New Student Referral: Mark P.", timestamp: "3 hours ago", read: false, link: "/va/referrals", icon: Gift },
 ];
 
 const mockPrintCenterNotifications = [
@@ -39,6 +40,7 @@ const mockPrintCenterNotifications = [
   { id: "PCN002", title: "Payment Confirmed for Job #JOB120", description: "Student Alice S. has paid ₦50.00.", timestamp: "2 hours ago", read: false, link: "/printcenter/jobs/JOB120", icon: DollarIcon },
   { id: "PCN003", title: "Admin Message: Holiday Schedule", description: "Please update your holiday hours in your profile.", timestamp: "2 days ago", read: true, link: "/printcenter/profile", icon: MessageSquareIcon },
   { id: "PCN004", title: "Low Paper Stock Alert", description: "Your A4 paper stock seems low.", timestamp: "3 days ago", read: true, category: "Shop Alert", icon: AlertCircleIcon },
+  { id: "PCN005", title: "New Print Center Referral: Alpha Prints", timestamp: "1 day ago", read: false, link: "/printcenter/referrals", icon: Gift },
 ];
 
 
@@ -52,6 +54,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
   let subscriptionSettingsLink = "/dashboard/subscription";
   let supportLink = "/dashboard/support";
   let logoutLink = "/auth/login";
+  let referralsLink = "/dashboard/referrals"; // Default for student
   let currentNotifications = mockStudentNotifications;
 
   if (role === "va") {
@@ -62,6 +65,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     subscriptionSettingsLink = "/va/subscription"; 
     supportLink = "/va/support";
     logoutLink = "/va/login";
+    referralsLink = "/va/referrals";
     currentNotifications = mockVaNotifications;
   } else if (role === "admin") {
     userName = "Admin User";
@@ -71,6 +75,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     subscriptionSettingsLink = "/admin/settings"; 
     supportLink = "/admin/dashboard"; 
     logoutLink = "/auth/login"; 
+    referralsLink = "/admin/settings"; // Admin might manage referrals here
     currentNotifications = []; 
   } else if (role === "print-center") {
     userName = "Print Shop Owner";
@@ -80,6 +85,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     subscriptionSettingsLink = "/printcenter/profile"; 
     supportLink = "/printcenter/support";
     logoutLink = "/printcenter/login";
+    referralsLink = "/printcenter/referrals";
     currentNotifications = mockPrintCenterNotifications;
   }
   
@@ -188,6 +194,14 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
                 </Link>
                 </DropdownMenuItem>
             )}
+             {role !== 'admin' && ( // Referrals link for non-admin roles
+                <DropdownMenuItem asChild>
+                  <Link href={referralsLink}>
+                    <Gift className="mr-2 h-4 w-4" />
+                    <span>Referrals</span>
+                  </Link>
+                </DropdownMenuItem>
+            )}
              { (role === 'admin' || role === 'print-center') && (
                 <DropdownMenuItem asChild>
                 <Link href={subscriptionSettingsLink}> {/* For print-center, this links to profile; for admin, to settings */}
@@ -215,4 +229,3 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     </header>
   );
 }
-

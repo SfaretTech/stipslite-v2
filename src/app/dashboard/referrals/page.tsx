@@ -1,16 +1,17 @@
+
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ReferralDashboard } from "@/components/referrals/ReferralDashboard";
-import { Users, Gift } from "lucide-react";
+import { Gift } from "lucide-react"; // Changed icon to Gift for consistency
 
 export default function ReferralsPage() {
   return (
     <div>
       <PageHeader 
-        title="Referral Program"
-        description="Invite friends to STIPS Lite and earn rewards for every successful referral."
+        title="My Referral Program"
+        description="Invite students or print centers to STIPS Lite and earn rewards!"
         icon={Gift}
       />
-      <ReferralDashboard />
+      <ReferralDashboard userRole="student" />
     </div>
   );
 }

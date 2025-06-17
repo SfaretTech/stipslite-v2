@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Settings, Save, DollarSign, Percent } from "lucide-react";
+import { Settings, Save, DollarSign, Percent, Gift, Users2, Building } from "lucide-react"; // Added Gift, Users2, Building
 
 export default function AdminSettingsPage() {
   return (
@@ -68,6 +68,8 @@ export default function AdminSettingsPage() {
               <Textarea id="subscriptionTiers" rows={5} defaultValue={JSON.stringify([
                   { id: "basic", name: "Basic", priceMonthly: 9.99, priceYearly: 99.99, currency: "NGN" },
                   { id: "pro", name: "Pro", priceMonthly: 19.99, priceYearly: 199.99, currency: "NGN" },
+                  { id: "expert_va_student", name: "Student Expert VA Plan", priceMonthly: 500, priceYearly: 2000, currency: "NGN"},
+                  { id: "va_professional_business", name: "VA Professional Business Plan", priceMonthly: 1000, priceYearly: 5000, currency: "NGN"}
               ], null, 2)} 
               className="font-code"
               />
@@ -78,34 +80,67 @@ export default function AdminSettingsPage() {
         
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Referral Program Settings</CardTitle>
-            <CardDescription>Configure referral bonuses and withdrawal limits.</CardDescription>
+            <CardTitle className="font-headline flex items-center"><Gift className="mr-2 h-5 w-5 text-primary"/>Referral Program Management</CardTitle>
+            <CardDescription>Configure referral bonuses for different user types and actions.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                    <Label htmlFor="referralBonus">Referral Bonus Amount (NGN)</Label>
-                     <div className="relative">
-                        <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
-                        <Input id="referralBonus" type="number" defaultValue="5.00" className="pl-8" />
-                    </div>
-                </div>
-                <div className="space-y-1.5">
-                    <Label htmlFor="minWithdrawal">Minimum Withdrawal Amount (NGN)</Label>
-                     <div className="relative">
-                        <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
-                        <Input id="minWithdrawal" type="number" defaultValue="10.00" className="pl-8" />
-                    </div>
-                </div>
-            </div>
-             <div className="flex items-center justify-between rounded-lg border p-4">
+          <CardContent className="space-y-6">
+            <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
                 <Label htmlFor="referralProgramActive" className="text-base">Referral Program Active</Label>
                 <p className="text-sm text-muted-foreground">
-                  Enable or disable the referral program for users.
+                  Enable or disable the entire referral program.
                 </p>
               </div>
               <Switch id="referralProgramActive" defaultChecked aria-label="Toggle referral program" />
+            </div>
+            
+            <div className="space-y-4 p-4 border rounded-lg">
+                <h4 className="font-medium text-md flex items-center"><Users2 className="mr-2 h-4 w-4 text-muted-foreground"/> Student Referral Settings</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                        <Label htmlFor="studentSignupBonus">New Student Signup Bonus (NGN)</Label>
+                         <div className="relative">
+                            <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
+                            <Input id="studentSignupBonus" type="number" defaultValue="100.00" className="pl-8" />
+                        </div>
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="studentYearlySubBonus">Student Yearly Subscription Bonus (NGN)</Label>
+                         <div className="relative">
+                            <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
+                            <Input id="studentYearlySubBonus" type="number" defaultValue="1000.00" className="pl-8" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <div className="space-y-4 p-4 border rounded-lg">
+                <h4 className="font-medium text-md flex items-center"><Building className="mr-2 h-4 w-4 text-muted-foreground"/> Print Center Referral Settings</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                        <Label htmlFor="pcSignupBonus">New Print Center Signup Bonus (NGN)</Label>
+                         <div className="relative">
+                            <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
+                            <Input id="pcSignupBonus" type="number" defaultValue="250.00" className="pl-8" />
+                        </div>
+                    </div>
+                     <div className="space-y-1.5">
+                        <Label htmlFor="pcFirstTransactionBonus">Print Center First Paid Job Bonus (NGN)</Label>
+                         <div className="relative">
+                            <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
+                            <Input id="pcFirstTransactionBonus" type="number" defaultValue="500.00" className="pl-8" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="space-y-1.5">
+                <Label htmlFor="minWithdrawalGlobal">Minimum Withdrawal Amount (NGN - Global)</Label>
+                 <div className="relative">
+                    <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
+                    <Input id="minWithdrawalGlobal" type="number" defaultValue="100.00" className="pl-8" />
+                </div>
+                 <p className="text-xs text-muted-foreground">This applies to all referral earnings withdrawals.</p>
             </div>
           </CardContent>
         </Card>

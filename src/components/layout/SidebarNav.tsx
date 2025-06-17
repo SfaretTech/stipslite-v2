@@ -29,6 +29,7 @@ import {
   Banknote, 
   Store, 
   FileText, 
+  Gift, // Added Gift icon
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -56,7 +57,7 @@ const studentNavItemsBase = [
     ],
   },
   { href: "/dashboard/print-centers", label: "Print Centers", icon: Printer },
-  { href: "/dashboard/referrals", label: "Referrals", icon: Users },
+  { href: "/dashboard/referrals", label: "Referrals", icon: Gift }, // Changed icon to Gift
   {
     href: "/dashboard/subscription", 
     activeHref: "/dashboard/find-va", 
@@ -94,6 +95,7 @@ const vaNavItemsBase = [
   },
   { href: "/va/profile", label: "My VA Profile", icon: UserCircle },
   { href: "/va/payouts", label: "Payouts", icon: Banknote }, 
+  { href: "/va/referrals", label: "Referrals", icon: Gift }, // Added VA Referrals
   { href: "/va/notifications", label: "Notifications", icon: Bell },
   { href: "/va/subscription", label: "My Subscription", icon: CreditCard }, 
   { href: "/va/support", label: "Support", icon: MessageSquare },
@@ -104,6 +106,7 @@ const printCenterNavItems = [
   { href: "/printcenter/jobs", label: "Print Jobs", icon: FileText },
   { href: "/printcenter/profile", label: "Shop Profile", icon: Store },
   { href: "/printcenter/earnings", label: "Earnings & Payouts", icon: Banknote },
+  { href: "/printcenter/referrals", label: "Referrals", icon: Gift }, // Added PC Referrals
   { href: "/printcenter/notifications", label: "Notifications", icon: Bell },
   { href: "/printcenter/support", label: "Support", icon: MessageSquare },
 ];
@@ -310,4 +313,3 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
     </SidebarMenu>
   );
 }
-
