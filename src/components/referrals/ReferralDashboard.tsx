@@ -11,6 +11,7 @@ import { StatCard } from "@/components/shared/StatCard";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react"; 
+import { Badge } from "@/components/ui/badge"; // Added missing import
 
 interface Referral {
   id: string;
@@ -300,3 +301,4 @@ export function ReferralDashboard({ userRole }: ReferralDashboardProps) {
     </div>
   );
 }
+
