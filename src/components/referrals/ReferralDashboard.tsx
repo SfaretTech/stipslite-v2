@@ -6,23 +6,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Copy, DollarSign, Users, Gift, Smartphone, Send, Users2, Building } from "lucide-react"; // Added Users2, Building
+import { Copy, DollarSign, Users, Gift, Smartphone, Send, Users2, Building, Briefcase } from "lucide-react";
 import { StatCard } from "@/components/shared/StatCard";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react"; 
-import { Badge } from "@/components/ui/badge"; // Added missing import
+import { Badge } from "@/components/ui/badge";
 
 interface Referral {
   id: string;
-  referredEntityName: string; // e.g., "Alice Wonderland" or "Speedy Prints"
-  referredEntityType: "Student" | "Print Center";
+  referredEntityName: string; 
+  referredEntityType: "Student" | "Print Center" | "Virtual Assistant";
   date: string;
-  status: string; // e.g., "Student Signed Up - Reward Earned", "Print Center Registered - Reward Pending"
+  status: string; 
   earnings: string;
 }
 
-// More diverse mock data for demonstration
 const mockReferrals: Referral[] = [
   { id: "REF001", referredEntityName: "Alice W.", referredEntityType: "Student", date: "2024-07-01", status: "Student Signed Up - Reward Earned", earnings: "₦100.00" },
   { id: "REF002", referredEntityName: "Speedy Prints", referredEntityType: "Print Center", date: "2024-07-03", status: "Print Center Registered - Reward Pending", earnings: "₦0.00" },
@@ -30,6 +29,8 @@ const mockReferrals: Referral[] = [
   { id: "REF004", referredEntityName: "Charlie Brown", referredEntityType: "Student", date: "2024-07-10", status: "Student Signed Up - Awaiting Activity", earnings: "₦0.00" },
   { id: "REF005", referredEntityName: "Quick Copy Ltd", referredEntityType: "Print Center", date: "2024-07-12", status: "Print Center Active - Reward Earned", earnings: "₦500.00" },
   { id: "REF006", referredEntityName: "Diana Prince", referredEntityType: "Student", date: "2024-07-15", status: "Student Pending First Task", earnings: "₦0.00" },
+  { id: "REF007", referredEntityName: "Eva Express VA", referredEntityType: "Virtual Assistant", date: "2024-07-18", status: "VA Registered - Reward Pending", earnings: "₦0.00"},
+  { id: "REF008", referredEntityName: "David Direct VA", referredEntityType: "Virtual Assistant", date: "2024-07-20", status: "VA Completed First Task - Reward Earned", earnings: "₦300.00"},
 ];
 
 const mobileMoneyPlatforms = [
@@ -45,9 +46,7 @@ interface ReferralDashboardProps {
 
 export function ReferralDashboard({ userRole }: ReferralDashboardProps) {
   const referralLinkBase = "https://stips.lite/ref/";
-  // In a real app, this userSpecificCode would come from the backend for the logged-in user
   const userSpecificCode = userRole === 'student' ? "STUDENT_XYZ" : userRole === 'va' ? "VA_ABC" : "PC_123";
-  const referralLink = `${referralLinkBase}${userSpecificCode}`; 
   
   const { toast } = useToast();
   const [withdrawalAmount, setWithdrawalAmount] = useState(""); 
@@ -61,11 +60,11 @@ export function ReferralDashboard({ userRole }: ReferralDashboardProps) {
   const [currentBalance, setCurrentBalance] = useState(initialBalance);
 
   const calculatePendingEarnings = () => {
-    // This is a simplified calculation. Real logic would depend on specific rules.
     return mockReferrals.reduce((acc, ref) => {
       if (ref.status.includes("Pending") || ref.status.includes("Awaiting")) {
-        if (ref.referredEntityType === "Student") return acc + 100; // Example pending student reward
-        if (ref.referredEntityType === "Print Center") return acc + 250; // Example pending PC reward
+        if (ref.referredEntityType === "Student") return acc + 100; 
+        if (ref.referredEntityType === "Print Center") return acc + 250;
+        if (ref.referredEntityType === "Virtual Assistant") return acc + 150; // Example pending VA reward
       }
       return acc;
     }, 0);
@@ -130,7 +129,7 @@ export function ReferralDashboard({ userRole }: ReferralDashboardProps) {
   return (
     <div className="space-y-8">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Total Successful Referrals" value={mockReferrals.filter(r => r.status.includes("Earned")).length.toString()} icon={Users} description="Successful student & print center referrals." />
+        <StatCard title="Total Successful Referrals" value={mockReferrals.filter(r => r.status.includes("Earned")).length.toString()} icon={Users} description="Successful student, VA & print center referrals." />
         <StatCard title="Total Referral Earnings" value={`₦${currentBalance.toFixed(2)}`} icon={DollarSign} description="From completed referral actions." />
         <StatCard title="Potential Pending Earnings" value={`₦${pendingBalance.toFixed(2)}`} icon={Gift} description="From referrals in progress." />
       </div>
@@ -146,28 +145,44 @@ export function ReferralDashboard({ userRole }: ReferralDashboardProps) {
                     <Users2 className="h-5 w-5 mr-2 text-primary"/> Refer a New Student
                 </Label>
                 <div className="flex items-center space-x-3">
-                    <Input id="studentReferralLink" type="text" value={`${referralLink}&type=student`} readOnly className="bg-muted/50" />
-                    <Button onClick={() => copyToClipboard(`${referralLink}&type=student`, "Student")} variant="outline" size="icon">
+                    <Input id="studentReferralLink" type="text" value={`${referralLinkBase}${userSpecificCode}&type=student`} readOnly className="bg-muted/50" />
+                    <Button onClick={() => copyToClipboard(`${referralLinkBase}${userSpecificCode}&type=student`, "Student")} variant="outline" size="icon">
                         <Copy className="h-4 w-4" />
                         <span className="sr-only">Copy Student Referral Link</span>
                     </Button>
                 </div>
             </div>
-             <div>
-                <Label htmlFor="pcReferralLink" className="font-medium flex items-center mb-1">
-                    <Building className="h-5 w-5 mr-2 text-primary"/> Refer a New Print Center
-                </Label>
-                <div className="flex items-center space-x-3">
-                    <Input id="pcReferralLink" type="text" value={`${referralLink}&type=printcenter`} readOnly className="bg-muted/50" />
-                    <Button onClick={() => copyToClipboard(`${referralLink}&type=printcenter`, "Print Center")} variant="outline" size="icon">
-                        <Copy className="h-4 w-4" />
-                        <span className="sr-only">Copy Print Center Referral Link</span>
-                    </Button>
-                </div>
-            </div>
+            {userRole !== 'va' && (
+              <div>
+                  <Label htmlFor="pcReferralLink" className="font-medium flex items-center mb-1">
+                      <Building className="h-5 w-5 mr-2 text-primary"/> Refer a New Print Center
+                  </Label>
+                  <div className="flex items-center space-x-3">
+                      <Input id="pcReferralLink" type="text" value={`${referralLinkBase}${userSpecificCode}&type=printcenter`} readOnly className="bg-muted/50" />
+                      <Button onClick={() => copyToClipboard(`${referralLinkBase}${userSpecificCode}&type=printcenter`, "Print Center")} variant="outline" size="icon">
+                          <Copy className="h-4 w-4" />
+                          <span className="sr-only">Copy Print Center Referral Link</span>
+                      </Button>
+                  </div>
+              </div>
+            )}
+            {userRole === 'va' && (
+              <div>
+                  <Label htmlFor="vaReferralLink" className="font-medium flex items-center mb-1">
+                      <Briefcase className="h-5 w-5 mr-2 text-primary"/> Refer a New VA
+                  </Label>
+                  <div className="flex items-center space-x-3">
+                      <Input id="vaReferralLink" type="text" value={`${referralLinkBase}${userSpecificCode}&type=va`} readOnly className="bg-muted/50" />
+                      <Button onClick={() => copyToClipboard(`${referralLinkBase}${userSpecificCode}&type=va`, "VA")} variant="outline" size="icon">
+                          <Copy className="h-4 w-4" />
+                          <span className="sr-only">Copy VA Referral Link</span>
+                      </Button>
+                  </div>
+              </div>
+            )}
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
-          Referral rewards vary for students and print centers. Check with admin for current program details.
+          Referral rewards vary for different entity types. Check with admin for current program details.
         </CardFooter>
       </Card>
 
@@ -192,7 +207,18 @@ export function ReferralDashboard({ userRole }: ReferralDashboardProps) {
                 <TableRow key={ref.id}>
                   <TableCell>{ref.referredEntityName}</TableCell>
                   <TableCell>
-                     <Badge variant={ref.referredEntityType === "Student" ? "secondary" : "outline"} className={ref.referredEntityType === "Print Center" ? "border-primary text-primary" : ""}>
+                     <Badge 
+                        variant={
+                            ref.referredEntityType === "Student" ? "secondary" 
+                            : ref.referredEntityType === "Print Center" ? "outline" 
+                            : "default" 
+                        } 
+                        className={
+                            ref.referredEntityType === "Print Center" ? "border-primary text-primary" 
+                            : ref.referredEntityType === "Virtual Assistant" ? "border-purple-500 text-purple-600 bg-purple-50" 
+                            : ""
+                        }
+                      >
                         {ref.referredEntityType}
                      </Badge>
                   </TableCell>
@@ -200,7 +226,7 @@ export function ReferralDashboard({ userRole }: ReferralDashboardProps) {
                   <TableCell>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium
                       ${ref.status.includes('Earned') ? 'bg-green-100 text-green-700' : 
-                        ref.status.includes('Subscribed') ? 'bg-blue-100 text-blue-700' :
+                        ref.status.includes('Subscribed') || ref.status.includes('Active') ? 'bg-blue-100 text-blue-700' :
                         'bg-yellow-100 text-yellow-700'}`}>
                       {ref.status}
                     </span>
@@ -301,4 +327,3 @@ export function ReferralDashboard({ userRole }: ReferralDashboardProps) {
     </div>
   );
 }
-

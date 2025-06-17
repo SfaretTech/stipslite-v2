@@ -6,14 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Settings, Save, DollarSign, Percent, Gift, Users2, Building } from "lucide-react"; // Added Gift, Users2, Building
+import { Settings, Save, DollarSign, Percent, Gift, Users2, Building, Briefcase } from "lucide-react"; // Added Briefcase
 
 export default function AdminSettingsPage() {
   return (
     <div className="space-y-8">
       <PageHeader 
         title="Platform Settings"
-        description="Configure general settings, payment parameters, and referral program rules."
+        description="Configure general settings, payment parameters, and referral program rules for students, VAs, and print centers."
         icon={Settings}
       />
       
@@ -129,6 +129,26 @@ export default function AdminSettingsPage() {
                          <div className="relative">
                             <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
                             <Input id="pcFirstTransactionBonus" type="number" defaultValue="500.00" className="pl-8" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="space-y-4 p-4 border rounded-lg">
+                <h4 className="font-medium text-md flex items-center"><Briefcase className="mr-2 h-4 w-4 text-muted-foreground"/> Virtual Assistant (VA) Referral Settings</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                        <Label htmlFor="vaSignupBonus">New VA Signup Bonus (NGN)</Label>
+                         <div className="relative">
+                            <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
+                            <Input id="vaSignupBonus" type="number" defaultValue="150.00" className="pl-8" />
+                        </div>
+                    </div>
+                     <div className="space-y-1.5">
+                        <Label htmlFor="vaFirstTaskBonus">VA First Completed Task Bonus (NGN)</Label>
+                         <div className="relative">
+                            <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
+                            <Input id="vaFirstTaskBonus" type="number" defaultValue="300.00" className="pl-8" />
                         </div>
                     </div>
                 </div>

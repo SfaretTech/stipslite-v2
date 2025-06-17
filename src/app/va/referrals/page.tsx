@@ -8,7 +8,7 @@ export default function VaReferralsPage() {
     <div className="space-y-8">
       <PageHeader 
         title="VA Referral Program"
-        description="Refer new students or print centers to STIPS Lite and earn rewards for your efforts."
+        description="Refer new students or other Virtual Assistants to STIPS Lite and earn rewards."
         icon={Gift}
       />
       <ReferralDashboard userRole="va" />
