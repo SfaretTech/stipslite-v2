@@ -14,7 +14,7 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye, Briefcase, Printer, MessageSquare as MessageSquareIcon, AlertCircle as AlertCircleIcon, Gift } from "lucide-react"; // Added Gift
+import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye, Briefcase, Printer, MessageSquare as MessageSquareIcon, AlertCircle as AlertCircleIcon, Gift, LayoutDashboard } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AiSearchDialog } from "@/components/ai/AiSearchDialog";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +43,13 @@ const mockPrintCenterNotifications = [
   { id: "PCN005", title: "New Print Center Referral: Alpha Prints", timestamp: "1 day ago", read: false, link: "/printcenter/referrals", icon: Gift },
 ];
 
+const mockAdminNotifications = [
+    { id: "AN001", title: "New User 'Jane S.' Awaiting Approval", timestamp: "15 mins ago", read: false, link: "/admin/approvals", icon: UsersIcon },
+    { id: "AN002", title: "Task 'TSK105' Submitted by 'John D.'", timestamp: "1 hour ago", read: false, link: "/admin/tasks", icon: Briefcase },
+    { id: "AN003", title: "Support Ticket #STK034 Opened", timestamp: "3 hours ago", read: false, link: "/admin/dashboard", icon: LifeBuoy }, // Assuming admins handle support tickets or see them
+    { id: "AN004", title: "Platform Update Deployed Successfully", timestamp: "1 day ago", read: true, link: "/admin/settings", icon: Settings },
+];
+
 
 export function Header({ role = "student" }: { role?: "student" | "admin" | "va" | "print-center" }) {
   const { isMobile } = useSidebar();
@@ -54,7 +61,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
   let subscriptionSettingsLink = "/dashboard/subscription";
   let supportLink = "/dashboard/support";
   let logoutLink = "/auth/login";
-  let referralsLink = "/dashboard/referrals"; // Default for student
+  let referralsLink = "/dashboard/referrals";
   let currentNotifications = mockStudentNotifications;
 
   if (role === "va") {
@@ -69,20 +76,20 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     currentNotifications = mockVaNotifications;
   } else if (role === "admin") {
     userName = "Admin User";
-    userEmail = "admin@example.com";
-    profileLink = "/admin/settings"; 
-    notificationsLink = "/admin/dashboard"; 
-    subscriptionSettingsLink = "/admin/settings"; 
-    supportLink = "/admin/dashboard"; 
-    logoutLink = "/auth/login"; 
-    referralsLink = "/admin/settings"; // Admin might manage referrals here
-    currentNotifications = []; 
+    userEmail = "admin@stipslite.com"; // Changed email
+    profileLink = "/admin/settings"; // Admin's "profile" is platform settings
+    notificationsLink = "/admin/dashboard"; // Or a specific admin activity log page
+    subscriptionSettingsLink = ""; // No direct subscription for admin account
+    supportLink = "/admin/dashboard"; // Admin might handle support or view overview
+    logoutLink = "/auth/login"; // Admin logs out to general login
+    referralsLink = "/admin/settings"; // Admin manages referral program from settings
+    currentNotifications = mockAdminNotifications; 
   } else if (role === "print-center") {
     userName = "Print Shop Owner";
     userEmail = "shop@example.com";
     profileLink = "/printcenter/profile";
     notificationsLink = "/printcenter/notifications"; 
-    subscriptionSettingsLink = "/printcenter/profile"; 
+    subscriptionSettingsLink = ""; // Print centers don't have subscriptions in this model
     supportLink = "/printcenter/support";
     logoutLink = "/printcenter/login";
     referralsLink = "/printcenter/referrals";
@@ -173,12 +180,22 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
               <p className="text-xs text-muted-foreground">{userEmail}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href={profileLink}>
-                {role === 'print-center' ? <Printer className="mr-2 h-4 w-4" /> : <UserCircle className="mr-2 h-4 w-4" />}
-                <span>{role === 'print-center' ? 'Shop Profile' : 'Profile'}</span>
-              </Link>
-            </DropdownMenuItem>
+            {role !== 'admin' && (
+                <DropdownMenuItem asChild>
+                <Link href={profileLink}>
+                    {role === 'print-center' ? <Printer className="mr-2 h-4 w-4" /> : <UserCircle className="mr-2 h-4 w-4" />}
+                    <span>{role === 'print-center' ? 'Shop Profile' : 'Profile'}</span>
+                </Link>
+                </DropdownMenuItem>
+            )}
+            {role === 'admin' && (
+                <DropdownMenuItem asChild>
+                <Link href={profileLink}> 
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Platform Settings</span>
+                </Link>
+                </DropdownMenuItem>
+            )}
              <DropdownMenuItem asChild>
               <Link href={notificationsLink}>
                 <Bell className="mr-2 h-4 w-4" />
@@ -186,7 +203,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
                 {unreadNotificationsCount > 0 && <Badge variant="destructive" className="ml-auto">{unreadNotificationsCount}</Badge>}
               </Link>
             </DropdownMenuItem>
-            { (role === 'student' || role === 'va') && (
+            { (role === 'student' || role === 'va') && subscriptionSettingsLink && (
                 <DropdownMenuItem asChild>
                 <Link href={subscriptionSettingsLink}>
                     <CreditCard className="mr-2 h-4 w-4" />
@@ -194,7 +211,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
                 </Link>
                 </DropdownMenuItem>
             )}
-             {role !== 'admin' && ( // Referrals link for non-admin roles
+             {role !== 'admin' && (
                 <DropdownMenuItem asChild>
                   <Link href={referralsLink}>
                     <Gift className="mr-2 h-4 w-4" />
@@ -202,20 +219,30 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
                   </Link>
                 </DropdownMenuItem>
             )}
-             { (role === 'admin' || role === 'print-center') && (
+             {role === 'admin' && ( // Admin specific link for referral settings
                 <DropdownMenuItem asChild>
-                <Link href={subscriptionSettingsLink}> {/* For print-center, this links to profile; for admin, to settings */}
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>{role === 'print-center' ? 'Shop Settings' : 'Platform Settings'}</span>
+                <Link href="/admin/settings"> 
+                    <Gift className="mr-2 h-4 w-4" />
+                    <span>Referral Settings</span>
                 </Link>
                 </DropdownMenuItem>
             )}
-            <DropdownMenuItem asChild>
-              <Link href={supportLink}>
-                <LifeBuoy className="mr-2 h-4 w-4" />
-                <span>Support</span>
-              </Link>
-            </DropdownMenuItem>
+             {role !== 'admin' && (
+                <DropdownMenuItem asChild>
+                <Link href={supportLink}>
+                    <LifeBuoy className="mr-2 h-4 w-4" />
+                    <span>Support</span>
+                </Link>
+                </DropdownMenuItem>
+             )}
+             {role === 'admin' && (
+                 <DropdownMenuItem asChild>
+                 <Link href="/admin/dashboard">
+                     <LayoutDashboard className="mr-2 h-4 w-4" />
+                     <span>Admin Overview</span>
+                 </Link>
+                 </DropdownMenuItem>
+             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href={logoutLink} className="text-red-600 focus:text-red-600 focus:bg-red-50">

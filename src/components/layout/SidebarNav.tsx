@@ -29,7 +29,7 @@ import {
   Banknote, 
   Store, 
   FileText, 
-  Gift, // Added Gift icon
+  Gift,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -57,7 +57,7 @@ const studentNavItemsBase = [
     ],
   },
   { href: "/dashboard/print-centers", label: "Print Centers", icon: Printer },
-  { href: "/dashboard/referrals", label: "Referrals", icon: Gift }, // Changed icon to Gift
+  { href: "/dashboard/referrals", label: "Referrals", icon: Gift },
   {
     href: "/dashboard/subscription", 
     activeHref: "/dashboard/find-va", 
@@ -79,7 +79,7 @@ const adminNavItems = [
    { href: "/admin/approvals", label: "Account Approvals", icon: ShieldCheck },
    { href: "/admin/tasks", label: "Task Approvals", icon: ClipboardList },
    { href: "/admin/users", label: "Manage Users", icon: BookUser },
-   { href: "/admin/settings", label: "Site Settings", icon: Settings },
+   { href: "/admin/settings", label: "Platform Settings", icon: Settings }, // Changed label for clarity
 ];
 
 const vaNavItemsBase = [
@@ -95,7 +95,7 @@ const vaNavItemsBase = [
   },
   { href: "/va/profile", label: "My VA Profile", icon: UserCircle },
   { href: "/va/payouts", label: "Payouts", icon: Banknote }, 
-  { href: "/va/referrals", label: "Referrals", icon: Gift }, // Added VA Referrals
+  { href: "/va/referrals", label: "Referrals", icon: Gift },
   { href: "/va/notifications", label: "Notifications", icon: Bell },
   { href: "/va/subscription", label: "My Subscription", icon: CreditCard }, 
   { href: "/va/support", label: "Support", icon: MessageSquare },
@@ -106,7 +106,7 @@ const printCenterNavItems = [
   { href: "/printcenter/jobs", label: "Print Jobs", icon: FileText },
   { href: "/printcenter/profile", label: "Shop Profile", icon: Store },
   { href: "/printcenter/earnings", label: "Earnings & Payouts", icon: Banknote },
-  { href: "/printcenter/referrals", label: "Referrals", icon: Gift }, // Added PC Referrals
+  { href: "/printcenter/referrals", label: "Referrals", icon: Gift },
   { href: "/printcenter/notifications", label: "Notifications", icon: Bell },
   { href: "/printcenter/support", label: "Support", icon: MessageSquare },
 ];
@@ -193,7 +193,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   const logoutHref = 
     role === "va" ? "/va/login" :
     role === "print-center" ? "/printcenter/login" :
-    role === "admin" ? "/auth/login" : 
+    role === "admin" ? "/auth/login" : // Admin logout can go to general login
     "/auth/login";
 
 
