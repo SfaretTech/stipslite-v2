@@ -45,7 +45,6 @@ export default function VaPayoutsPage() {
   const [currentBalance, setCurrentBalance] = useState(initialCurrentBalance);
   const [lastPayoutAmount, setLastPayoutAmount] = useState(initialLastPayoutAmount);
   const [payoutHistory, setPayoutHistory] = useState<PayoutHistoryItem[]>(mockPayoutHistoryInitial);
-  // totalEarned can remain a const for this UI simulation if it represents an overall lifetime earning not directly reduced by withdrawals
   const totalEarned = initialTotalEarned; 
 
 
@@ -64,15 +63,15 @@ export default function VaPayoutsPage() {
         return;
     }
 
-    setCurrentBalance(prevBalance => prevBalance - amount);
+    const newBalance = currentBalance - amount;
+    setCurrentBalance(newBalance);
     setLastPayoutAmount(amount);
 
-    // Add to payout history (simulated)
     const newPayout: PayoutHistoryItem = {
         id: `PAY${String(Date.now()).slice(-3)}`,
-        date: new Date().toISOString().split('T')[0], // Today's date
+        date: new Date().toISOString().split('T')[0], 
         amount: `₦${amount.toFixed(2)}`,
-        status: "Pending", // New withdrawals are pending
+        status: "Pending", 
         transactionId: `TRX_PENDING_${String(Date.now()).slice(-4)}`,
         bankName: mockVaBankDetails.bankName,
         accountLast4: mockVaBankDetails.accountNumber.slice(-4),
@@ -82,7 +81,13 @@ export default function VaPayoutsPage() {
 
     toast({
       title: "Withdrawal Request Submitted",
-      description: `Your request to withdraw ₦${amount.toFixed(2)} to ${mockVaBankDetails.bankName} (******${mockVaBankDetails.accountNumber.slice(-4)}) is pending admin approval.`,
+      description: `Your request to withdraw ₦${amount.toFixed(2)} to ${mockVaBankDetails.bankName} (******${mockVaBankDetails.accountNumber.slice(-4)}) is pending admin approval. Your balance has been updated.`,
+    });
+     toast({
+        title: "Admin Notification (Simulated)",
+        description: `Admin to verify balance and process withdrawal for ₦${amount.toFixed(2)}. User: VA, Current Balance: ₦${newBalance.toFixed(2)}`,
+        variant: "default",
+        duration: 7000, 
     });
     setWithdrawalAmount(""); 
   };

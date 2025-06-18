@@ -60,8 +60,9 @@ export default function PrintCenterEarningsPage() {
          toast({ title: "Minimum Withdrawal", description: `Minimum withdrawal amount is ₦1,000.00.`, variant: "destructive" });
         return;
     }
-
-    setCurrentBalance(prevBalance => prevBalance - amount);
+    
+    const newBalance = currentBalance - amount;
+    setCurrentBalance(newBalance);
     setLastPayoutAmount(amount);
 
     const newPayout: PayoutHistoryItem = {
@@ -77,7 +78,13 @@ export default function PrintCenterEarningsPage() {
 
     toast({
       title: "Withdrawal Request Submitted",
-      description: `Your request to withdraw ₦${amount.toFixed(2)} to ${mockShopBankDetails.bankName} (******${mockShopBankDetails.accountNumber.slice(-4)}) is pending admin approval.`,
+      description: `Your request to withdraw ₦${amount.toFixed(2)} to ${mockShopBankDetails.bankName} (******${mockShopBankDetails.accountNumber.slice(-4)}) is pending admin approval. Your balance has been updated.`,
+    });
+     toast({
+        title: "Admin Notification (Simulated)",
+        description: `Admin to verify balance and process withdrawal for ₦${amount.toFixed(2)}. User: Print Center, Current Balance: ₦${newBalance.toFixed(2)}`,
+        variant: "default",
+        duration: 7000, 
     });
     setWithdrawalAmount(""); 
   };
