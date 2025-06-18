@@ -33,7 +33,7 @@ import {
   Activity,
   UserCog, 
   ShieldOff, 
-  Megaphone, // Added Megaphone
+  Megaphone,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -81,10 +81,17 @@ const accountNavItemsStudent = [
 const adminNavItems = [
    { href: "/admin/dashboard", label: "Admin Dashboard", icon: LayoutDashboard },
    { href: "/admin/approvals", label: "Account Approvals", icon: ShieldCheck },
-   { href: "/admin/tasks", label: "Task Approvals", icon: ClipboardList },
+   {
+    label: "Task Management",
+    icon: ClipboardList,
+    subItems: [
+      { href: "/admin/tasks", label: "Manage All Tasks", icon: ListChecks },
+      { href: "/admin/live-tasks", label: "Live Tasks", icon: Signal },
+    ],
+  },
    { href: "/admin/users", label: "Manage Users", icon: BookUser },
    { href: "/admin/manage-admins", label: "Manage Admins", icon: UserCog }, 
-   { href: "/admin/announcements", label: "Announcements", icon: Megaphone }, // Added Announcements
+   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
    { href: "/admin/notifications", label: "Activity Log", icon: Activity },
    { href: "/admin/settings", label: "Platform Settings", icon: Settings },
 ];
