@@ -38,7 +38,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Banknote, CheckCircle, Clock, XCircle, MoreHorizontal, Users, Briefcase, Printer, Gift, Edit3, AlertTriangle } from "lucide-react";
+import { Banknote, CheckCircle, Clock, XCircle, MoreHorizontal, Users, Briefcase, Printer, Gift, Edit3, AlertTriangle, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO } from "date-fns";
 
@@ -188,11 +188,18 @@ export default function AdminPaymentManagementPage() {
     setSelectedRequest(null);
     setCurrentAction(null);
   };
+  
+  const handleDownloadCsv = (dataType: string) => {
+    toast({
+      title: "CSV Download Simulated",
+      description: `${dataType} CSV download has started (simulated).`,
+    });
+  };
 
   const referralWithdrawals = useMemo(() => requests.filter(r => r.type === "Referral Earnings"), [requests]);
   const servicePayouts = useMemo(() => requests.filter(r => r.type === "VA Payout" || r.type === "Print Center Payout"), [requests]);
 
-  const renderTable = (data: WithdrawalRequest[], tableTitle: string) => (
+  const renderTable = (data: WithdrawalRequest[], tableTitle: string, dataTypeForCsv: string) => (
     <Card>
       <CardHeader>
         <CardTitle className="font-headline">{tableTitle} ({data.length})</CardTitle>
@@ -280,6 +287,11 @@ export default function AdminPaymentManagementPage() {
         </div>
         )}
       </CardContent>
+      <CardFooter className="border-t pt-4">
+          <Button onClick={() => handleDownloadCsv(dataTypeForCsv)} variant="outline">
+              <Download className="mr-2 h-4 w-4"/> Download as CSV
+          </Button>
+      </CardFooter>
     </Card>
   );
 
@@ -297,10 +309,10 @@ export default function AdminPaymentManagementPage() {
           <TabsTrigger value="service_payouts"><Briefcase className="mr-2 h-4 w-4"/>Service Payouts (VAs/PCs)</TabsTrigger>
         </TabsList>
         <TabsContent value="referrals">
-          {renderTable(referralWithdrawals, "Referral Withdrawal Requests")}
+          {renderTable(referralWithdrawals, "Referral Withdrawal Requests", "Referral Withdrawals")}
         </TabsContent>
         <TabsContent value="service_payouts">
-          {renderTable(servicePayouts, "VA & Print Center Payout Requests")}
+          {renderTable(servicePayouts, "VA & Print Center Payout Requests", "Service Payouts")}
         </TabsContent>
       </Tabs>
 
@@ -388,5 +400,3 @@ export default function AdminPaymentManagementPage() {
     </div>
   );
 }
-
-    
