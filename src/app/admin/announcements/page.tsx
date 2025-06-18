@@ -39,6 +39,7 @@ import { Megaphone, Eye, Trash2, MoreHorizontal, Send, Users, Briefcase, Printer
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area"; // Added import
 
 type TargetAudience = "student" | "va" | "print-center";
 
@@ -195,7 +196,7 @@ export default function AdminAnnouncementsPage() {
           <DialogHeader>
             <DialogTitle>{announcementToView?.title || "Announcement Details"}</DialogTitle>
             <DialogDescription>
-              Sent on: {announcementToView?.dateSent} | To: {announcementToView?.targets.join(', ')}
+              Sent on: {announcementToView?.dateSent ? format(new Date(announcementToView.dateSent), "PPP") : 'N/A'} | To: {announcementToView?.targets.join(', ')}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] my-4">
@@ -238,7 +239,7 @@ export default function AdminAnnouncementsPage() {
                         <TableCell className="space-x-1">
                             {ann.targets.map(target => <Badge key={target} variant="secondary">{target.charAt(0).toUpperCase() + target.slice(1)}</Badge>)}
                         </TableCell>
-                        <TableCell>{ann.dateSent}</TableCell>
+                        <TableCell>{format(new Date(ann.dateSent), "PPP")}</TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
