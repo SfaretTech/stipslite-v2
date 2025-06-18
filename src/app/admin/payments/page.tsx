@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -65,6 +65,41 @@ interface WithdrawalRequest {
   processedDate?: string; 
   transactionId?: string;
 }
+
+// Helper component for client-side date and time formatting
+const ClientSideTime: React.FC<{ date: Date | string | undefined }> = ({ date }) => {
+  const [timeString, setTimeString] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (date) {
+      const d = typeof date === 'string' ? parseISO(date) : date;
+      try {
+        setTimeString(format(d, 'PPP p'));
+      } catch (error) {
+        console.error("Error formatting date in ClientSideTime:", error);
+        setTimeString('Invalid Date');
+      }
+    } else {
+      setTimeString('N/A');
+    }
+  }, [date]); // Rerun when date prop changes
+
+  if (timeString === null) {
+    // Initial render (SSR and first client render before useEffect completes)
+    if (date) {
+      const d = typeof date === 'string' ? parseISO(date) : date;
+      try {
+        return <>{format(d, 'PPP')}</>; // Render only the date part
+      } catch {
+        return <>Invalid Date</>;
+      }
+    }
+    return <>N/A</>; // Placeholder if no date
+  }
+
+  return <>{timeString}</>; // Render full date and time string after client-side effect
+};
+
 
 const initialWithdrawalRequests: WithdrawalRequest[] = [
   { id: "WDR001", userId: "STD001", userName: "John Doe", userRole: "Student", amount: 1500, currency: "NGN", requestedDate: "2024-07-25T10:00:00Z", status: "Pending", type: "Referral Earnings", paymentDetails: { method: "OPay", identifier: "08012345678", recipientName: "John Doe" } },
@@ -198,7 +233,7 @@ export default function AdminPaymentManagementPage() {
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">₦{req.amount.toFixed(2)}</TableCell>
-                    <TableCell>{format(parseISO(req.requestedDate), "PPP p")}</TableCell>
+                    <TableCell><ClientSideTime date={req.requestedDate} /></TableCell>
                     <TableCell>
                         {req.paymentDetails.method}
                         <span className="block text-xs text-muted-foreground">({req.paymentDetails.identifier})</span>
@@ -287,12 +322,12 @@ export default function AdminPaymentManagementPage() {
                 <div className="text-sm space-y-1 p-3 bg-muted/50 rounded-md">
                     <p><strong>User:</strong> {selectedRequest.userName} ({selectedRequest.userId} - {selectedRequest.userRole})</p>
                     <p><strong>Amount:</strong> ₦{selectedRequest.amount.toFixed(2)} ({selectedRequest.type})</p>
-                    <p><strong>Requested:</strong> {format(parseISO(selectedRequest.requestedDate), "PPP p")}</p>
+                    <div><strong>Requested:</strong> <ClientSideTime date={selectedRequest.requestedDate} /></div>
                     <p><strong>Method:</strong> {selectedRequest.paymentDetails.method} ({selectedRequest.paymentDetails.identifier})</p>
                     <p><strong>Recipient:</strong> {selectedRequest.paymentDetails.recipientName}</p>
                     <div><strong>Current Status:</strong> <Badge variant="outline" className={statusColors[selectedRequest.status]}>{selectedRequest.status}</Badge></div>
                     {selectedRequest.transactionId && <p><strong>Transaction ID:</strong> {selectedRequest.transactionId}</p>}
-                    {selectedRequest.processedDate && <p><strong>Processed/Updated:</strong> {format(parseISO(selectedRequest.processedDate), "PPP p")}</p>}
+                    {selectedRequest.processedDate && <div><strong>Processed/Updated:</strong> <ClientSideTime date={selectedRequest.processedDate} /></div>}
                 </div>
             )}
             {(currentAction === "mark_paid" || currentAction === "reject" || (!currentAction && selectedRequest?.adminNotes)) && (
