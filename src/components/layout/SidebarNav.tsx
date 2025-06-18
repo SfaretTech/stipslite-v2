@@ -32,7 +32,8 @@ import {
   Gift,
   Activity,
   UserCog, 
-  ShieldOff, // Added ShieldOff
+  ShieldOff, 
+  Megaphone, // Added Megaphone
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -83,7 +84,8 @@ const adminNavItems = [
    { href: "/admin/tasks", label: "Task Approvals", icon: ClipboardList },
    { href: "/admin/users", label: "Manage Users", icon: BookUser },
    { href: "/admin/manage-admins", label: "Manage Admins", icon: UserCog }, 
-   { href: "/admin/notifications", label: "Activity Log", icon: Activity }, // Changed label and icon
+   { href: "/admin/announcements", label: "Announcements", icon: Megaphone }, // Added Announcements
+   { href: "/admin/notifications", label: "Activity Log", icon: Activity },
    { href: "/admin/settings", label: "Platform Settings", icon: Settings },
 ];
 
@@ -113,7 +115,7 @@ const printCenterNavItems = [
   { href: "/printcenter/earnings", label: "Earnings & Payouts", icon: Banknote },
   { href: "/printcenter/referrals", label: "Referrals", icon: Gift },
   { href: "/printcenter/notifications", label: "Notifications", icon: Bell },
-  { href: "/printcenter/subscription", label: "Subscription", icon: CreditCard }, // Added subscription
+  { href: "/printcenter/subscription", label: "Subscription", icon: CreditCard }, 
   { href: "/printcenter/support", label: "Support", icon: MessageSquare },
 ];
 
@@ -319,6 +321,5 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
     </SidebarMenu>
   );
 }
-
 
     

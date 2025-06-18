@@ -14,7 +14,7 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye, Briefcase, Printer, MessageSquare as MessageSquareIcon, AlertCircle as AlertCircleIcon, Gift, LayoutDashboard, Activity } from "lucide-react";
+import { Bell, LifeBuoy, LogOut, Settings, UserCircle, PanelLeft, Search, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye, Briefcase, Printer, MessageSquare as MessageSquareIcon, AlertCircle as AlertCircleIcon, Gift, LayoutDashboard, Activity, Megaphone } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AiSearchDialog } from "@/components/ai/AiSearchDialog";
 import { Badge } from "@/components/ui/badge";
@@ -27,12 +27,14 @@ const mockStudentNotifications = [
   { id: "N002", title: "New Referral: Jane Doe", timestamp: "1 day ago", read: false, link: "/dashboard/referrals", icon: UsersIcon },
   { id: "N003", title: "Subscription Renewal Soon", timestamp: "3 days ago", read: true, link: "/dashboard/subscription", icon: CreditCard },
   { id: "N004", title: "Payment Received", timestamp: "5 days ago", read: true, link: "/dashboard/tasks/TSK00X", icon: DollarIcon },
+  { id: "N005_ANNOUNCEMENT", title: "New Platform Announcement!", description: "Check out the latest updates for all users.", timestamp: "Just now", read: false, link: "/dashboard/notifications", icon: Megaphone },
 ];
 
 const mockVaNotifications = [
   { id: "VAN001", title: "New Task Assigned", timestamp: "1 hour ago", read: false, link: "/va/business-tasks/BST001", icon: Briefcase },
   { id: "VAN002", title: "Payment Processed", timestamp: "2 days ago", read: true, link: "/va/payouts", icon: DollarIcon }, 
   { id: "VAN003", title: "New Student Referral: Mark P.", timestamp: "3 hours ago", read: false, link: "/va/referrals", icon: Gift },
+  { id: "VAN004_ANNOUNCEMENT", title: "Important VA Update", description: "A new announcement regarding VA policies is available.", timestamp: "Just now", read: false, link: "/va/notifications", icon: Megaphone },
 ];
 
 const mockPrintCenterNotifications = [
@@ -41,13 +43,15 @@ const mockPrintCenterNotifications = [
   { id: "PCN003", title: "Admin Message: Holiday Schedule", description: "Please update your holiday hours in your profile.", timestamp: "2 days ago", read: true, link: "/printcenter/profile", icon: MessageSquareIcon },
   { id: "PCN004", title: "Low Paper Stock Alert", description: "Your A4 paper stock seems low.", timestamp: "3 days ago", read: true, category: "Shop Alert", icon: AlertCircleIcon },
   { id: "PCN005", title: "New Print Center Referral: Alpha Prints", timestamp: "1 day ago", read: false, link: "/printcenter/referrals", icon: Gift },
+  { id: "PCN006_ANNOUNCEMENT", title: "Notice for Print Centers", description: "Check for important operational updates.", timestamp: "Just now", read: false, link: "/printcenter/notifications", icon: Megaphone },
 ];
 
 const mockAdminNotifications = [
     { id: "AN001", title: "New User 'Jane S.' Awaiting Approval", timestamp: "15 mins ago", read: false, link: "/admin/approvals", icon: UsersIcon },
     { id: "AN002", title: "Task 'TSK105' Submitted by 'John D.'", timestamp: "1 hour ago", read: false, link: "/admin/tasks", icon: Briefcase },
-    { id: "AN003", title: "Support Ticket #STK034 Opened", timestamp: "3 hours ago", read: false, link: "/admin/dashboard", icon: LifeBuoy }, // Assuming admins handle support tickets or see them
+    { id: "AN003", title: "Support Ticket #STK034 Opened", timestamp: "3 hours ago", read: false, link: "/admin/dashboard", icon: LifeBuoy }, 
     { id: "AN004", title: "Platform Update Deployed Successfully", timestamp: "1 day ago", read: true, link: "/admin/settings", icon: Settings },
+    { id: "AN005_SENT_ANNOUNCEMENT", title: "Announcement 'Holiday Hours' Sent", description: "Sent to Students, VAs, Print Centers.", timestamp: "20 mins ago", read: false, link: "/admin/announcements", icon: Megaphone },
 ];
 
 
@@ -83,10 +87,10 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     userEmail = "admin@stipslite.com"; 
     profileLink = "/admin/settings"; 
     notificationsLink = "/admin/notifications"; 
-    subscriptionSettingsLink = ""; // Admin does not have personal subscription page
-    supportLink = "/admin/dashboard"; // Admin support may lead to general dashboard or specific tool
+    subscriptionSettingsLink = ""; 
+    supportLink = "/admin/dashboard"; 
     logoutLink = "/admin/login";
-    referralsLink = "/admin/settings"; // Admin manages referral settings
+    referralsLink = "/admin/settings"; 
     currentNotifications = mockAdminNotifications; 
     notificationsLinkText = "Activity Log";
     NotificationsLinkIconComponent = Activity;
@@ -95,7 +99,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     userEmail = "shop@example.com";
     profileLink = "/printcenter/profile";
     notificationsLink = "/printcenter/notifications"; 
-    subscriptionSettingsLink = "/printcenter/subscription"; // Added subscription link for PC
+    subscriptionSettingsLink = "/printcenter/subscription"; 
     supportLink = "/printcenter/support";
     logoutLink = "/printcenter/login";
     referralsLink = "/printcenter/referrals";
@@ -109,10 +113,11 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
       {isMobile && <SidebarTrigger />}
-      {!isMobile && <div className="w-8 h-8" /> /* Placeholder to align items when desktop sidebar trigger is hidden or part of sidebar itself */}
+      {!isMobile && <div className="w-8 h-8" /> 
+      }
       
       <div className="flex-1">
-        {/* Optional: Global search bar if not using AI Search Dialog exclusively */}
+        
       </div>
 
       <div className="flex items-center gap-3">
@@ -153,8 +158,8 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
                       <IconComponent className={cn("h-5 w-5 mt-0.5 shrink-0", notification.read ? "text-muted-foreground" : "text-primary")} />
                       <div className="flex-grow">
                         <p className={cn("text-sm font-medium", !notification.read && "text-foreground")}>{notification.title}</p>
-                        {/* @ts-ignore */}
-                        {notification.description && <p className="text-xs text-muted-foreground/80 line-clamp-1">{notification.description}</p>}
+                        
+                        {(notification as any).description && <p className="text-xs text-muted-foreground/80 line-clamp-1">{(notification as any).description}</p>}
                         <p className="text-xs text-muted-foreground">{notification.timestamp}</p>
                       </div>
                        {!notification.read && <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1.5"></div>}
@@ -210,7 +215,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
                 {unreadNotificationsCount > 0 && role !== 'admin' && <Badge variant="destructive" className="ml-auto">{unreadNotificationsCount}</Badge>}
               </Link>
             </DropdownMenuItem>
-            {subscriptionSettingsLink && ( // Conditionally render subscription link
+            {subscriptionSettingsLink && ( 
                 <DropdownMenuItem asChild>
                 <Link href={subscriptionSettingsLink}>
                     <CreditCard className="mr-2 h-4 w-4" />
@@ -226,9 +231,9 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
                   </Link>
                 </DropdownMenuItem>
             )}
-             {role === 'admin' && ( // Admin specific link for referral settings
+             {role === 'admin' && ( 
                 <DropdownMenuItem asChild>
-                <Link href="/admin/settings#referralProgramActive"> {/* Link to section in settings */}
+                <Link href="/admin/settings#referralProgramActive"> 
                     <Gift className="mr-2 h-4 w-4" />
                     <span>Referral Settings</span>
                 </Link>
@@ -263,6 +268,5 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     </header>
   );
 }
-
 
     
