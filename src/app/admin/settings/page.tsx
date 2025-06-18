@@ -322,7 +322,7 @@ export default function AdminSettingsPage() {
                         <div className="space-y-1.5"><Label htmlFor="subPriceMonthly">Price Monthly (NGN)</Label><Input id="subPriceMonthly" type="number" value={currentSubTier.priceMonthlyNGN ?? ""} onChange={(e) => setCurrentSubTier(p => ({...p, priceMonthlyNGN: e.target.value ? parseFloat(e.target.value) : null}))} /></div>
                         <div className="space-y-1.5"><Label htmlFor="subPriceYearly">Price Yearly (NGN)</Label><Input id="subPriceYearly" type="number" value={currentSubTier.priceYearlyNGN ?? ""} onChange={(e) => setCurrentSubTier(p => ({...p, priceYearlyNGN: e.target.value ? parseFloat(e.target.value) : null}))} /></div>
                     </div>
-                    <div className="space-y-1.5"><Label htmlFor="subCurrency">Currency</Label><Input id="subCurrency" value={currentSubTier.currency} onChange={(e) => setCurrentSubTier(p => ({...p, currency: e.target.value}))} defaultValue="NGN" /></div>
+                    <div className="space-y-1.5"><Label htmlFor="subCurrency">Currency</Label><Input id="subCurrency" value={currentSubTier.currency} onChange={(e) => setCurrentSubTier(p => ({...p, currency: e.target.value}))} /></div>
                     <div className="space-y-2">
                         <Label>Target User Roles</Label>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -445,5 +445,7 @@ export default function AdminSettingsPage() {
   );
 }
 
+
+    
 
     
