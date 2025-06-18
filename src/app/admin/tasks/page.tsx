@@ -38,7 +38,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClipboardList, Check, X, Eye, DollarSign, UserCheck, FileText, MoreHorizontal, Search, Paperclip, MessageSquare, AlertTriangle, Send } from "lucide-react";
+import { ClipboardList, Check, X, Eye, DollarSign, UserCheck, FileText, MoreHorizontal, Search, Paperclip, MessageSquare, AlertTriangle, Send, UserX, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -47,6 +47,8 @@ import { Separator } from "@/components/ui/separator";
 type AdminTaskStatus =
   | "Pending Admin Review"
   | "Pending VA Assignment"
+  | "Pending VA Acceptance" // New status
+  | "Rejected by VA"      // New status
   | "Awaiting Student Payment"
   | "In Progress with VA"
   | "Work Submitted by VA"
@@ -71,6 +73,7 @@ interface AdminTask {
   assignedVaId: string | null;
   assignedVaName: string | null;
   adminNotes?: string;
+  vaRejectionReason?: string; // Optional reason if VA rejects
   vaSubmissionDate?: string | null;
   vaSubmissionNotes?: string;
   vaSubmissionAttachments?: { name: string; url: string }[];
@@ -86,15 +89,19 @@ const mockAdminTasksInitial: AdminTask[] = [
   { id: "TSK105", title: "History Essay: Cold War Impact", studentName: "Mike Brown", studentId: "STD005", submittedDate: "2024-07-18", type: "Essay", pages: 8, description: "Analyze the long-term impact of the Cold War on global politics. 8 pages, APA format.", attachments: [], status: "Work Submitted by VA", adminSetPriceNGN: 100, paymentStatus: "Paid by Student", assignedVaId: "VA001", assignedVaName: "Aisha Bello", vaSubmissionDate: "2024-07-26", vaSubmissionNotes: "Essay completed. All sources cited.", vaSubmissionAttachments: [{name: "cold_war_essay_final.docx", url:"#"}]},
   { id: "TSK106", title: "Business Plan - Coffee Shop", studentName: "Sarah Lee", studentId: "STD006", submittedDate: "2024-07-15", type: "Business Plan", pages: 25, description: "Develop a comprehensive business plan for a new specialty coffee shop.", attachments: [], status: "Completed", adminSetPriceNGN: 300, paymentStatus: "VA Paid", assignedVaId: "VA003", assignedVaName: "Fatima Diallo", deadline: "2024-08-01", completionDate: "2024-07-23"},
   { id: "TSK107", title: "Internship Report - Marketing", studentName: "David Kim", studentId: "STD007", submittedDate: "2024-07-10", type: "Report", pages: 15, description: "Summer internship report for marketing department.", attachments: [], status: "Rejected by Admin", adminSetPriceNGN: null, paymentStatus: "Unpaid", assignedVaId: null, assignedVaName: null, adminNotes: "Description too vague. Please provide specific deliverables and learning outcomes."},
+  { id: "TSK108", title: "Poetry Analysis", studentName: "Grace Field", studentId: "STD008", submittedDate: "2024-07-27", type: "Literature", pages: 3, description: "Analyze three poems by W.B. Yeats.", attachments: [], status: "Pending VA Acceptance", adminSetPriceNGN: 50, paymentStatus: "Unpaid", assignedVaId: "VA004", assignedVaName: "David Adebayo", deadline: "2024-08-02" },
+  { id: "TSK109", title: "Statistical Data Review", studentName: "Ken Miles", studentId: "STD009", submittedDate: "2024-07-26", type: "Statistics", pages: 1, description: "Review dataset for outliers and provide summary statistics.", attachments: [{name: "dataset.csv", url:"#"}], status: "Rejected by VA", adminSetPriceNGN: 40, paymentStatus: "Unpaid", assignedVaId: "VA002", assignedVaName: "Chinedu Okoro", vaRejectionReason: "Current workload too high.", deadline: "2024-07-30" },
 ];
 
 const adminTaskStatusColors: Record<AdminTaskStatus, string> = {
   "Pending Admin Review": "bg-yellow-100 text-yellow-700 border-yellow-300",
   "Pending VA Assignment": "bg-orange-100 text-orange-700 border-orange-300",
+  "Pending VA Acceptance": "bg-cyan-100 text-cyan-700 border-cyan-300", // New Color
+  "Rejected by VA": "bg-pink-100 text-pink-700 border-pink-300",         // New Color
   "Awaiting Student Payment": "bg-blue-100 text-blue-700 border-blue-300",
   "In Progress with VA": "bg-indigo-100 text-indigo-700 border-indigo-300",
   "Work Submitted by VA": "bg-purple-100 text-purple-700 border-purple-300",
-  "Revision Requested (to VA)": "bg-pink-100 text-pink-700 border-pink-300",
+  "Revision Requested (to VA)": "bg-pink-100 text-pink-700 border-pink-300", // Re-used pink, might want unique
   "Completed": "bg-green-100 text-green-700 border-green-300",
   "Rejected by Admin": "bg-red-100 text-red-700 border-red-300",
   "Cancelled": "bg-gray-100 text-gray-700 border-gray-300",
@@ -146,6 +153,7 @@ export default function AdminTasksPage() {
     setAdminPriceInput(task.adminSetPriceNGN?.toString() || "");
     setAdminNotesInput(task.adminNotes || "");
     setAdminReviewNotesInput(""); 
+    setSelectedVaForAssignment(task.assignedVaId || undefined);
     dialogSetter(true);
   };
 
@@ -177,8 +185,8 @@ export default function AdminTasksPage() {
       return;
     }
     const va = mockVAs.find(v => v.id === selectedVaForAssignment);
-    setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, status: "Awaiting Student Payment", assignedVaId: va?.id || null, assignedVaName: va?.name || null } : t));
-    toast({ title: "VA Assigned", description: `${va?.name} assigned to ${selectedTask.title}. Awaiting student payment.` });
+    setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, status: "Pending VA Acceptance", assignedVaId: va?.id || null, assignedVaName: va?.name || null } : t));
+    toast({ title: "VA Assigned", description: `${va?.name} assigned to ${selectedTask.title}. Task is now Pending VA Acceptance.` });
     setIsAssignVaOpen(false);
     setSelectedVaForAssignment(undefined);
   };
@@ -305,11 +313,16 @@ export default function AdminTasksPage() {
                               <DollarSign className="mr-2 h-4 w-4" /> Review & Price
                             </DropdownMenuItem>
                           )}
-                          {task.status === "Pending VA Assignment" && (
+                          {(task.status === "Pending VA Assignment" || task.status === "Rejected by VA") && (
                             <DropdownMenuItem onClick={() => openDialog(setIsAssignVaOpen, task)}>
-                              <UserCheck className="mr-2 h-4 w-4" /> Assign VA
+                              <UserCheck className="mr-2 h-4 w-4" /> {task.status === "Rejected by VA" ? "Re-assign VA" : "Assign VA"}
                             </DropdownMenuItem>
                           )}
+                           {task.status === "Rejected by VA" && (
+                             <DropdownMenuItem onClick={() => openDialog(setIsReviewPriceOpen, task)} className="text-red-600 focus:bg-red-50 focus:text-red-700">
+                              <UserX className="mr-2 h-4 w-4" /> Reject Task for Student
+                            </DropdownMenuItem>
+                           )}
                           {task.status === "Awaiting Student Payment" && task.paymentStatus === "Unpaid" && (
                             <DropdownMenuItem onClick={() => openDialog(setIsConfirmPaymentOpen, task)}>
                               <Check className="mr-2 h-4 w-4 text-green-600" /> Confirm Student Payment
@@ -377,6 +390,9 @@ export default function AdminTasksPage() {
                     <h4 className="font-semibold text-primary">Assignment & Progress</h4>
                     <div><strong className="text-muted-foreground">Current Status:</strong> <Badge variant="outline" className={`text-xs ${adminTaskStatusColors[selectedTask?.status || "Cancelled"]}`}>{selectedTask?.status}</Badge></div>
                     <div><strong className="text-muted-foreground">Assigned VA:</strong> {selectedTask?.assignedVaName || "Not Assigned"} (ID: {selectedTask?.assignedVaId || "N/A"})</div>
+                     {selectedTask?.status === "Rejected by VA" && selectedTask.vaRejectionReason && (
+                        <div><strong className="text-muted-foreground">VA Rejection Reason:</strong> <span className="text-pink-700">{selectedTask.vaRejectionReason}</span></div>
+                     )}
                     {selectedTask?.vaSubmissionDate && (
                         <>
                             <div><strong className="text-muted-foreground">VA Submission Date:</strong> {selectedTask.vaSubmissionDate}</div>
@@ -442,8 +458,15 @@ export default function AdminTasksPage() {
        <Dialog open={isAssignVaOpen} onOpenChange={setIsAssignVaOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Assign VA to Task: {selectedTask?.title}</DialogTitle>
-            <DialogDescription>Select a Virtual Assistant for this task. Price set: ₦{selectedTask?.adminSetPriceNGN?.toFixed(2)}</DialogDescription>
+            <DialogTitle>
+                {selectedTask?.status === "Rejected by VA" ? "Re-assign VA to Task: " : "Assign VA to Task: "} 
+                {selectedTask?.title}
+            </DialogTitle>
+            <DialogDescription>
+                Select a Virtual Assistant for this task. 
+                {selectedTask?.status === "Rejected by VA" && ` Previous VA: ${selectedTask.assignedVaName} rejected (Reason: ${selectedTask.vaRejectionReason || 'N/A'}).`}
+                Price set: ₦{selectedTask?.adminSetPriceNGN?.toFixed(2)}
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-1.5">
@@ -454,7 +477,9 @@ export default function AdminTasksPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {mockVAs.map(va => (
-                    <SelectItem key={va.id} value={va.id}>{va.name}</SelectItem>
+                    <SelectItem key={va.id} value={va.id} disabled={va.id === selectedTask?.assignedVaId && selectedTask?.status === "Rejected by VA"}>
+                        {va.name} {va.id === selectedTask?.assignedVaId && selectedTask?.status === "Rejected by VA" && "(Previously Rejected)"}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -462,7 +487,10 @@ export default function AdminTasksPage() {
           </div>
           <DialogFooter>
             <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-            <Button onClick={handleAssignVa}>Assign Selected VA</Button>
+            <Button onClick={handleAssignVa}>
+                {selectedTask?.status === "Rejected by VA" ? <RefreshCw className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                {selectedTask?.status === "Rejected by VA" ? "Re-assign Selected VA" : "Assign Selected VA"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -551,3 +579,6 @@ export default function AdminTasksPage() {
     </div>
   );
 }
+
+
+    
