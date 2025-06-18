@@ -60,7 +60,7 @@ export default function PrintCenterSubscriptionPage() {
 
     let toastTitle = `Processing ${chosenPlan.name} (${cycle})...`;
     let toastDescription = "Your Print Center subscription selection is being updated.";
-    let redirectPath = "/printcenter/dashboard"; 
+    let redirectPath = "/print-center/dashboard"; 
 
     toast({ title: "Initiating Flutterwave Payment...", description: `Preparing payment for ${chosenPlan.name} (${cycle}). Please wait.` });
 
@@ -70,7 +70,7 @@ export default function PrintCenterSubscriptionPage() {
             localStorage.setItem('stipsLitePcAdsBlockerActive', 'true');
             setIsAdsBlockerActive(true);
             toastDescription = "Ads Blocker for Print Centers is now active. Enjoy an ad-free experience!";
-            redirectPath = `/printcenter/subscription?plan_activated=${planId}`;
+            redirectPath = `/print-center/subscription?plan_activated=${planId}`;
           }
           // Add other Print Center specific plan logic here if any
       }
@@ -100,7 +100,7 @@ export default function PrintCenterSubscriptionPage() {
     }
 
     let toastPaymentDescription = `Processing payment for ${planToActivate.name} (${billingCycle}) via Flutterwave...`;
-    let redirectPath = "/printcenter/dashboard"; 
+    let redirectPath = "/print-center/dashboard"; 
 
     toast({ 
         title: "Flutterwave Payment Initiated (Print Center - Simulated)", 
@@ -115,7 +115,7 @@ export default function PrintCenterSubscriptionPage() {
             if (planIdToActivate === 'ads_blocker_pc') {
                 localStorage.setItem('stipsLitePcAdsBlockerActive', 'true');
                 setIsAdsBlockerActive(true);
-                redirectPath = `/printcenter/subscription?plan_activated=${planIdToActivate}`;
+                redirectPath = `/print-center/subscription?plan_activated=${planIdToActivate}`;
             }
              // Add other Print Center specific plan logic here
         }
@@ -239,6 +239,3 @@ export default function PrintCenterSubscriptionPage() {
     </div>
   );
 }
-
-
-    

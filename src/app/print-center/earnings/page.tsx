@@ -121,7 +121,7 @@ export default function PrintCenterEarningsPage() {
             <p className="text-sm"><span className="text-muted-foreground">Bank:</span> {mockShopBankDetails.bankName}</p>
             <p className="text-sm"><span className="text-muted-foreground">Account:</span> {mockShopBankDetails.accountNumber}</p>
             <p className="text-sm"><span className="text-muted-foreground">Name:</span> {mockShopBankDetails.accountName}</p>
-            <p className="text-xs text-muted-foreground mt-2">To update these details, please go to your <a href="/printcenter/profile" className="underline text-primary">Shop Profile</a>.</p>
+            <p className="text-xs text-muted-foreground mt-2">To update these details, please go to your <a href="/print-center/profile" className="underline text-primary">Shop Profile</a>.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="withdrawalAmountShop">Amount to Withdraw (NGN)</Label>

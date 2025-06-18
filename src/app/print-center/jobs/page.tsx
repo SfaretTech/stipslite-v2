@@ -153,7 +153,7 @@ export default function PrintCenterJobsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/printcenter/jobs/${job.id}`}>
+                              <Link href={`/print-center/jobs/${job.id}`}>
                                 <Eye className="mr-2 h-4 w-4" /> View Details
                               </Link>
                             </DropdownMenuItem>

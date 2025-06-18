@@ -116,7 +116,7 @@ export default function PrintJobDetailPage() {
           <CardContent className="pt-6">
             <p>Sorry, we couldn't find details for print job ID: {jobId}.</p>
             <Button asChild variant="outline" className="mt-4">
-              <Link href="/printcenter/jobs">
+              <Link href="/print-center/jobs">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to All Jobs
               </Link>
             </Button>
@@ -156,10 +156,10 @@ export default function PrintJobDetailPage() {
 
   const handleContactStudent = () => {
      if (typeof window !== 'undefined') {
-        localStorage.setItem('stipsLiteContactStudentTaskId', job.id); // Using job.id as task ID for context
-        localStorage.setItem('stipsLiteContactStudentName', job.studentName);
+        localStorage.setItem('stipsLiteContactStudentJobId', job.id); 
+        localStorage.setItem('stipsLiteContactStudentNameForJob', job.studentName);
     }
-    router.push('/printcenter/support'); // Redirect Print Center to their support page
+    router.push('/print-center/support'); 
   };
 
 
@@ -171,7 +171,7 @@ export default function PrintJobDetailPage() {
         icon={FileText}
         actions={
             <Button asChild variant="outline">
-              <Link href="/printcenter/jobs">
+              <Link href="/print-center/jobs">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to All Jobs
               </Link>
             </Button>

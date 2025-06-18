@@ -12,7 +12,7 @@ export default function PrintCenterSectionLayout({
   const pathname = usePathname();
 
   const isAuthPage = pathname === '/print-center/login' ||
-                     pathname === '/print-center/register' ||
+                     pathname === '/print-center/register' || // Changed from signup
                      pathname === '/print-center/forgot-password';
 
   if (isAuthPage) {

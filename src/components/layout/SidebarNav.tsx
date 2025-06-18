@@ -36,7 +36,7 @@ import {
   Megaphone,
   Landmark,
   ChevronDown,
-  LifeBuoy, // Added LifeBuoy
+  LifeBuoy,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -128,14 +128,14 @@ const vaNavItemsBase = [
 ];
 
 const printCenterNavItems = [
-  { href: "/printcenter/dashboard", label: "PC Dashboard", icon: LayoutDashboard },
-  { href: "/printcenter/jobs", label: "Print Jobs", icon: FileText },
-  { href: "/printcenter/profile", label: "Shop Profile", icon: Store },
-  { href: "/printcenter/earnings", label: "Earnings & Payouts", icon: Banknote },
-  { href: "/printcenter/referrals", label: "Referrals", icon: Gift },
-  { href: "/printcenter/notifications", label: "Notifications", icon: Bell },
-  { href: "/printcenter/subscription", label: "Subscription", icon: CreditCard }, 
-  { href: "/printcenter/support", label: "Support", icon: MessageSquare },
+  { href: "/print-center/dashboard", label: "PC Dashboard", icon: LayoutDashboard },
+  { href: "/print-center/jobs", label: "Print Jobs", icon: FileText },
+  { href: "/print-center/profile", label: "Shop Profile", icon: Store },
+  { href: "/print-center/earnings", label: "Earnings & Payouts", icon: Banknote },
+  { href: "/print-center/referrals", label: "Referrals", icon: Gift },
+  { href: "/print-center/notifications", label: "Notifications", icon: Bell },
+  { href: "/print-center/subscription", label: "Subscription", icon: CreditCard }, 
+  { href: "/print-center/support", label: "Support", icon: MessageSquare },
 ];
 
 
@@ -238,7 +238,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   const accountNavItems = role === "student" ? accountNavItemsStudent : [];
   const logoutHref = 
     role === "va" ? "/va/login" :
-    role === "print-center" ? "/printcenter/login" :
+    role === "print-center" ? "/print-center/login" :
     role === "admin" ? "/admin/login" : 
     "/auth/login";
 

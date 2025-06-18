@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Bell, Check, Eye, X, Archive, ArchiveX, Printer, DollarSign, MessageSquare, AlertCircle } from "lucide-react"; 
+import { Bell, Check, Eye, X, Archive, ArchiveX, Printer, DollarSign, MessageSquare, AlertCircle, Gift } from "lucide-react"; 
 import { cn } from "@/lib/utils";
 
 interface PrintCenterNotificationItem {
@@ -16,16 +16,17 @@ interface PrintCenterNotificationItem {
   description: string;
   timestamp: string;
   read: boolean;
-  category: 'New Print Job' | 'Payment Update' | 'Admin Message' | 'Shop Alert';
+  category: 'New Print Job' | 'Payment Update' | 'Admin Message' | 'Shop Alert' | 'Referral Update';
   link?: string;
   icon?: React.ElementType;
 }
 
 const initialPrintCenterNotifications: PrintCenterNotificationItem[] = [
-  { id: "PCN001", title: "New Print Job Received: #JOB123", description: "From Student John Doe - 'Math_Assignment.pdf', 10 pages, Color.", timestamp: "2024-07-25 10:00 AM", read: false, category: "New Print Job", link: "/printcenter/jobs/JOB123", icon: Printer },
-  { id: "PCN002", title: "Payment Confirmed for Job #JOB120", description: "Student Alice Smith has paid ₦50.00 for job #JOB120.", timestamp: "2024-07-24 14:30 PM", read: false, category: "Payment Update", link: "/printcenter/jobs/JOB120", icon: DollarSign },
-  { id: "PCN003", title: "Admin Message: Holiday Hours", description: "Please update your shop's operating hours for the upcoming public holiday.", timestamp: "2024-07-23 09:15 AM", read: true, category: "Admin Message", link: "/printcenter/profile", icon: MessageSquare },
-  { id: "PCN004", title: "Low Paper Stock Alert", description: "Your A4 paper stock seems low. Consider reordering.", timestamp: "2024-07-22 11:00 AM", read: true, category: "Shop Alert", icon: AlertCircle },
+  { id: "PCN001", title: "New Print Job Received: #JOB123", description: "From Student John Doe - 'Math_Assignment.pdf'", timestamp: "30 mins ago", read: false, category: "New Print Job", link: "/print-center/jobs/JOB123", icon: Printer },
+  { id: "PCN002", title: "Payment Confirmed for Job #JOB120", description: "Student Alice S. has paid ₦50.00.", timestamp: "2 hours ago", read: false, category: "Payment Update", link: "/print-center/jobs/JOB120", icon: DollarSign },
+  { id: "PCN003", title: "Admin Message: Holiday Schedule", description: "Please update your holiday hours in your profile.", timestamp: "2 days ago", read: true, category: "Admin Message", link: "/print-center/profile", icon: MessageSquare },
+  { id: "PCN004", title: "Low Paper Stock Alert", description: "Your A4 paper stock seems low.", timestamp: "3 days ago", read: true, category: "Shop Alert", icon: AlertCircleIcon },
+  { id: "PCN005", title: "New Print Center Referral: Alpha Prints", description: "You referred Alpha Prints. Reward pending.", timestamp: "1 day ago", read: false, category: "Referral Update", link: "/print-center/referrals", icon: Gift },
 ];
 
 
@@ -35,6 +36,7 @@ function getPrintCenterCategoryBadgeVariant(category: PrintCenterNotificationIte
         case 'Payment Update': return 'bg-green-100 text-green-700 hover:bg-green-200';
         case 'Admin Message': return 'bg-purple-100 text-purple-700 hover:bg-purple-200';
         case 'Shop Alert': return 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200';
+        case 'Referral Update': return 'bg-teal-100 text-teal-700 hover:bg-teal-200';
         default: return 'secondary';
     }
 }
