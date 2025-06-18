@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Settings, Save, DollarSign, Percent, Gift, Users2, Building, Briefcase, ClipboardList, Radio, Edit3, Trash2, PlusCircle, Palette, CreditCardIcon, Info } from "lucide-react";
+import { Settings, Save, DollarSign, Percent, Gift, Users2, Building, Briefcase, ClipboardList, Radio, Edit3, Trash2, PlusCircle, Palette, CreditCardIcon, Info, Eye, EyeOff } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -146,6 +146,8 @@ export default function AdminSettingsPage() {
   const [currentSubTier, setCurrentSubTier] = useState<Omit<SubscriptionTierConfig, 'id'>>(emptySubscriptionTier);
   const [editingSubTierId, setEditingSubTierId] = useState<string | null>(null);
 
+  const [showSecretKey, setShowSecretKey] = useState(false);
+
 
   // Task Pricing Handlers
   const handleAddNewTaskType = () => {
@@ -157,7 +159,7 @@ export default function AdminSettingsPage() {
   const handleEditTaskType = (task: TaskPricingConfig) => {
     setCurrentTaskConfig({ ...task });
     setEditingTaskId(task.id);
-    setIsTaskDialogOpen(true); // Use same dialog, but could be setIsTaskEditDialogOpen if different
+    setIsTaskDialogOpen(true); 
   };
 
   const handleSaveTaskConfig = () => {
@@ -254,6 +256,47 @@ export default function AdminSettingsPage() {
         </Card>
 
         <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center"><CreditCardIcon className="mr-2 h-5 w-5 text-primary"/>Payment Gateway Integration (Flutterwave)</CardTitle>
+            <CardDescription>Configure API keys for payment processing. These are critical for all transactions.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="flutterwavePublicKey">Flutterwave Public Key</Label>
+              <Input id="flutterwavePublicKey" placeholder="FLWPUBK_TEST_XXXXXXXXXXXXXXXXXXXXXXXX" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="flutterwaveSecretKey">Flutterwave Secret Key</Label>
+              <div className="relative">
+                <Input 
+                  id="flutterwaveSecretKey" 
+                  type={showSecretKey ? "text" : "password"} 
+                  placeholder="FLWSECK_TEST_XXXXXXXXXXXXXXXXXXXXXXXX" 
+                  className="pr-10"
+                />
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowSecretKey(!showSecretKey)}
+                >
+                  {showSecretKey ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
+                  <span className="sr-only">{showSecretKey ? "Hide" : "Show"} secret key</span>
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-start p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-700">
+              <Info className="h-5 w-5 mr-2 mt-0.5 shrink-0" />
+              <p>
+                Ensure these keys are correct and kept confidential. Incorrect keys will prevent payment processing.
+                The Secret Key is sensitive; handle with extreme care.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="font-headline flex items-center"><CreditCardIcon className="mr-2 h-5 w-5 text-primary"/>Subscription Tier Management</CardTitle>
@@ -308,7 +351,6 @@ export default function AdminSettingsPage() {
           </CardContent>
         </Card>
         
-        {/* Subscription Tier Dialog */}
         <Dialog open={isSubTierDialogOpen} onOpenChange={setIsSubTierDialogOpen}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
@@ -393,17 +435,17 @@ export default function AdminSettingsPage() {
         
         <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
             <DialogContent className="sm:max-w-lg">
-                <DialogHeader><DialogTitle>{editingTaskId ? "Edit" : "Add New"} Task Type</DialogTitle><DialogDescription>{editingTaskId ? "Modify details." : "Define a new task type."}</DialogDescription></DialogHeader>
+                <DialogHeader><DialogTitle>{editingTaskId ? "Edit" : "Add New"} Task Type</DialogTitle><DialogDescription>{editingTaskId ? "Modify details for this task type." : "Define a new task type and its pricing structure."}</DialogDescription></DialogHeader>
                 <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
                     <div className="space-y-1.5"><Label htmlFor="taskTypeNameEdit">Task Type Name</Label><Input id="taskTypeNameEdit" value={currentTaskConfig.taskTypeName} onChange={(e) => setCurrentTaskConfig(p => ({...p, taskTypeName: e.target.value}))} required /></div>
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5"><Label htmlFor="feeRangeNGNEdit">Fee Range (NGN)</Label><Input id="feeRangeNGNEdit" value={currentTaskConfig.feeRangeNGN} onChange={(e) => setCurrentTaskConfig(p => ({...p, feeRangeNGN: e.target.value}))} /></div>
-                        <div className="space-y-1.5"><Label htmlFor="feeRangeUSDEdit">Fee Range (USD)</Label><Input id="feeRangeUSDEdit" value={currentTaskConfig.feeRangeUSD || ""} onChange={(e) => setCurrentTaskConfig(p => ({...p, feeRangeUSD: e.target.value}))} /></div>
+                        <div className="space-y-1.5"><Label htmlFor="feeRangeNGNEdit">Fee Range (NGN)</Label><Input id="feeRangeNGNEdit" value={currentTaskConfig.feeRangeNGN} onChange={(e) => setCurrentTaskConfig(p => ({...p, feeRangeNGN: e.target.value}))} placeholder="e.g., 2000-5000 or 1000" /></div>
+                        <div className="space-y-1.5"><Label htmlFor="feeRangeUSDEdit">Fee Range (USD - Optional)</Label><Input id="feeRangeUSDEdit" value={currentTaskConfig.feeRangeUSD || ""} onChange={(e) => setCurrentTaskConfig(p => ({...p, feeRangeUSD: e.target.value}))} placeholder="e.g., 5-10 or 3" /></div>
                     </div>
                     <div className="space-y-1.5"><Label htmlFor="pricingModelEdit">Pricing Model</Label><Select value={currentTaskConfig.pricingModel} onValueChange={(value) => setCurrentTaskConfig(p => ({...p, pricingModel: value as "per_page" | "fixed"}))}><SelectTrigger id="pricingModelEdit"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="per_page">Per Page</SelectItem><SelectItem value="fixed">Fixed Price</SelectItem></SelectContent></Select></div>
-                    {currentTaskConfig.pricingModel === "per_page" && (<div className="space-y-1.5"><Label htmlFor="pricePerPageNGNEdit">Price Per Page (NGN)</Label><Input id="pricePerPageNGNEdit" type="number" value={currentTaskConfig.pricePerPageNGN || ""} onChange={(e) => setCurrentTaskConfig(p => ({...p, pricePerPageNGN: e.target.value ? parseFloat(e.target.value) : null, fixedPriceNGN: null}))} /></div>)}
-                    {currentTaskConfig.pricingModel === "fixed" && (<div className="space-y-1.5"><Label htmlFor="fixedPriceNGNEdit">Fixed Price (NGN)</Label><Input id="fixedPriceNGNEdit" type="number" value={currentTaskConfig.fixedPriceNGN || ""} onChange={(e) => setCurrentTaskConfig(p => ({...p, fixedPriceNGN: e.target.value ? parseFloat(e.target.value) : null, pricePerPageNGN: null}))} /></div>)}
-                    <div className="space-y-1.5"><Label htmlFor="notesEdit">Notes</Label><Textarea id="notesEdit" value={currentTaskConfig.notes || ""} onChange={(e) => setCurrentTaskConfig(p => ({...p, notes: e.target.value}))} /></div>
+                    {currentTaskConfig.pricingModel === "per_page" && (<div className="space-y-1.5"><Label htmlFor="pricePerPageNGNEdit">Price Per Page (NGN)</Label><Input id="pricePerPageNGNEdit" type="number" value={currentTaskConfig.pricePerPageNGN ?? ""} onChange={(e) => setCurrentTaskConfig(p => ({...p, pricePerPageNGN: e.target.value ? parseFloat(e.target.value) : null, fixedPriceNGN: null}))} placeholder="e.g., 200" /></div>)}
+                    {currentTaskConfig.pricingModel === "fixed" && (<div className="space-y-1.5"><Label htmlFor="fixedPriceNGNEdit">Fixed Price (NGN)</Label><Input id="fixedPriceNGNEdit" type="number" value={currentTaskConfig.fixedPriceNGN ?? ""} onChange={(e) => setCurrentTaskConfig(p => ({...p, fixedPriceNGN: e.target.value ? parseFloat(e.target.value) : null, pricePerPageNGN: null}))} placeholder="e.g., 5000" /></div>)}
+                    <div className="space-y-1.5"><Label htmlFor="notesEdit">Notes (Optional)</Label><Textarea id="notesEdit" value={currentTaskConfig.notes || ""} onChange={(e) => setCurrentTaskConfig(p => ({...p, notes: e.target.value}))} placeholder="e.g., For urgent tasks, pricing may vary." rows={2} /></div>
                 </div>
                 <DialogFooter><DialogClose asChild><Button variant="outline" onClick={() => setIsTaskDialogOpen(false)}>Cancel</Button></DialogClose><Button onClick={handleSaveTaskConfig}>Save {editingTaskId ? "Changes" : "Task Type"}</Button></DialogFooter>
             </DialogContent>
@@ -444,8 +486,3 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
-
-
-    
-
-    
