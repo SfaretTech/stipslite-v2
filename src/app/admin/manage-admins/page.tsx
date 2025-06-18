@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserCog, Search, Edit3, Trash2, UserPlus, MoreHorizontal, ShieldCheck, ShieldAlert, Settings, CheckCircle, XCircle } from "lucide-react";
+import { UserCog, Search, Edit3, Trash2, UserPlus, MoreHorizontal, ShieldCheck, ShieldAlert, Settings, CheckCircle, XCircle, Banknote, Megaphone, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -58,8 +58,8 @@ interface AdminUser {
 
 const initialAdminUsers: AdminUser[] = [
   { id: "ADM001", name: "General Admin", email: "admin@sfaret", role: "General Admin", status: "Active", lastLogin: "2024-07-25", featureAccess: { all: true } },
-  { id: "ADM002", name: "Support Lead", email: "support.lead@stipslite.com", role: "Support Admin", status: "Active", lastLogin: "2024-07-24", featureAccess: { canManageTickets: true, canViewUsers: true } },
-  { id: "ADM003", name: "Content Manager", email: "content.mgr@stipslite.com", role: "Content Admin", status: "Inactive", lastLogin: "2024-07-20", featureAccess: { canManageContent: true } },
+  { id: "ADM002", name: "Support Lead", email: "support.lead@stipslite.com", role: "Support Admin", status: "Active", lastLogin: "2024-07-24", featureAccess: { manageSupportTickets: true, viewUsers: true } },
+  { id: "ADM003", name: "Content Manager", email: "content.mgr@stipslite.com", role: "Content Admin", status: "Inactive", lastLogin: "2024-07-20", featureAccess: { manageAnnouncements: true } },
 ];
 
 const availableRoles: AdminRole[] = ['Full Admin', 'Support Admin', 'Content Admin'];
@@ -68,6 +68,9 @@ const mockFeatures = [
     { id: "manageUsers", label: "Manage Users" },
     { id: "manageTasks", label: "Manage Task Approvals" },
     { id: "manageApprovals", label: "Manage Account Approvals" },
+    { id: "managePaymentWithdrawals", label: "Manage Payment Withdrawals", icon: Banknote },
+    { id: "manageAnnouncements", label: "Manage Announcements", icon: Megaphone },
+    { id: "manageSupportTickets", label: "Manage Support Tickets", icon: MessageSquare },
     { id: "manageSettings", label: "Manage Platform Settings" },
     { id: "manageAdmins", label: "Manage Other Admins" },
     { id: "viewFinancials", label: "View Financial Reports" },
@@ -255,27 +258,31 @@ export default function ManageAdminsPage() {
                     <DialogTitle>Configure Permissions for {selectedAdmin.name}</DialogTitle>
                     <DialogDescription>
                         Manage granular feature access for {selectedAdmin.name} ({selectedAdmin.role}).
-                        These settings complement their assigned role. Note: The 'General Admin' account has all permissions by default and cannot be modified here.
+                        These settings complement their assigned role.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-3 py-4 max-h-[60vh] overflow-y-auto pr-2">
-                    {mockFeatures.map(feature => (
-                        <div key={feature.id} className="flex items-center justify-between p-3 border rounded-md">
-                            <Label htmlFor={`perm-${feature.id}`} className="text-sm">
-                                {feature.label}
-                            </Label>
-                            <Switch 
-                                id={`perm-${feature.id}`}
-                                checked={selectedAdmin.featureAccess[feature.id] || selectedAdmin.featureAccess.all || false}
-                                onCheckedChange={(checked) => {
-                                    setSelectedAdmin(prev => prev ? {
-                                        ...prev, 
-                                        featureAccess: {...prev.featureAccess, all: false, [feature.id]: checked}
-                                    } : null);
-                                }}
-                            />
-                        </div>
-                    ))}
+                    {mockFeatures.map(feature => {
+                        const Icon = feature.icon;
+                        return (
+                            <div key={feature.id} className="flex items-center justify-between p-3 border rounded-md">
+                                <Label htmlFor={`perm-${feature.id}`} className="text-sm flex items-center">
+                                    {Icon && <Icon className="h-4 w-4 mr-2 text-muted-foreground" />}
+                                    {feature.label}
+                                </Label>
+                                <Switch 
+                                    id={`perm-${feature.id}`}
+                                    checked={selectedAdmin.featureAccess[feature.id] || selectedAdmin.featureAccess.all || false}
+                                    onCheckedChange={(checked) => {
+                                        setSelectedAdmin(prev => prev ? {
+                                            ...prev, 
+                                            featureAccess: {...prev.featureAccess, all: false, [feature.id]: checked}
+                                        } : null);
+                                    }}
+                                />
+                            </div>
+                        );
+                    })}
                 </div>
                 <DialogFooter>
                     <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
@@ -318,7 +325,10 @@ export default function ManageAdminsPage() {
                       } else {
                         const grantedPermissions = Object.entries(admin.featureAccess)
                           .filter(([key, value]) => value && key !== 'all')
-                          .map(([key]) => key.replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase()))
+                          .map(([key]) => {
+                            const feature = mockFeatures.find(f => f.id === key);
+                            return feature ? feature.label : key.replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase());
+                          })
                           .join(', ');
                         if (grantedPermissions) {
                           featureAccessText = grantedPermissions;
@@ -335,7 +345,7 @@ export default function ManageAdminsPage() {
                               {admin.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-xs">
+                          <TableCell className="text-xs max-w-[200px] truncate">
                             {featureAccessText}
                           </TableCell>
                           <TableCell>
