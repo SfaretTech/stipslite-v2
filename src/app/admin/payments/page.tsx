@@ -290,7 +290,7 @@ export default function AdminPaymentManagementPage() {
                     <p><strong>Requested:</strong> {format(parseISO(selectedRequest.requestedDate), "PPP p")}</p>
                     <p><strong>Method:</strong> {selectedRequest.paymentDetails.method} ({selectedRequest.paymentDetails.identifier})</p>
                     <p><strong>Recipient:</strong> {selectedRequest.paymentDetails.recipientName}</p>
-                    <p><strong>Current Status:</strong> <Badge variant="outline" className={statusColors[selectedRequest.status]}>{selectedRequest.status}</Badge></p>
+                    <div><strong>Current Status:</strong> <Badge variant="outline" className={statusColors[selectedRequest.status]}>{selectedRequest.status}</Badge></div>
                     {selectedRequest.transactionId && <p><strong>Transaction ID:</strong> {selectedRequest.transactionId}</p>}
                     {selectedRequest.processedDate && <p><strong>Processed/Updated:</strong> {format(parseISO(selectedRequest.processedDate), "PPP p")}</p>}
                 </div>
@@ -353,3 +353,5 @@ export default function AdminPaymentManagementPage() {
     </div>
   );
 }
+
+    
