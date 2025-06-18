@@ -42,7 +42,7 @@ import { ClipboardList, Check, X, Eye, DollarSign, UserCheck, FileText, MoreHori
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator"; // Added import
+import { Separator } from "@/components/ui/separator";
 
 type AdminTaskStatus =
   | "Pending Admin Review"
@@ -53,7 +53,7 @@ type AdminTaskStatus =
   | "Completed"
   | "Rejected by Admin"
   | "Cancelled"
-  | "Revision Requested (to VA)"; // Added for admin to request revision
+  | "Revision Requested (to VA)";
 
 interface AdminTask {
   id: string;
@@ -75,7 +75,7 @@ interface AdminTask {
   vaSubmissionNotes?: string;
   vaSubmissionAttachments?: { name: string; url: string }[];
   deadline?: string;
-  completionDate?: string; // Added for when task is marked completed
+  completionDate?: string;
 }
 
 const mockAdminTasksInitial: AdminTask[] = [
@@ -94,13 +94,12 @@ const adminTaskStatusColors: Record<AdminTaskStatus, string> = {
   "Awaiting Student Payment": "bg-blue-100 text-blue-700 border-blue-300",
   "In Progress with VA": "bg-indigo-100 text-indigo-700 border-indigo-300",
   "Work Submitted by VA": "bg-purple-100 text-purple-700 border-purple-300",
-  "Revision Requested (to VA)": "bg-pink-100 text-pink-700 border-pink-300", // Added color
+  "Revision Requested (to VA)": "bg-pink-100 text-pink-700 border-pink-300",
   "Completed": "bg-green-100 text-green-700 border-green-300",
   "Rejected by Admin": "bg-red-100 text-red-700 border-red-300",
   "Cancelled": "bg-gray-100 text-gray-700 border-gray-300",
 };
 
-// Simplified mock VAs for assignment
 const mockVAs = [
     { id: "VA001", name: "Aisha Bello (Academic Writing)" },
     { id: "VA002", name: "Chinedu Okoro (Technical & STEM)" },
@@ -115,7 +114,6 @@ export default function AdminTasksPage() {
   const [statusFilter, setStatusFilter] = useState<AdminTaskStatus | "all">("all");
   const [selectedTask, setSelectedTask] = useState<AdminTask | null>(null);
   
-  // Dialog states
   const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
   const [isReviewPriceOpen, setIsReviewPriceOpen] = useState(false);
   const [isAssignVaOpen, setIsAssignVaOpen] = useState(false);
@@ -123,7 +121,6 @@ export default function AdminTasksPage() {
   const [isReviewVaWorkOpen, setIsReviewVaWorkOpen] = useState(false);
   const [isCancelTaskOpen, setIsCancelTaskOpen] = useState(false);
 
-  // Form states for dialogs
   const [adminPriceInput, setAdminPriceInput] = useState("");
   const [adminNotesInput, setAdminNotesInput] = useState("");
   const [selectedVaForAssignment, setSelectedVaForAssignment] = useState<string | undefined>();
@@ -148,7 +145,7 @@ export default function AdminTasksPage() {
     setSelectedTask(task);
     setAdminPriceInput(task.adminSetPriceNGN?.toString() || "");
     setAdminNotesInput(task.adminNotes || "");
-    setAdminReviewNotesInput(""); // Clear review notes for new dialog
+    setAdminReviewNotesInput(""); 
     dialogSetter(true);
   };
 
@@ -343,7 +340,6 @@ export default function AdminTasksPage() {
         </CardContent>
       </Card>
 
-      {/* Dialog for Viewing Full Task Details */}
       <Dialog open={isViewDetailsOpen} onOpenChange={setIsViewDetailsOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
@@ -354,13 +350,13 @@ export default function AdminTasksPage() {
             <div className="grid gap-6 py-4">
                 <div className="space-y-2">
                     <h4 className="font-semibold text-primary">Task Information</h4>
-                    <p><strong className="text-muted-foreground">Student:</strong> {selectedTask?.studentName} ({selectedTask?.studentId})</p>
-                    <p><strong className="text-muted-foreground">Submitted:</strong> {selectedTask?.submittedDate}</p>
-                    <p><strong className="text-muted-foreground">Type:</strong> {selectedTask?.type}</p>
-                    <p><strong className="text-muted-foreground">Pages/Units:</strong> {selectedTask?.pages}</p>
-                    <p><strong className="text-muted-foreground">Deadline:</strong> {selectedTask?.deadline || "Not set"}</p>
-                    <p><strong className="text-muted-foreground">Description:</strong></p>
-                    <p className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask?.description}</p>
+                    <div><strong className="text-muted-foreground">Student:</strong> {selectedTask?.studentName} ({selectedTask?.studentId})</div>
+                    <div><strong className="text-muted-foreground">Submitted:</strong> {selectedTask?.submittedDate}</div>
+                    <div><strong className="text-muted-foreground">Type:</strong> {selectedTask?.type}</div>
+                    <div><strong className="text-muted-foreground">Pages/Units:</strong> {selectedTask?.pages}</div>
+                    <div><strong className="text-muted-foreground">Deadline:</strong> {selectedTask?.deadline || "Not set"}</div>
+                    <div><strong className="text-muted-foreground">Description:</strong></div>
+                    <div className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask?.description}</div>
                     {selectedTask?.attachments && selectedTask.attachments.length > 0 && (
                         <div>
                         <strong className="text-muted-foreground">Attachments:</strong>
@@ -373,19 +369,19 @@ export default function AdminTasksPage() {
                 <Separator />
                  <div className="space-y-2">
                     <h4 className="font-semibold text-primary">Pricing & Payment</h4>
-                    <p><strong className="text-muted-foreground">Admin Set Price:</strong> {selectedTask?.adminSetPriceNGN ? `₦${selectedTask.adminSetPriceNGN.toFixed(2)}` : "Not Set"}</p>
-                    <p><strong className="text-muted-foreground">Payment Status:</strong> <Badge variant={selectedTask?.paymentStatus === "Paid by Student" || selectedTask?.paymentStatus === "VA Paid" ? "default" : "outline"} className={selectedTask?.paymentStatus === "Paid by Student" || selectedTask?.paymentStatus === "VA Paid" ? "bg-green-500 text-white" : ""}>{selectedTask?.paymentStatus}</Badge></p>
+                    <div><strong className="text-muted-foreground">Admin Set Price:</strong> {selectedTask?.adminSetPriceNGN ? `₦${selectedTask.adminSetPriceNGN.toFixed(2)}` : "Not Set"}</div>
+                    <div><strong className="text-muted-foreground">Payment Status:</strong> <Badge variant={selectedTask?.paymentStatus === "Paid by Student" || selectedTask?.paymentStatus === "VA Paid" ? "default" : "outline"} className={selectedTask?.paymentStatus === "Paid by Student" || selectedTask?.paymentStatus === "VA Paid" ? "bg-green-500 text-white" : ""}>{selectedTask?.paymentStatus}</Badge></div>
                 </div>
                 <Separator />
                 <div className="space-y-2">
                     <h4 className="font-semibold text-primary">Assignment & Progress</h4>
-                    <p><strong className="text-muted-foreground">Current Status:</strong> <Badge variant="outline" className={`text-xs ${adminTaskStatusColors[selectedTask?.status || "Cancelled"]}`}>{selectedTask?.status}</Badge></p>
-                    <p><strong className="text-muted-foreground">Assigned VA:</strong> {selectedTask?.assignedVaName || "Not Assigned"} (ID: {selectedTask?.assignedVaId || "N/A"})</p>
+                    <div><strong className="text-muted-foreground">Current Status:</strong> <Badge variant="outline" className={`text-xs ${adminTaskStatusColors[selectedTask?.status || "Cancelled"]}`}>{selectedTask?.status}</Badge></div>
+                    <div><strong className="text-muted-foreground">Assigned VA:</strong> {selectedTask?.assignedVaName || "Not Assigned"} (ID: {selectedTask?.assignedVaId || "N/A"})</div>
                     {selectedTask?.vaSubmissionDate && (
                         <>
-                            <p><strong className="text-muted-foreground">VA Submission Date:</strong> {selectedTask.vaSubmissionDate}</p>
-                            <p><strong className="text-muted-foreground">VA Submission Notes:</strong></p>
-                            <p className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask.vaSubmissionNotes || "No notes from VA."}</p>
+                            <div><strong className="text-muted-foreground">VA Submission Date:</strong> {selectedTask.vaSubmissionDate}</div>
+                            <div><strong className="text-muted-foreground">VA Submission Notes:</strong></div>
+                            <div className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask.vaSubmissionNotes || "No notes from VA."}</div>
                             {selectedTask.vaSubmissionAttachments && selectedTask.vaSubmissionAttachments.length > 0 && (
                                 <div>
                                 <strong className="text-muted-foreground">VA Attachments:</strong>
@@ -396,14 +392,14 @@ export default function AdminTasksPage() {
                             )}
                         </>
                     )}
-                    {selectedTask?.completionDate && <p><strong className="text-muted-foreground">Completion Date:</strong> {selectedTask.completionDate}</p>}
+                    {selectedTask?.completionDate && <div><strong className="text-muted-foreground">Completion Date:</strong> {selectedTask.completionDate}</div>}
                 </div>
                 {selectedTask?.adminNotes && (
                      <>
                         <Separator />
                         <div className="space-y-2">
                             <h4 className="font-semibold text-primary">Admin Notes</h4>
-                            <p className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask.adminNotes}</p>
+                            <div className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask.adminNotes}</div>
                         </div>
                      </>
                 )}
@@ -415,7 +411,6 @@ export default function AdminTasksPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for Review & Price Task */}
       <Dialog open={isReviewPriceOpen} onOpenChange={setIsReviewPriceOpen}>
         <DialogContent>
           <DialogHeader>
@@ -423,8 +418,8 @@ export default function AdminTasksPage() {
             <DialogDescription>Set the price for this task and approve or reject it.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <p className="text-sm"><strong className="text-muted-foreground">Student:</strong> {selectedTask?.studentName}</p>
-            <p className="text-sm"><strong className="text-muted-foreground">Description:</strong> {selectedTask?.description}</p>
+            <div className="text-sm"><strong className="text-muted-foreground">Student:</strong> {selectedTask?.studentName}</div>
+            <div className="text-sm"><strong className="text-muted-foreground">Description:</strong> {selectedTask?.description}</div>
             <div className="space-y-1.5">
               <Label htmlFor="adminPrice">Set Price (NGN)</Label>
               <div className="relative">
@@ -444,8 +439,7 @@ export default function AdminTasksPage() {
         </DialogContent>
       </Dialog>
 
-       {/* Dialog for Assign VA */}
-      <Dialog open={isAssignVaOpen} onOpenChange={setIsAssignVaOpen}>
+       <Dialog open={isAssignVaOpen} onOpenChange={setIsAssignVaOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Assign VA to Task: {selectedTask?.title}</DialogTitle>
@@ -473,7 +467,6 @@ export default function AdminTasksPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for Confirm Student Payment */}
       <Dialog open={isConfirmPaymentOpen} onOpenChange={setIsConfirmPaymentOpen}>
             <DialogContent>
                 <DialogHeader>
@@ -483,10 +476,10 @@ export default function AdminTasksPage() {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
-                    <p className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground">
                         Has the student successfully paid the amount of ₦{selectedTask?.adminSetPriceNGN?.toFixed(2)} for this task?
                         Confirming payment will change the task status to "In Progress with VA" and notify the VA.
-                    </p>
+                    </div>
                      <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-700 flex items-center">
                         <AlertTriangle className="h-5 w-5 mr-2 shrink-0" />
                         Ensure payment is verified before confirming. This action is usually irreversible.
@@ -502,7 +495,6 @@ export default function AdminTasksPage() {
         </Dialog>
 
 
-      {/* Dialog for Review VA Submission */}
       <Dialog open={isReviewVaWorkOpen} onOpenChange={setIsReviewVaWorkOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -512,7 +504,7 @@ export default function AdminTasksPage() {
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
             <div className="space-y-1.5">
               <Label className="font-medium">VA Submission Notes:</Label>
-              <p className="text-sm bg-muted/30 p-2 rounded">{selectedTask?.vaSubmissionNotes || "No notes provided by VA."}</p>
+              <div className="text-sm bg-muted/30 p-2 rounded">{selectedTask?.vaSubmissionNotes || "No notes provided by VA."}</div>
             </div>
              {selectedTask?.vaSubmissionAttachments && selectedTask.vaSubmissionAttachments.length > 0 && (
                 <div className="space-y-1.5">
@@ -540,7 +532,6 @@ export default function AdminTasksPage() {
         </DialogContent>
       </Dialog>
       
-      {/* AlertDialog for Cancel Task */}
       <AlertDialog open={isCancelTaskOpen} onOpenChange={setIsCancelTaskOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -560,4 +551,3 @@ export default function AdminTasksPage() {
     </div>
   );
 }
-
