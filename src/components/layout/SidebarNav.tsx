@@ -34,7 +34,8 @@ import {
   UserCog, 
   ShieldOff, 
   Megaphone,
-  Landmark, // Added for User Payout Settings
+  Landmark,
+  ChevronDown, // Added ChevronDown
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -147,6 +148,27 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   const [isSubscribedToStudentVaPlan, setIsSubscribedToStudentVaPlan] = useState(false);
   const [isVaSubscribedToProPlan, setIsVaSubscribedToProPlan] = useState(false);
 
+  const navItemsToRender = 
+    role === "admin" ? adminNavItems : 
+    role === "va" ? vaNavItems : 
+    role === "print-center" ? printCenterNavItems :
+    studentNavItems;
+
+  const [openSubMenus, setOpenSubMenus] = useState<Record<string, boolean>>(() => {
+    const initialState: Record<string, boolean> = {};
+    navItemsToRender.forEach(item => {
+      if ((item as any).subItems) {
+        const subItems = (item as any).subItems as { href?: string; label: string }[];
+        if (subItems.some(sub => sub.href && pathname.startsWith(sub.href))) {
+          initialState[item.label] = true;
+        } else {
+          initialState[item.label] = false; 
+        }
+      }
+    });
+    return initialState;
+  });
+
   useEffect(() => {
     setHasMounted(true);
     if (typeof window !== 'undefined') {
@@ -207,11 +229,9 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   }, [pathname, searchParams, hasMounted, isSubscribedToStudentVaPlan, isVaSubscribedToProPlan]);
 
 
-  const navItemsToRender = 
-    role === "admin" ? adminNavItems : 
-    role === "va" ? vaNavItems : 
-    role === "print-center" ? printCenterNavItems :
-    studentNavItems;
+  const toggleSubMenu = (label: string) => {
+    setOpenSubMenus(prev => ({ ...prev, [label]: !prev[label] }));
+  };
   
   const accountNavItems = role === "student" ? accountNavItemsStudent : [];
   const logoutHref = 
@@ -235,38 +255,65 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
 
         if ((item as any).subItems) {
           const subItems = (item as any).subItems as { href?: string; label: string; icon?: React.ElementType }[];
+          const isSubMenuOpen = openSubMenus[item.label] || false;
           return (
             <SidebarMenuItem key={item.label} className="relative">
               <SidebarMenuButton
-                isActive={subItems.some(sub => sub.href && pathname.startsWith(sub.href))}
+                isActive={subItems.some(sub => sub.href && pathname.startsWith(sub.href)) || (open && !isMobile && isSubMenuOpen)}
                 tooltip={item.label}
+                onClick={() => {
+                    if (open || isMobile) toggleSubMenu(item.label);
+                }}
+                aria-expanded={isSubMenuOpen}
+                className="justify-between w-full"
               >
-                <item.icon className="h-5 w-5" />
-                <span className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200")}>{item.label}</span>
+                <div className="flex items-center gap-2 truncate">
+                    <item.icon className="h-5 w-5 shrink-0" />
+                    <span className={cn(open || isMobile ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200 truncate")}>{item.label}</span>
+                </div>
+                {(open || isMobile) && (
+                  <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform duration-200", isSubMenuOpen && "rotate-180")} />
+                )}
               </SidebarMenuButton>
-              <SidebarMenuSub>
-                {subItems.map((subItem) => (
-                  <SidebarMenuSubItem key={subItem.label}>
-                    <SidebarMenuSubButton
-                      href={subItem.href!}
-                      isActive={pathname === subItem.href}
-                      className="justify-start"
-                      size="sm"
-                    >
-                      {subItem.icon && <subItem.icon className="h-4 w-4 mr-2" />}
-                      {subItem.label}
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                ))}
-              </SidebarMenuSub>
+              {/* Render sub-menu if sidebar is expanded/mobile AND this specific sub-menu is toggled open */}
+              {(open || isMobile) && isSubMenuOpen && (
+                <SidebarMenuSub>
+                  {subItems.map((subItem) => (
+                    <SidebarMenuSubItem key={subItem.label}>
+                      <SidebarMenuSubButton
+                        href={subItem.href!}
+                        isActive={pathname === subItem.href}
+                        className="justify-start"
+                        size="sm"
+                      >
+                        {subItem.icon && <subItem.icon className="h-4 w-4 mr-2 shrink-0" />}
+                        {subItem.label}
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  ))}
+                </SidebarMenuSub>
+              )}
+              {/* Keep sub-menu in DOM for collapsed sidebar (Radix might handle its popover display) but rely on group-data for hiding */}
+              {!(open || isMobile) && (
+                  <SidebarMenuSub> 
+                    {subItems.map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.label}>
+                            <SidebarMenuSubButton href={subItem.href!} isActive={pathname === subItem.href} className="justify-start" size="sm" >
+                                {subItem.icon && <subItem.icon className="h-4 w-4 mr-2 shrink-0" />}
+                                {subItem.label}
+                            </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+              )}
             </SidebarMenuItem>
           );
         } else {
           const buttonContent = (
             <>
               <item.icon className="h-5 w-5" />
-              <span className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200 flex-grow truncate")}>{item.label}</span>
-              {isDynamicStatusItem && isItemLocked && open && <Lock className="h-3.5 w-3.5 ml-1 text-muted-foreground shrink-0" />}
+              <span className={cn(open || isMobile ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200 flex-grow truncate")}>{item.label}</span>
+              {isDynamicStatusItem && isItemLocked && (open || isMobile) && <Lock className="h-3.5 w-3.5 ml-1 text-muted-foreground shrink-0" />}
             </>
           );
 
@@ -307,7 +354,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
       {role === "student" && accountNavItems.length > 0 && (
         <>
           <Separator className="my-4" />
-          <SidebarGroupLabel className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200 pl-0")}>Account</SidebarGroupLabel>
+          <SidebarGroupLabel className={cn(open ? "opacity-100" : "opacity-0 delay-200", "transition-opacity duration-200 pl-2")}>Account</SidebarGroupLabel>
           {accountNavItems.map((item) => (
             <SidebarMenuItem key={item.label}>
               <Link href={item.href}>
