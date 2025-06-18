@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -41,6 +42,7 @@ import { ClipboardList, Check, X, Eye, DollarSign, UserCheck, FileText, MoreHori
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator"; // Added import
 
 type AdminTaskStatus =
   | "Pending Admin Review"
@@ -50,7 +52,8 @@ type AdminTaskStatus =
   | "Work Submitted by VA"
   | "Completed"
   | "Rejected by Admin"
-  | "Cancelled";
+  | "Cancelled"
+  | "Revision Requested (to VA)"; // Added for admin to request revision
 
 interface AdminTask {
   id: string;
@@ -72,6 +75,7 @@ interface AdminTask {
   vaSubmissionNotes?: string;
   vaSubmissionAttachments?: { name: string; url: string }[];
   deadline?: string;
+  completionDate?: string; // Added for when task is marked completed
 }
 
 const mockAdminTasksInitial: AdminTask[] = [
@@ -90,6 +94,7 @@ const adminTaskStatusColors: Record<AdminTaskStatus, string> = {
   "Awaiting Student Payment": "bg-blue-100 text-blue-700 border-blue-300",
   "In Progress with VA": "bg-indigo-100 text-indigo-700 border-indigo-300",
   "Work Submitted by VA": "bg-purple-100 text-purple-700 border-purple-300",
+  "Revision Requested (to VA)": "bg-pink-100 text-pink-700 border-pink-300", // Added color
   "Completed": "bg-green-100 text-green-700 border-green-300",
   "Rejected by Admin": "bg-red-100 text-red-700 border-red-300",
   "Cancelled": "bg-gray-100 text-gray-700 border-gray-300",
@@ -555,3 +560,4 @@ export default function AdminTasksPage() {
     </div>
   );
 }
+
