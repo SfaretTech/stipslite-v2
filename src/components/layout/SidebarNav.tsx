@@ -90,6 +90,7 @@ const adminNavItems = [
     ],
   },
    { href: "/admin/users", label: "Manage Users", icon: BookUser },
+   { href: "/admin/payments", label: "Payment Management", icon: Banknote },
    { href: "/admin/manage-admins", label: "Manage Admins", icon: UserCog }, 
    { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
    { href: "/admin/notifications", label: "Activity Log", icon: Activity },
