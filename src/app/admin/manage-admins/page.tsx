@@ -254,8 +254,8 @@ export default function ManageAdminsPage() {
                 <DialogHeader>
                     <DialogTitle>Configure Permissions for {selectedAdmin.name}</DialogTitle>
                     <DialogDescription>
-                        Toggle feature access for this administrator. 
-                        Only the General Admin can modify these settings.
+                        Manage granular feature access for {selectedAdmin.name} ({selectedAdmin.role}).
+                        These settings complement their assigned role. Note: The 'General Admin' account has all permissions by default and cannot be modified here.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-3 py-4 max-h-[60vh] overflow-y-auto pr-2">
@@ -311,52 +311,65 @@ export default function ManageAdminsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {admins.map(admin => (
-                      <TableRow key={admin.id}>
-                        <TableCell className="font-medium">{admin.name}</TableCell>
-                        <TableCell>{admin.email}</TableCell>
-                        <TableCell><Badge variant={admin.role === "General Admin" ? "default" : "secondary"}>{admin.role}</Badge></TableCell>
-                        <TableCell>
-                          <Badge variant={admin.status === "Active" ? "outline" : "destructive"} className={cn(admin.status === "Active" ? "text-green-600 border-green-600" : "")}>
-                            {admin.status === "Active" ? <CheckCircle className="mr-1 h-3.5 w-3.5"/> : <XCircle className="mr-1 h-3.5 w-3.5"/>}
-                            {admin.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                            {admin.featureAccess.all ? "All Features" : 
-                             Object.entries(admin.featureAccess).filter(([key, value]) => value && key !== 'all').map(([key]) => key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())).join(', ') || "Standard"}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" /><span className="sr-only">Admin Actions</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleOpenEditDialog(admin)}>
-                                <Edit3 className="mr-2 h-4 w-4" /> Edit Details
-                              </DropdownMenuItem>
-                              {admin.role !== "General Admin" && (
-                                <>
-                                <DropdownMenuItem onClick={() => handleToggleStatus(admin.id)}>
-                                    {admin.status === "Active" ? <ShieldAlert className="mr-2 h-4 w-4 text-orange-600" /> : <ShieldCheck className="mr-2 h-4 w-4 text-green-600" />}
-                                    {admin.status === "Active" ? "Deactivate" : "Activate"}
+                    {admins.map(admin => {
+                      let featureAccessText = "Standard (Role Defaults)";
+                      if (admin.featureAccess.all) {
+                        featureAccessText = "All Features";
+                      } else {
+                        const grantedPermissions = Object.entries(admin.featureAccess)
+                          .filter(([key, value]) => value && key !== 'all')
+                          .map(([key]) => key.replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase()))
+                          .join(', ');
+                        if (grantedPermissions) {
+                          featureAccessText = grantedPermissions;
+                        }
+                      }
+                      return (
+                        <TableRow key={admin.id}>
+                          <TableCell className="font-medium">{admin.name}</TableCell>
+                          <TableCell>{admin.email}</TableCell>
+                          <TableCell><Badge variant={admin.role === "General Admin" ? "default" : "secondary"}>{admin.role}</Badge></TableCell>
+                          <TableCell>
+                            <Badge variant={admin.status === "Active" ? "outline" : "destructive"} className={cn(admin.status === "Active" ? "text-green-600 border-green-600" : "")}>
+                              {admin.status === "Active" ? <CheckCircle className="mr-1 h-3.5 w-3.5"/> : <XCircle className="mr-1 h-3.5 w-3.5"/>}
+                              {admin.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {featureAccessText}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" /><span className="sr-only">Admin Actions</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleOpenEditDialog(admin)}>
+                                  <Edit3 className="mr-2 h-4 w-4" /> Edit Details
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleOpenPermissionsDialog(admin)}>
-                                    <Settings className="mr-2 h-4 w-4" /> Configure Permissions
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => confirmDeleteAdmin(admin)} className="text-red-600 focus:text-red-700 focus:bg-red-50">
-                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Admin
-                                </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                {admin.role !== "General Admin" && (
+                                  <>
+                                  <DropdownMenuItem onClick={() => handleToggleStatus(admin.id)}>
+                                      {admin.status === "Active" ? <ShieldAlert className="mr-2 h-4 w-4 text-orange-600" /> : <ShieldCheck className="mr-2 h-4 w-4 text-green-600" />}
+                                      {admin.status === "Active" ? "Deactivate" : "Activate"}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleOpenPermissionsDialog(admin)}>
+                                      <Settings className="mr-2 h-4 w-4" /> Configure Permissions
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => confirmDeleteAdmin(admin)} className="text-red-600 focus:text-red-700 focus:bg-red-50">
+                                      <Trash2 className="mr-2 h-4 w-4" /> Delete Admin
+                                  </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -382,3 +395,4 @@ export default function ManageAdminsPage() {
     </div>
   );
 }
+
