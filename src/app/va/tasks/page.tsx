@@ -56,4 +56,3 @@ export default function VaTasksPage_Deprecated() {
     </div>
   );
 }
-

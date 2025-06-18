@@ -172,7 +172,8 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
             localStorage.removeItem('stipsLiteContactStudentName');
         }
     } else if (userRole === 'print-center' && typeof window !== 'undefined') {
-        const contactStudentJobId = localStorage.getItem('stipsLiteContactStudentJobId'); // Potentially a new key for this context
+        // Check for localStorage items specific to Print Center contacting student about a job
+        const contactStudentJobId = localStorage.getItem('stipsLiteContactStudentJobId');
         const contactStudentNameForJob = localStorage.getItem('stipsLiteContactStudentNameForJob');
 
         if (contactStudentJobId && contactStudentNameForJob) {
@@ -635,4 +636,3 @@ export function SupportChatInterface({ userRole }: { userRole: 'student' | 'va' 
     </div>
   );
 }
-
