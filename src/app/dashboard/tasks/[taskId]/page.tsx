@@ -6,8 +6,8 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Added Alert
-import { ArrowLeft, Edit, MessageSquare, Paperclip, DollarSign, CheckCircle, Clock, AlertCircle, Check, X, Loader2, XCircle as XCircleIcon, Info } from "lucide-react"; // Renamed XCircle
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ArrowLeft, Edit, MessageSquare, Paperclip, DollarSign, CheckCircle, Clock, AlertCircle, Check, X, Loader2, XCircle as XCircleIcon, Info } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -15,7 +15,6 @@ import { db } from "@/lib/firebase";
 import { doc, onSnapshot, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 
-// Task status as defined for student view / interactions
 type TaskStatusStudent = 
   | "Pending Approval" 
   | "VA Quote Received - Action Needed" 
@@ -30,13 +29,13 @@ interface TaskDetail {
   title: string;
   taskType: string;
   pages: number;
-  submissionDate: string; // Formatted date string
+  submissionDate: string; 
   status: TaskStatusStudent;
   taskDescription: string;
   attachments?: { name: string; url: string; size?: string }[];
   estimatedCost?: string | null; 
   vaName?: string | null;
-  deadline?: string | null; // Formatted date string
+  deadline?: string | null; 
   studentComments?: { user: string; text: string; timestamp: string }[]; 
   paymentStatus?: "Unpaid" | "Paid by Student" | "VA Payout Pending" | "VA Paid" | "Refunded";
 }
@@ -72,14 +71,13 @@ export default function TaskDetailPage() {
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [error, setError] = useState<string | null>(null); // Added error state
+  const [error, setError] = useState<string | null>(null); 
 
   useEffect(() => {
     if (!taskId) {
       setIsLoading(false);
       setError("Task ID is missing.");
       toast({ title: "Error", description: "Task ID is missing.", variant: "destructive" });
-      // No router.push here, let error display handle it.
       return;
     }
 
@@ -96,7 +94,7 @@ export default function TaskDetailPage() {
             } catch (e) {
                  formattedSubmissionDate = typeof data.submissionDate === 'string' ? data.submissionDate : 'Invalid Date';
             }
-        } else if (data.createdAt && data.createdAt.toDate) {
+        } else if (data.createdAt && typeof data.createdAt.toDate === 'function') {
              try {
                 formattedSubmissionDate = format(data.createdAt.toDate(), "PPP p");
             } catch (e) {}
@@ -130,7 +128,7 @@ export default function TaskDetailPage() {
     });
 
     return () => unsubscribe();
-  }, [taskId, toast, router]);
+  }, [taskId, toast]);
 
   const updateTaskStatusInFirestore = async (newStatus: TaskStatusStudent, updates: Record<string, any> = {}) => {
     if (!task) return;
@@ -175,21 +173,34 @@ export default function TaskDetailPage() {
     });
   };
 
-  const handleProceedToPayment = () => {
+  const handleProceedToPayment = async () => {
     if (!task || task.status !== "Approved - Payment Due") return;
-    setIsUpdating(true); // Keep this to disable button immediately
+    setIsUpdating(true);
     toast({
       title: "Initiating Flutterwave Payment...",
       description: `Preparing payment for task: ${task.title} (Amount: ${task.estimatedCost}). Please wait.`,
     });
-    setTimeout(async () => { // Make async to await Firestore update
-      await updateTaskStatusInFirestore("In Progress", { paymentStatus: "Paid by Student" }); // This will set isUpdating to false
-      toast({
-        title: "Payment Successful (Simulated)",
-        description: `Payment for ${task.title} processed. Task is now In Progress.`,
-      });
-      // No router.push here, onSnapshot will update the task state.
-    }, 2500);
+
+    // Simulate Flutterwave payment process
+    setTimeout(async () => {
+      const paymentSuccessful = true; // Simulate success
+
+      if (paymentSuccessful) {
+        await updateTaskStatusInFirestore("In Progress", { paymentStatus: "Paid by Student" });
+        toast({
+          title: "Payment Successful (Simulated via Flutterwave)",
+          description: `Payment for ${task.title} processed. Task is now In Progress.`,
+        });
+        // The onSnapshot listener will automatically update the UI with the new task status
+      } else {
+        toast({
+          title: "Payment Failed (Simulated)",
+          description: `Payment for ${task.title} could not be processed. Please try again or contact support.`,
+          variant: "destructive",
+        });
+        setIsUpdating(false); // Re-enable button if payment fails
+      }
+    }, 2500); // Simulate 2.5 seconds for payment processing
   };
 
 
@@ -242,7 +253,7 @@ export default function TaskDetailPage() {
     );
   }
 
-  const StatusIcon = studentStatusIcons[task.status] || Info; // Fallback icon
+  const StatusIcon = studentStatusIcons[task.status] || Info;
 
   return (
     <div className="space-y-8">
@@ -331,7 +342,7 @@ export default function TaskDetailPage() {
                   disabled={isUpdating}
                 >
                   {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DollarSign className="mr-2 h-4 w-4" />} 
-                  Proceed to Payment
+                  Proceed to Payment via Flutterwave
                 </Button>
               )}
 
@@ -385,3 +396,5 @@ export default function TaskDetailPage() {
     </div>
   );
 }
+
+    

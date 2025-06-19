@@ -255,7 +255,7 @@ export default function AdminSettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-2 border-primary/50 shadow-xl">
           <CardHeader>
             <CardTitle className="font-headline flex items-center"><CreditCardIcon className="mr-2 h-5 w-5 text-primary"/>Payment Gateway Integration (Flutterwave)</CardTitle>
             <CardDescription>Configure API keys for payment processing. These are critical for all transactions.</CardDescription>
@@ -288,10 +288,14 @@ export default function AdminSettingsPage() {
             </div>
             <div className="flex items-start p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-700">
               <Info className="h-5 w-5 mr-2 mt-0.5 shrink-0" />
-              <p>
-                Ensure these keys are correct and kept confidential. Incorrect keys will prevent payment processing.
-                The Secret Key is sensitive; handle with extreme care.
-              </p>
+              <div>
+                <p className="font-semibold">Important:</p>
+                <ul className="list-disc pl-5 mt-1">
+                    <li>Ensure these keys are correct and kept confidential. Incorrect keys will prevent payment processing.</li>
+                    <li>The Public Key is used on the client-side, while the Secret Key is used for server-to-server communication and should NEVER be exposed in client-side code.</li>
+                    <li>In a real application, the Secret Key would be stored securely on your backend server and used for payment verification.</li>
+                </ul>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -486,3 +490,5 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
+
+    
