@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Badge } from "@/components/ui/badge";
@@ -5,50 +6,105 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowRight, MoreHorizontal, CheckCircle, Clock, AlertCircle, DollarSign, ClipboardList } from "lucide-react"; // Added ClipboardList for empty state
+import { ArrowRight, MoreHorizontal, CheckCircle, Clock, AlertCircle, DollarSign, ClipboardList, Loader2 } from "lucide-react"; 
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast"; // Added useToast
-import { useRouter } from "next/navigation"; // Added useRouter
+import { useToast } from "@/hooks/use-toast"; 
+import { useRouter } from "next/navigation"; 
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { collection, query, where, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
+import { format } from "date-fns";
 
-type TaskStatus = "Pending Approval" | "Approved - Payment Due" | "In Progress" | "Completed" | "Rejected";
+type StudentTaskStatus = 
+  | "Pending Approval" 
+  | "VA Quote Received - Action Needed" 
+  | "Approved - Payment Due" 
+  | "In Progress" 
+  | "Completed" 
+  | "Rejected"
+  | "Quote Rejected";
 
-interface Task {
-  id: string;
+interface TaskListItem {
+  id: string; // Document ID
   title: string;
-  type: string;
+  type: string; // maps to taskType from Firestore
   pages: number;
-  submittedDate: string;
-  status: TaskStatus;
+  submittedDate: string; // ISO string from Firestore's submissionDate
+  status: StudentTaskStatus;
   estimatedCost?: string;
+  deadline?: string; // ISO string from Firestore
 }
 
-const mockTasks: Task[] = [
-  { id: "TSK001", title: "Literature Review - Chapter 1", type: "Research", pages: 15, submittedDate: "2024-07-10", status: "Approved - Payment Due", estimatedCost: "₦65.00" }, // Updated cost to match detail page
-  { id: "TSK002", title: "Marketing Presentation Q3", type: "Presentation", pages: 20, submittedDate: "2024-07-08", status: "In Progress" },
-  { id: "TSK003", title: "Calculus Problem Set", type: "Assignment", pages: 5, submittedDate: "2024-07-05", status: "Completed" },
-  { id: "TSK004", title: "History Essay - WW2 Impact", type: "Essay", pages: 8, submittedDate: "2024-07-12", status: "Pending Approval" },
-  { id: "TSK005", title: "App Dev Proposal", type: "Report", pages: 12, submittedDate: "2024-07-01", status: "Rejected" },
-];
-
-const statusColors: Record<TaskStatus, string> = {
+const studentStatusColors: Record<StudentTaskStatus, string> = {
   "Pending Approval": "bg-yellow-100 text-yellow-700 border-yellow-300",
+  "VA Quote Received - Action Needed": "bg-orange-100 text-orange-700 border-orange-300",
   "Approved - Payment Due": "bg-blue-100 text-blue-700 border-blue-300",
   "In Progress": "bg-indigo-100 text-indigo-700 border-indigo-300",
   "Completed": "bg-green-100 text-green-700 border-green-300",
   "Rejected": "bg-red-100 text-red-700 border-red-300",
+  "Quote Rejected": "bg-pink-100 text-pink-700 border-pink-300",
 };
 
-const statusIcons: Record<TaskStatus, React.ElementType> = {
+const studentStatusIcons: Record<StudentTaskStatus, React.ElementType> = {
   "Pending Approval": Clock,
+  "VA Quote Received - Action Needed": AlertCircle, // Or another icon like Edit
   "Approved - Payment Due": DollarSign,
   "In Progress": Clock, 
   "Completed": CheckCircle,
   "Rejected": AlertCircle,
+  "Quote Rejected": XCircle, // Assuming XCircle is available or use X
 };
+import { XCircle } from "lucide-react"; // Ensure XCircle is imported if used
+
 
 export function TaskList() {
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
+  const [tasks, setTasks] = useState<TaskListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setIsLoading(false);
+      // Optionally, redirect to login or show a message if user is not authenticated
+      return;
+    }
+
+    setIsLoading(true);
+    const q = query(
+      collection(db, "tasks"), 
+      where("studentUid", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const fetchedTasks: TaskListItem[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        fetchedTasks.push({
+          id: doc.id,
+          title: data.taskTitle,
+          type: data.taskType,
+          pages: data.pages,
+          submittedDate: data.submissionDate ? format(new Date(data.submissionDate), "yyyy-MM-dd") : 'N/A',
+          status: data.status as StudentTaskStatus, // Ensure status matches
+          estimatedCost: data.estimatedCost,
+          deadline: data.deadline ? format(new Date(data.deadline), "yyyy-MM-dd") : undefined,
+        });
+      });
+      setTasks(fetchedTasks);
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error fetching tasks:", error);
+      toast({ title: "Error", description: "Could not fetch tasks.", variant: "destructive" });
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe(); // Cleanup listener on component unmount
+  }, [user, toast]);
+
 
   const handleProceedToPayment = (taskId: string, taskTitle: string, amount?: string) => {
     toast({
@@ -59,11 +115,11 @@ export function TaskList() {
     setTimeout(() => {
       toast({
         title: "Payment Successful (Simulated)",
-        description: `Payment for ${taskTitle} processed. Task is now In Progress.`,
+        description: `Payment for ${taskTitle} processed. Task status will update shortly.`,
         variant: "default",
       });
-      // Here you would typically navigate or update task status from backend response
-      // For simulation, we can navigate to the task detail page.
+      // For UI simulation, navigate and let TaskDetailPage handle status from query param
+      // In a real app, this might trigger a Firestore update which onSnapshot would then pick up.
       router.push(`/dashboard/tasks/${taskId}?payment_success=true`);
     }, 2500);
   };
@@ -76,7 +132,12 @@ export function TaskList() {
         <CardDescription>Track the status and details of all your tasks.</CardDescription>
       </CardHeader>
       <CardContent>
-        {mockTasks.length === 0 ? (
+        {isLoading ? (
+            <div className="flex justify-center items-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="ml-2 text-muted-foreground">Loading your tasks...</p>
+            </div>
+        ) : tasks.length === 0 ? (
           <div className="text-center py-12">
             <ClipboardList className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-medium">No tasks submitted yet</h3>
@@ -102,17 +163,17 @@ export function TaskList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockTasks.map((task) => {
-                const StatusIcon = statusIcons[task.status];
+              {tasks.map((task) => {
+                const StatusIcon = studentStatusIcons[task.status];
                 return (
                   <TableRow key={task.id}>
-                    <TableCell className="font-medium">{task.id}</TableCell>
+                    <TableCell className="font-medium font-mono text-xs">{task.id.substring(0,8)}...</TableCell>
                     <TableCell>{task.title}</TableCell>
                     <TableCell>{task.type}</TableCell>
                     <TableCell>{task.pages}</TableCell>
                     <TableCell>{task.submittedDate}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={`text-xs ${statusColors[task.status]}`}>
+                      <Badge variant="outline" className={`text-xs ${studentStatusColors[task.status]}`}>
                         <StatusIcon className="h-3.5 w-3.5 mr-1.5" />
                         {task.status}
                       </Badge>
@@ -140,8 +201,8 @@ export function TaskList() {
                                 <DollarSign className="mr-2 h-4 w-4" /> Proceed to Payment
                             </DropdownMenuItem>
                           )}
-                          {task.status === "Pending Approval" && (
-                            <DropdownMenuItem>Cancel Submission</DropdownMenuItem>
+                          {task.status === "Pending Approval" && ( // Example of another action
+                            <DropdownMenuItem disabled>Cancel Submission (Future)</DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -154,7 +215,7 @@ export function TaskList() {
         </div>
         )}
       </CardContent>
-      {mockTasks.length > 0 && (
+      {tasks.length > 0 && (
         <CardFooter className="justify-end pt-6">
           <Button variant="outline" asChild>
             <Link href="/dashboard/tasks/archive">View Archived Tasks <ArrowRight className="ml-2 h-4 w-4" /></Link>

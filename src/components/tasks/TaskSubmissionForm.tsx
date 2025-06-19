@@ -1,7 +1,7 @@
 
 "use client";
 
-import Link from "next/link"; // Added import
+import Link from "next/link"; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,10 +37,13 @@ import { Badge } from "@/components/ui/badge";
 
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, UploadCloud, DollarSign, Users, Shuffle, AlertTriangle } from "lucide-react";
+import { Calendar as CalendarIcon, UploadCloud, DollarSign, Users, Shuffle, AlertTriangle, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const durationOptions = [
   { value: "1_hour", label: "1 Hour" },
@@ -108,13 +111,14 @@ export function TaskSubmissionForm() {
   const [deadline, setDeadline] = useState<Date | undefined>();
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const [isVaSelectionDialogOpen, setIsVaSelectionDialogOpen] = useState(false);
   const [selectedVaId, setSelectedVaId] = useState<string | undefined>();
   const [isSubscribedToExpertVaPlan, setIsSubscribedToExpertVaPlan] = useState(false); 
 
   useEffect(() => {
-    
     if (typeof window !== 'undefined') {
       const planStatus = localStorage.getItem('stipsLiteActivePlanId'); 
       if (planStatus === 'expert_va') { 
@@ -123,36 +127,91 @@ export function TaskSubmissionForm() {
     }
   }, []);
 
-
-  const performActualSubmission = (vaPreference: "specific" | "random", vaIdToAssign?: string) => {
-    let vaMessage = "";
-    if (vaPreference === "specific" && vaIdToAssign) {
-      const va = mockSelectableVAs.find(v => v.id === vaIdToAssign);
-      if (va && !va.isAvailableForDirectAssignment) {
-        toast({
-          title: "VA Currently Unavailable",
-          description: `${va.name} is not accepting direct assignments at the moment. Your task will be sent to the general pool, or you can cancel and choose another VA.`,
-          variant: "destructive",
-          duration: 7000,
-        });
-        
-        vaMessage = `Your task has been submitted. Note: ${va.name} was selected but is currently unavailable for direct tasks, so it has been added to the general pool.`;
-      } else {
-        vaMessage = `Your task has been submitted and will be assigned to ${va ? va.name : 'your chosen VA'} for review, quoting, and acceptance. This is a feature of the Expert VA Plan.`;
-      }
-    } else {
-      vaMessage = "Your task has been submitted and a Virtual Assistant will be assigned randomly from the general pool. This task will have a platform-set price upon approval.";
+  const performActualSubmission = async (vaPreference: "specific" | "random", vaIdToAssign?: string) => {
+    if (!user) {
+      toast({ title: "Authentication Error", description: "You must be logged in to submit a task.", variant: "destructive" });
+      return;
     }
 
-    toast({
-      title: "Task Submitted Successfully!",
-      description: `${vaMessage} Your task is now pending review and admin approval. Payment will be requested upon approval (or after VA quote acceptance if applicable).`,
-      variant: "default",
-      duration: 9000, 
-    });
-    router.push('/dashboard/tasks');
-    setIsVaSelectionDialogOpen(false); 
-    setSelectedVaId(undefined);
+    const form = document.getElementById("taskSubmissionForm") as HTMLFormElement;
+    if (!form) {
+        toast({ title: "Form Error", description: "Could not find the task submission form.", variant: "destructive"});
+        return;
+    }
+    const formData = new FormData(form);
+    const taskType = formData.get("taskType") as string;
+    const taskTitle = formData.get("taskTitle") as string;
+    const taskDescription = formData.get("taskDescription") as string;
+    const pages = formData.get("pages") as string;
+    const estimatedDuration = formData.get("estimatedDuration") as string;
+    // Attachments are handled via UI only for now
+
+    if (!taskType || !taskTitle || !taskDescription || !pages || !estimatedDuration) {
+        toast({ title: "Missing Fields", description: "Please fill all required task details.", variant: "destructive"});
+        return;
+    }
+    
+    setIsLoading(true);
+
+    let vaMessage = "";
+    let taskData: any = {
+        taskType,
+        taskTitle,
+        taskDescription,
+        pages: parseInt(pages, 10),
+        estimatedDuration,
+        submissionDate: submissionDate ? submissionDate.toISOString() : new Date().toISOString(),
+        deadline: deadline ? deadline.toISOString() : null,
+        studentUid: user.uid,
+        studentName: user.displayName || "Student",
+        status: "Pending Approval",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        paymentStatus: "Unpaid",
+        vaPreference: vaPreference,
+    };
+
+    if (vaPreference === "specific" && vaIdToAssign) {
+        const va = mockSelectableVAs.find(v => v.id === vaIdToAssign);
+        taskData.assignedVaId = vaIdToAssign;
+        taskData.assignedVaName = va?.name;
+
+        if (va && !va.isAvailableForDirectAssignment) {
+            toast({
+            title: "VA Currently Unavailable",
+            description: `${va.name} is not accepting direct assignments at the moment. Your task will be sent to the general pool, or you can cancel and choose another VA.`,
+            variant: "destructive",
+            duration: 7000,
+            });
+            taskData.vaPreference = "random"; // Override to random if VA is unavailable
+            vaMessage = `Your task has been submitted. Note: ${va.name} was selected but is currently unavailable for direct tasks, so it has been added to the general pool.`;
+        } else {
+            vaMessage = `Your task has been submitted and will be assigned to ${va ? va.name : 'your chosen VA'} for review, quoting, and acceptance. This is a feature of the Expert VA Plan.`;
+        }
+    } else {
+        vaMessage = "Your task has been submitted and a Virtual Assistant will be assigned randomly from the general pool. This task will have a platform-set price upon approval.";
+    }
+
+    try {
+        await addDoc(collection(db, "tasks"), taskData);
+        toast({
+            title: "Task Submitted Successfully!",
+            description: `${vaMessage} Your task is now pending review and admin approval. Payment will be requested upon approval (or after VA quote acceptance if applicable).`,
+            variant: "default",
+            duration: 9000, 
+        });
+        router.push('/dashboard/tasks');
+    } catch (error) {
+        console.error("Error submitting task to Firestore:", error);
+        toast({ title: "Submission Failed", description: "Could not save your task. Please try again.", variant: "destructive"});
+    } finally {
+        setIsLoading(false);
+        setIsVaSelectionDialogOpen(false); 
+        setSelectedVaId(undefined);
+        form.reset();
+        setSubmissionDate(new Date());
+        setDeadline(undefined);
+    }
   };
 
 
@@ -168,7 +227,7 @@ export function TaskSubmissionForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="taskType">Task Type</Label>
-              <Select name="taskType" required>
+              <Select name="taskType" required disabled={isLoading}>
                 <SelectTrigger id="taskType">
                   <SelectValue placeholder="Select task type" />
                 </SelectTrigger>
@@ -183,23 +242,23 @@ export function TaskSubmissionForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="taskTitle">Task Title</Label>
-              <Input id="taskTitle" name="taskTitle" placeholder="e.g., Q1 Marketing Report" required />
+              <Input id="taskTitle" name="taskTitle" placeholder="e.g., Q1 Marketing Report" required disabled={isLoading} />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="taskDescription">Task Description</Label>
-            <Textarea id="taskDescription" name="taskDescription" placeholder="Provide a detailed description of the task requirements including formatting (e.g., APA 7th ed., font size 12, font name: Times New Roman), specific sources to use, or any other instructions." rows={4} required />
+            <Textarea id="taskDescription" name="taskDescription" placeholder="Provide a detailed description of the task requirements including formatting (e.g., APA 7th ed., font size 12, font name: Times New Roman), specific sources to use, or any other instructions." rows={4} required disabled={isLoading}/>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="pages">Number of Pages/Slides</Label>
-              <Input id="pages" name="pages" type="number" placeholder="e.g., 10" min="1" required />
+              <Input id="pages" name="pages" type="number" placeholder="e.g., 10" min="1" required disabled={isLoading}/>
             </div>
             <div className="space-y-2">
               <Label htmlFor="estimatedDuration">Estimated Duration</Label>
-              <Select name="estimatedDuration" required>
+              <Select name="estimatedDuration" required disabled={isLoading}>
                 <SelectTrigger id="estimatedDuration">
                   <SelectValue placeholder="Select estimated duration" />
                 </SelectTrigger>
@@ -225,6 +284,7 @@ export function TaskSubmissionForm() {
                       "w-full justify-start text-left font-normal",
                       !submissionDate && "text-muted-foreground"
                     )}
+                    disabled={isLoading}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {submissionDate ? format(submissionDate, "PPP") : <span>Pick a date</span>}
@@ -250,6 +310,7 @@ export function TaskSubmissionForm() {
                       "w-full justify-start text-left font-normal",
                       !deadline && "text-muted-foreground"
                     )}
+                    disabled={isLoading}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {deadline ? format(deadline, "PPP") : <span>Pick a date</span>}
@@ -284,7 +345,7 @@ export function TaskSubmissionForm() {
                         </p>
                         <p className="text-xs text-muted-foreground">PDF, DOCX, PPTX, ZIP (MAX. 10MB)</p>
                     </div>
-                    <Input id="dropzone-file" type="file" className="hidden" multiple name="attachments"/>
+                    <Input id="dropzone-file" type="file" className="hidden" multiple name="attachments" disabled={isLoading}/>
                 </Label>
             </div> 
           </div>
@@ -305,8 +366,8 @@ export function TaskSubmissionForm() {
         <CardFooter className="pt-6">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button type="button" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-                Submit Task for Approval
+              <Button type="button" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isLoading}>
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null} Submit Task for Approval
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -332,16 +393,18 @@ export function TaskSubmissionForm() {
                     }
                   }}
                   className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+                  disabled={isLoading}
                 >
                   <Users className="mr-2 h-4 w-4" /> Request Specific VA (Expert VA Plan)
                 </AlertDialogAction>
                 <AlertDialogAction
                   onClick={() => performActualSubmission("random")}
                   className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
+                  disabled={isLoading}
                 >
                  <Shuffle className="mr-2 h-4 w-4" /> Assign Random VA
                 </AlertDialogAction>
-                 <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
+                 <AlertDialogCancel className="w-full sm:w-auto" disabled={isLoading}>Cancel</AlertDialogCancel>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -403,7 +466,7 @@ export function TaskSubmissionForm() {
             </p>
           )}
           <div className="flex gap-2 w-full sm:w-auto">
-            <Button variant="outline" onClick={() => {setIsVaSelectionDialogOpen(false); setSelectedVaId(undefined);}} className="flex-1 sm:flex-none">Cancel</Button>
+            <Button variant="outline" onClick={() => {setIsVaSelectionDialogOpen(false); setSelectedVaId(undefined);}} className="flex-1 sm:flex-none" disabled={isLoading}>Cancel</Button>
             <Button
               onClick={() => {
                 if (selectedVaId) {
@@ -412,10 +475,10 @@ export function TaskSubmissionForm() {
                   toast({ title: "No VA Selected", description: "Please select a VA to proceed or cancel.", variant: "destructive"});
                 }
               }}
-              disabled={!selectedVaId}
+              disabled={!selectedVaId || isLoading}
               className="bg-accent hover:bg-accent/90 text-accent-foreground flex-1 sm:flex-none"
             >
-              Submit with Selected VA
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null} Submit with Selected VA
             </Button>
           </div>
         </DialogFooter>
