@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -38,17 +38,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClipboardList, Check, X, Eye, DollarSign, UserCheck, FileText, MoreHorizontal, Search, Paperclip, MessageSquare, AlertTriangle, Send, UserX, RefreshCw } from "lucide-react";
+import { ClipboardList, Check, X, Eye, DollarSign, UserCheck, FileText, MoreHorizontal, Search, Paperclip, MessageSquare, AlertTriangle, Send, UserX, RefreshCw, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { db } from "@/lib/firebase";
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
+import { format } from "date-fns";
 
 type AdminTaskStatus =
   | "Pending Admin Review"
   | "Pending VA Assignment"
-  | "Pending VA Acceptance" // New status
-  | "Rejected by VA"      // New status
+  | "Pending VA Acceptance" 
+  | "Rejected by VA"      
   | "Awaiting Student Payment"
   | "In Progress with VA"
   | "Work Submitted by VA"
@@ -58,12 +61,12 @@ type AdminTaskStatus =
   | "Revision Requested (to VA)";
 
 interface AdminTask {
-  id: string;
+  id: string; // Firestore document ID
   title: string;
   studentName: string;
-  studentId: string;
-  submittedDate: string;
-  type: string;
+  studentId: string; // studentUid from Firestore
+  submittedDate: string; // Should be ISO string or formatted date
+  type: string; // taskType from Firestore
   pages: number;
   description: string;
   attachments: { name: string; url: string }[];
@@ -73,41 +76,31 @@ interface AdminTask {
   assignedVaId: string | null;
   assignedVaName: string | null;
   adminNotes?: string;
-  vaRejectionReason?: string; // Optional reason if VA rejects
-  vaSubmissionDate?: string | null;
+  vaRejectionReason?: string; 
+  vaSubmissionDate?: string | null; // ISO string or formatted date
   vaSubmissionNotes?: string;
   vaSubmissionAttachments?: { name: string; url: string }[];
-  deadline?: string;
-  completionDate?: string;
+  deadline?: string | null; // ISO string or formatted date
+  completionDate?: string | null; // ISO string or formatted date
+  createdAt?: Timestamp; // Firestore timestamp
+  updatedAt?: Timestamp; // Firestore timestamp
 }
-
-const mockAdminTasksInitial: AdminTask[] = [
-  { id: "TSK101", title: "Market Analysis Report Q3", studentName: "John Doe", studentId: "STD001", submittedDate: "2024-07-25", type: "Report", pages: 20, description: "Detailed market analysis for tech sector, Q3 2024. Include competitor overview, SWOT, and growth projections.", attachments: [{name:"brief.pdf", url:"#"}], status: "Pending Admin Review", adminSetPriceNGN: null, paymentStatus: "Unpaid", assignedVaId: null, assignedVaName: null, deadline: "2024-08-10" },
-  { id: "TSK102", title: "App UI Design - Fitness Tracker", studentName: "Alice Smith", studentId: "STD002", submittedDate: "2024-07-24", type: "Design", pages: 10, description: "Design 10 screens for a mobile fitness tracking app. Focus on user experience and modern aesthetics.", attachments: [{name:"wireframes.fig", url:"#"}], status: "Pending VA Assignment", adminSetPriceNGN: 150, paymentStatus: "Unpaid", assignedVaId: null, assignedVaName: null, deadline: "2024-08-05" },
-  { id: "TSK103", title: "Thesis Chapter 3 - Methodology", studentName: "Bob Johnson", studentId: "STD003", submittedDate: "2024-07-22", type: "Research", pages: 30, description: "Write methodology chapter for PhD thesis on renewable energy policies. Must include quantitative and qualitative approaches.", attachments: [], status: "Awaiting Student Payment", adminSetPriceNGN: 250, paymentStatus: "Unpaid", assignedVaId: "VA001", assignedVaName: "Aisha Bello", deadline: "2024-08-20" },
-  { id: "TSK104", title: "Calculus Problem Set Advanced", studentName: "Eva Green", studentId: "STD004", submittedDate: "2024-07-20", type: "Assignment", pages: 5, description: "Solve advanced calculus problems, focusing on integration and differentiation.", attachments: [{name: "problems.pdf", url:"#"}], status: "In Progress with VA", adminSetPriceNGN: 75, paymentStatus: "Paid by Student", assignedVaId: "VA002", assignedVaName: "Chinedu Okoro", deadline: "2024-07-28" },
-  { id: "TSK105", title: "History Essay: Cold War Impact", studentName: "Mike Brown", studentId: "STD005", submittedDate: "2024-07-18", type: "Essay", pages: 8, description: "Analyze the long-term impact of the Cold War on global politics. 8 pages, APA format.", attachments: [], status: "Work Submitted by VA", adminSetPriceNGN: 100, paymentStatus: "Paid by Student", assignedVaId: "VA001", assignedVaName: "Aisha Bello", vaSubmissionDate: "2024-07-26", vaSubmissionNotes: "Essay completed. All sources cited.", vaSubmissionAttachments: [{name: "cold_war_essay_final.docx", url:"#"}]},
-  { id: "TSK106", title: "Business Plan - Coffee Shop", studentName: "Sarah Lee", studentId: "STD006", submittedDate: "2024-07-15", type: "Business Plan", pages: 25, description: "Develop a comprehensive business plan for a new specialty coffee shop.", attachments: [], status: "Completed", adminSetPriceNGN: 300, paymentStatus: "VA Paid", assignedVaId: "VA003", assignedVaName: "Fatima Diallo", deadline: "2024-08-01", completionDate: "2024-07-23"},
-  { id: "TSK107", title: "Internship Report - Marketing", studentName: "David Kim", studentId: "STD007", submittedDate: "2024-07-10", type: "Report", pages: 15, description: "Summer internship report for marketing department.", attachments: [], status: "Rejected by Admin", adminSetPriceNGN: null, paymentStatus: "Unpaid", assignedVaId: null, assignedVaName: null, adminNotes: "Description too vague. Please provide specific deliverables and learning outcomes."},
-  { id: "TSK108", title: "Poetry Analysis", studentName: "Grace Field", studentId: "STD008", submittedDate: "2024-07-27", type: "Literature", pages: 3, description: "Analyze three poems by W.B. Yeats.", attachments: [], status: "Pending VA Acceptance", adminSetPriceNGN: 50, paymentStatus: "Unpaid", assignedVaId: "VA004", assignedVaName: "David Adebayo", deadline: "2024-08-02" },
-  { id: "TSK109", title: "Statistical Data Review", studentName: "Ken Miles", studentId: "STD009", submittedDate: "2024-07-26", type: "Statistics", pages: 1, description: "Review dataset for outliers and provide summary statistics.", attachments: [{name: "dataset.csv", url:"#"}], status: "Rejected by VA", adminSetPriceNGN: 40, paymentStatus: "Unpaid", assignedVaId: "VA002", assignedVaName: "Chinedu Okoro", vaRejectionReason: "Current workload too high.", deadline: "2024-07-30" },
-];
 
 const adminTaskStatusColors: Record<AdminTaskStatus, string> = {
   "Pending Admin Review": "bg-yellow-100 text-yellow-700 border-yellow-300",
   "Pending VA Assignment": "bg-orange-100 text-orange-700 border-orange-300",
-  "Pending VA Acceptance": "bg-cyan-100 text-cyan-700 border-cyan-300", // New Color
-  "Rejected by VA": "bg-pink-100 text-pink-700 border-pink-300",         // New Color
+  "Pending VA Acceptance": "bg-cyan-100 text-cyan-700 border-cyan-300", 
+  "Rejected by VA": "bg-pink-100 text-pink-700 border-pink-300",         
   "Awaiting Student Payment": "bg-blue-100 text-blue-700 border-blue-300",
   "In Progress with VA": "bg-indigo-100 text-indigo-700 border-indigo-300",
   "Work Submitted by VA": "bg-purple-100 text-purple-700 border-purple-300",
-  "Revision Requested (to VA)": "bg-pink-100 text-pink-700 border-pink-300", // Re-used pink, might want unique
+  "Revision Requested (to VA)": "bg-pink-100 text-pink-700 border-pink-300", 
   "Completed": "bg-green-100 text-green-700 border-green-300",
   "Rejected by Admin": "bg-red-100 text-red-700 border-red-300",
   "Cancelled": "bg-gray-100 text-gray-700 border-gray-300",
 };
 
-const mockVAs = [
+const mockVAs = [ // Kept as mock for VA assignment dialog
     { id: "VA001", name: "Aisha Bello (Academic Writing)" },
     { id: "VA002", name: "Chinedu Okoro (Technical & STEM)" },
     { id: "VA003", name: "Fatima Diallo (Business & Presentations)" },
@@ -116,7 +109,8 @@ const mockVAs = [
 
 
 export default function AdminTasksPage() {
-  const [tasks, setTasks] = useState<AdminTask[]>(mockAdminTasksInitial);
+  const [allTasks, setAllTasks] = useState<AdminTask[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<AdminTaskStatus | "all">("all");
   const [selectedTask, setSelectedTask] = useState<AdminTask | null>(null);
@@ -133,11 +127,55 @@ export default function AdminTasksPage() {
   const [selectedVaForAssignment, setSelectedVaForAssignment] = useState<string | undefined>();
   const [adminReviewNotesInput, setAdminReviewNotesInput] = useState("");
 
-
   const { toast } = useToast();
 
+  useEffect(() => {
+    setIsLoading(true);
+    const q = query(collection(db, "tasks"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const fetchedTasks: AdminTask[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        fetchedTasks.push({
+          id: doc.id,
+          title: data.taskTitle,
+          studentName: data.studentName,
+          studentId: data.studentUid,
+          submittedDate: data.submissionDate ? format(new Date(data.submissionDate), "yyyy-MM-dd") : 'N/A',
+          type: data.taskType,
+          pages: data.pages,
+          description: data.taskDescription,
+          attachments: data.attachments || [],
+          status: data.status as AdminTaskStatus,
+          adminSetPriceNGN: data.adminSetPriceNGN || null,
+          paymentStatus: data.paymentStatus,
+          assignedVaId: data.assignedVaId || null,
+          assignedVaName: data.assignedVaName || null,
+          adminNotes: data.adminNotes,
+          vaRejectionReason: data.vaRejectionReason,
+          vaSubmissionDate: data.vaSubmissionDate ? format(new Date(data.vaSubmissionDate), "yyyy-MM-dd HH:mm") : null,
+          vaSubmissionNotes: data.vaSubmissionNotes,
+          vaSubmissionAttachments: data.vaSubmissionAttachments || [],
+          deadline: data.deadline ? format(new Date(data.deadline), "yyyy-MM-dd") : null,
+          completionDate: data.completionDate ? format(new Date(data.completionDate), "yyyy-MM-dd") : null,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        });
+      });
+      setAllTasks(fetchedTasks);
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error fetching tasks:", error);
+      toast({ title: "Error", description: "Could not fetch tasks.", variant: "destructive" });
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [toast]);
+
+
   const filteredTasks = useMemo(() => {
-    return tasks.filter(task => {
+    return allTasks.filter(task => {
       const matchesSearch = 
         task.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -146,7 +184,7 @@ export default function AdminTasksPage() {
       const matchesStatus = statusFilter === "all" || task.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [tasks, searchTerm, statusFilter]);
+  }, [allTasks, searchTerm, statusFilter]);
 
   const openDialog = (dialogSetter: React.Dispatch<React.SetStateAction<boolean>>, task: AdminTask) => {
     setSelectedTask(task);
@@ -157,7 +195,19 @@ export default function AdminTasksPage() {
     dialogSetter(true);
   };
 
-  const handleApproveTask = () => {
+  const updateTaskInFirestore = async (taskId: string, updates: Partial<AdminTask>) => {
+    const taskRef = doc(db, "tasks", taskId);
+    try {
+      await updateDoc(taskRef, { ...updates, updatedAt: serverTimestamp() });
+      return true;
+    } catch (error) {
+      console.error("Error updating task in Firestore:", error);
+      toast({ title: "Update Failed", description: "Could not update task in Firestore.", variant: "destructive"});
+      return false;
+    }
+  };
+
+  const handleApproveTask = async () => {
     if (!selectedTask || !adminPriceInput) {
       toast({ title: "Price Required", description: "Please set a price before approving.", variant: "destructive" });
       return;
@@ -167,59 +217,73 @@ export default function AdminTasksPage() {
        toast({ title: "Invalid Price", description: "Please enter a valid positive price.", variant: "destructive" });
        return;
     }
-    setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, status: "Pending VA Assignment", adminSetPriceNGN: price, adminNotes: adminNotesInput } : t));
-    toast({ title: "Task Approved", description: `${selectedTask.title} approved with price ₦${price}. Ready for VA assignment.` });
-    setIsReviewPriceOpen(false);
+    const success = await updateTaskInFirestore(selectedTask.id, { status: "Pending VA Assignment", adminSetPriceNGN: price, adminNotes: adminNotesInput });
+    if (success) {
+        toast({ title: "Task Approved", description: `${selectedTask.title} approved with price ₦${price}. Ready for VA assignment.` });
+        setIsReviewPriceOpen(false);
+    }
   };
 
-  const handleRejectTask = () => {
+  const handleRejectTask = async () => {
     if (!selectedTask) return;
-    setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, status: "Rejected by Admin", adminNotes: adminNotesInput || "Rejected by admin." } : t));
-    toast({ title: "Task Rejected", description: `${selectedTask.title} has been rejected.`, variant: "destructive" });
-    setIsReviewPriceOpen(false);
+    const success = await updateTaskInFirestore(selectedTask.id, { status: "Rejected by Admin", adminNotes: adminNotesInput || "Rejected by admin." });
+    if (success) {
+        toast({ title: "Task Rejected", description: `${selectedTask.title} has been rejected.`, variant: "destructive" });
+        setIsReviewPriceOpen(false);
+    }
   };
 
-  const handleAssignVa = () => {
+  const handleAssignVa = async () => {
     if (!selectedTask || !selectedVaForAssignment) {
       toast({ title: "VA Selection Required", description: "Please select a VA to assign.", variant: "destructive" });
       return;
     }
     const va = mockVAs.find(v => v.id === selectedVaForAssignment);
-    setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, status: "Pending VA Acceptance", assignedVaId: va?.id || null, assignedVaName: va?.name || null } : t));
-    toast({ title: "VA Assigned", description: `${va?.name} assigned to ${selectedTask.title}. Task is now Pending VA Acceptance.` });
-    setIsAssignVaOpen(false);
-    setSelectedVaForAssignment(undefined);
+    const success = await updateTaskInFirestore(selectedTask.id, { status: "Pending VA Acceptance", assignedVaId: va?.id || null, assignedVaName: va?.name || null });
+    if (success) {
+        toast({ title: "VA Assigned", description: `${va?.name} assigned to ${selectedTask.title}. Task is now Pending VA Acceptance.` });
+        setIsAssignVaOpen(false);
+        setSelectedVaForAssignment(undefined);
+    }
   };
   
-  const handleConfirmPayment = () => {
+  const handleConfirmPayment = async () => {
     if (!selectedTask) return;
-    setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, status: "In Progress with VA", paymentStatus: "Paid by Student" } : t));
-    toast({ title: "Payment Confirmed", description: `Payment for ${selectedTask.title} confirmed. VA can start work.` });
-    setIsConfirmPaymentOpen(false);
+    const success = await updateTaskInFirestore(selectedTask.id, { status: "In Progress with VA", paymentStatus: "Paid by Student" });
+    if (success) {
+        toast({ title: "Payment Confirmed", description: `Payment for ${selectedTask.title} confirmed. VA can start work.` });
+        setIsConfirmPaymentOpen(false);
+    }
   };
 
-  const handleApproveVaWork = () => {
+  const handleApproveVaWork = async () => {
     if (!selectedTask) return;
-     setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, status: "Completed", paymentStatus: "VA Payout Pending", adminNotes: adminReviewNotesInput, completionDate: new Date().toISOString().split('T')[0] } : t));
-    toast({ title: "VA Work Approved", description: `${selectedTask.title} marked as completed. VA payout is now pending.` });
-    setIsReviewVaWorkOpen(false);
+    const success = await updateTaskInFirestore(selectedTask.id, { status: "Completed", paymentStatus: "VA Payout Pending", adminNotes: adminReviewNotesInput, completionDate: new Date().toISOString() });
+    if (success) {
+        toast({ title: "VA Work Approved", description: `${selectedTask.title} marked as completed. VA payout is now pending.` });
+        setIsReviewVaWorkOpen(false);
+    }
   };
 
-  const handleRequestRevisionFromVA = () => {
+  const handleRequestRevisionFromVA = async () => {
     if (!selectedTask || !adminReviewNotesInput.trim()) {
         toast({title: "Revision Notes Required", description: "Please provide notes for the VA revision.", variant: "destructive"});
         return;
     }
-    setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, status: "Revision Requested (to VA)", adminNotes: adminReviewNotesInput } : t));
-    toast({ title: "Revision Requested", description: `Revision requested from VA for ${selectedTask.title}. Notes: ${adminReviewNotesInput}` });
-    setIsReviewVaWorkOpen(false);
+    const success = await updateTaskInFirestore(selectedTask.id, { status: "Revision Requested (to VA)", adminNotes: adminReviewNotesInput });
+    if (success) {
+        toast({ title: "Revision Requested", description: `Revision requested from VA for ${selectedTask.title}. Notes: ${adminReviewNotesInput}` });
+        setIsReviewVaWorkOpen(false);
+    }
   };
   
-  const handleCancelTask = () => {
+  const handleCancelTask = async () => {
       if(!selectedTask) return;
-      setTasks(prev => prev.map(t => t.id === selectedTask.id ? {...t, status: "Cancelled"} : t));
-      toast({title: "Task Cancelled", description: `Task ${selectedTask.title} has been cancelled.`, variant: "destructive"});
-      setIsCancelTaskOpen(false);
+      const success = await updateTaskInFirestore(selectedTask.id, { status: "Cancelled" });
+      if (success) {
+        toast({title: "Task Cancelled", description: `Task ${selectedTask.title} has been cancelled.`, variant: "destructive"});
+        setIsCancelTaskOpen(false);
+      }
   };
 
 
@@ -259,7 +323,12 @@ export default function AdminTasksPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {filteredTasks.length === 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center items-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="ml-2 text-muted-foreground">Loading tasks...</p>
+            </div>
+          ) : filteredTasks.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
                 <ClipboardList className="mx-auto h-12 w-12 mb-3" />
                 <p>No tasks match your current filters or no tasks submitted yet.</p>
@@ -282,9 +351,9 @@ export default function AdminTasksPage() {
               <TableBody>
                 {filteredTasks.map(task => (
                   <TableRow key={task.id}>
-                    <TableCell className="font-mono text-xs">{task.id}</TableCell>
+                    <TableCell className="font-mono text-xs">{task.id.substring(0,8)}...</TableCell>
                     <TableCell className="font-medium max-w-xs truncate">{task.title}</TableCell>
-                    <TableCell>{task.studentName} ({task.studentId})</TableCell>
+                    <TableCell>{task.studentName} ({task.studentId ? task.studentId.substring(0,6) + '...' : 'N/A'})</TableCell>
                     <TableCell>{task.assignedVaName || "N/A"}</TableCell>
                     <TableCell>{task.adminSetPriceNGN ? `₦${task.adminSetPriceNGN.toFixed(2)}` : "Not Set"}</TableCell>
                     <TableCell>
@@ -359,68 +428,87 @@ export default function AdminTasksPage() {
             <DialogTitle>Task Details: {selectedTask?.title} (ID: {selectedTask?.id})</DialogTitle>
             <DialogDescription>Comprehensive overview of the task.</DialogDescription>
           </DialogHeader>
-          <ScrollArea className="max-h-[70vh] pr-3">
-            <div className="grid gap-6 py-4">
-                <div className="space-y-2">
-                    <h4 className="font-semibold text-primary">Task Information</h4>
-                    <div><strong className="text-muted-foreground">Student:</strong> {selectedTask?.studentName} ({selectedTask?.studentId})</div>
-                    <div><strong className="text-muted-foreground">Submitted:</strong> {selectedTask?.submittedDate}</div>
-                    <div><strong className="text-muted-foreground">Type:</strong> {selectedTask?.type}</div>
-                    <div><strong className="text-muted-foreground">Pages/Units:</strong> {selectedTask?.pages}</div>
-                    <div><strong className="text-muted-foreground">Deadline:</strong> {selectedTask?.deadline || "Not set"}</div>
-                    <div><strong className="text-muted-foreground">Description:</strong></div>
-                    <div className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask?.description}</div>
-                    {selectedTask?.attachments && selectedTask.attachments.length > 0 && (
+          {selectedTask && (
+            <ScrollArea className="max-h-[70vh] pr-3">
+                <div className="grid gap-6 py-4">
+                    <div className="space-y-2">
+                        <h4 className="font-semibold text-primary">Task Information</h4>
+                        <div><strong className="text-muted-foreground">Student:</strong> {selectedTask.studentName} ({selectedTask.studentId ? selectedTask.studentId.substring(0,8) + '...' : 'N/A'})</div>
+                        <div><strong className="text-muted-foreground">Submitted:</strong> {selectedTask.submittedDate ? format(new Date(selectedTask.submittedDate), "PPP p") : 'N/A'}</div>
+                        <div><strong className="text-muted-foreground">Type:</strong> {selectedTask.type}</div>
+                        <div><strong className="text-muted-foreground">Pages/Units:</strong> {selectedTask.pages}</div>
+                        <div><strong className="text-muted-foreground">Deadline:</strong> {selectedTask.deadline ? format(new Date(selectedTask.deadline), "PPP") : "Not set"}</div>
+                        <div><strong className="text-muted-foreground">Description:</strong></div>
+                        <div className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask.description}</div>
+                        {selectedTask.attachments && selectedTask.attachments.length > 0 && (
+                            <div>
+                            <strong className="text-muted-foreground">Attachments:</strong>
+                            <ul className="list-disc pl-5 text-sm space-y-1">
+                                {selectedTask.attachments.map(att => (
+                                  <li key={att.name}>
+                                    <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline flex items-center">
+                                      <Paperclip className="h-4 w-4 mr-1.5 shrink-0"/> {att.name}
+                                    </a>
+                                  </li>
+                                ))}
+                            </ul>
+                            </div>
+                        )}
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                        <h4 className="font-semibold text-primary">Pricing & Payment</h4>
+                        <div><strong className="text-muted-foreground">Admin Set Price:</strong> {selectedTask.adminSetPriceNGN ? `₦${selectedTask.adminSetPriceNGN.toFixed(2)}` : "Not Set"}</div>
+                        <div><strong className="text-muted-foreground">Payment Status:</strong> <Badge variant={selectedTask.paymentStatus === "Paid by Student" || selectedTask.paymentStatus === "VA Paid" ? "default" : "outline"} className={cn(selectedTask.paymentStatus === "Paid by Student" || selectedTask.paymentStatus === "VA Paid" ? "bg-green-500 text-white" : "")}>{selectedTask.paymentStatus}</Badge></div>
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                        <h4 className="font-semibold text-primary">Assignment & Progress</h4>
                         <div>
-                        <strong className="text-muted-foreground">Attachments:</strong>
-                        <ul className="list-disc pl-5 text-sm">
-                            {selectedTask.attachments.map(att => <li key={att.name}><a href={att.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">{att.name}</a></li>)}
-                        </ul>
+                          <strong className="text-muted-foreground">Current Status:</strong> 
+                          <Badge variant="outline" className={`text-xs ml-1 ${adminTaskStatusColors[selectedTask.status]}`}>
+                            {selectedTask.status}
+                          </Badge>
                         </div>
-                    )}
-                </div>
-                <Separator />
-                 <div className="space-y-2">
-                    <h4 className="font-semibold text-primary">Pricing & Payment</h4>
-                    <div><strong className="text-muted-foreground">Admin Set Price:</strong> {selectedTask?.adminSetPriceNGN ? `₦${selectedTask.adminSetPriceNGN.toFixed(2)}` : "Not Set"}</div>
-                    <div><strong className="text-muted-foreground">Payment Status:</strong> <Badge variant={selectedTask?.paymentStatus === "Paid by Student" || selectedTask?.paymentStatus === "VA Paid" ? "default" : "outline"} className={selectedTask?.paymentStatus === "Paid by Student" || selectedTask?.paymentStatus === "VA Paid" ? "bg-green-500 text-white" : ""}>{selectedTask?.paymentStatus}</Badge></div>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                    <h4 className="font-semibold text-primary">Assignment & Progress</h4>
-                    <div><strong className="text-muted-foreground">Current Status:</strong> <Badge variant="outline" className={`text-xs ${adminTaskStatusColors[selectedTask?.status || "Cancelled"]}`}>{selectedTask?.status}</Badge></div>
-                    <div><strong className="text-muted-foreground">Assigned VA:</strong> {selectedTask?.assignedVaName || "Not Assigned"} (ID: {selectedTask?.assignedVaId || "N/A"})</div>
-                     {selectedTask?.status === "Rejected by VA" && selectedTask.vaRejectionReason && (
-                        <div><strong className="text-muted-foreground">VA Rejection Reason:</strong> <span className="text-pink-700">{selectedTask.vaRejectionReason}</span></div>
-                     )}
-                    {selectedTask?.vaSubmissionDate && (
+                        <div><strong className="text-muted-foreground">Assigned VA:</strong> {selectedTask.assignedVaName || "Not Assigned"} (ID: {selectedTask.assignedVaId || "N/A"})</div>
+                        {selectedTask.status === "Rejected by VA" && selectedTask.vaRejectionReason && (
+                            <div><strong className="text-muted-foreground">VA Rejection Reason:</strong> <span className="text-pink-700">{selectedTask.vaRejectionReason}</span></div>
+                        )}
+                        {selectedTask.vaSubmissionDate && (
+                            <>
+                                <div><strong className="text-muted-foreground">VA Submission Date:</strong> {format(new Date(selectedTask.vaSubmissionDate), "PPP p")}</div>
+                                <div><strong className="text-muted-foreground">VA Submission Notes:</strong></div>
+                                <div className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask.vaSubmissionNotes || "No notes from VA."}</div>
+                                {selectedTask.vaSubmissionAttachments && selectedTask.vaSubmissionAttachments.length > 0 && (
+                                    <div>
+                                    <strong className="text-muted-foreground">VA Attachments:</strong>
+                                    <ul className="list-disc pl-5 text-sm space-y-1">
+                                        {selectedTask.vaSubmissionAttachments.map(att => (
+                                          <li key={att.name}>
+                                            <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline flex items-center">
+                                              <Paperclip className="h-4 w-4 mr-1.5 shrink-0"/> {att.name}
+                                            </a>
+                                          </li>
+                                        ))}
+                                    </ul>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                        {selectedTask.completionDate && <div><strong className="text-muted-foreground">Completion Date:</strong> {format(new Date(selectedTask.completionDate), "PPP")}</div>}
+                    </div>
+                    {selectedTask.adminNotes && (
                         <>
-                            <div><strong className="text-muted-foreground">VA Submission Date:</strong> {selectedTask.vaSubmissionDate}</div>
-                            <div><strong className="text-muted-foreground">VA Submission Notes:</strong></div>
-                            <div className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask.vaSubmissionNotes || "No notes from VA."}</div>
-                            {selectedTask.vaSubmissionAttachments && selectedTask.vaSubmissionAttachments.length > 0 && (
-                                <div>
-                                <strong className="text-muted-foreground">VA Attachments:</strong>
-                                <ul className="list-disc pl-5 text-sm">
-                                    {selectedTask.vaSubmissionAttachments.map(att => <li key={att.name}><a href={att.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">{att.name}</a></li>)}
-                                </ul>
-                                </div>
-                            )}
+                            <Separator />
+                            <div className="space-y-2">
+                                <h4 className="font-semibold text-primary">Admin Notes</h4>
+                                <div className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask.adminNotes}</div>
+                            </div>
                         </>
                     )}
-                    {selectedTask?.completionDate && <div><strong className="text-muted-foreground">Completion Date:</strong> {selectedTask.completionDate}</div>}
                 </div>
-                {selectedTask?.adminNotes && (
-                     <>
-                        <Separator />
-                        <div className="space-y-2">
-                            <h4 className="font-semibold text-primary">Admin Notes</h4>
-                            <div className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask.adminNotes}</div>
-                        </div>
-                     </>
-                )}
-            </div>
-          </ScrollArea>
+            </ScrollArea>
+          )}
           <DialogFooter>
             <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
           </DialogFooter>
@@ -444,12 +532,12 @@ export default function AdminTasksPage() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="adminNotesPricing">Admin Notes (Optional)</Label>
+              <Label htmlFor="adminNotesPricing">Admin Notes (Optional for approval, Required for rejection)</Label>
               <Textarea id="adminNotesPricing" placeholder="Notes for VA or internal records..." value={adminNotesInput} onChange={(e) => setAdminNotesInput(e.target.value)} rows={2}/>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="destructive" onClick={handleRejectTask}>Reject Task</Button>
+            <Button variant="destructive" onClick={handleRejectTask} disabled={!adminNotesInput.trim() && selectedTask?.status === "Pending Admin Review"}>Reject Task</Button>
             <Button onClick={handleApproveTask} className="bg-green-600 hover:bg-green-700 text-white">Approve & Set Price</Button>
           </DialogFooter>
         </DialogContent>
@@ -527,7 +615,7 @@ export default function AdminTasksPage() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Review VA Submission for: {selectedTask?.title}</DialogTitle>
-            <DialogDescription>VA: {selectedTask?.assignedVaName} | Submitted: {selectedTask?.vaSubmissionDate}</DialogDescription>
+            <DialogDescription>VA: {selectedTask?.assignedVaName} | Submitted: {selectedTask?.vaSubmissionDate ? format(new Date(selectedTask.vaSubmissionDate), "PPP p") : 'N/A'}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
             <div className="space-y-1.5">
@@ -549,7 +637,7 @@ export default function AdminTasksPage() {
                 </div>
             )}
             <div className="space-y-1.5 pt-3 border-t">
-              <Label htmlFor="adminReviewNotes">Admin Review Notes / Feedback (Optional)</Label>
+              <Label htmlFor="adminReviewNotes">Admin Review Notes / Feedback (Required for Revision)</Label>
               <Textarea id="adminReviewNotes" placeholder="Notes for student or internal record..." value={adminReviewNotesInput} onChange={(e) => setAdminReviewNotesInput(e.target.value)} rows={3}/>
             </div>
           </div>
@@ -579,6 +667,3 @@ export default function AdminTasksPage() {
     </div>
   );
 }
-
-
-    
