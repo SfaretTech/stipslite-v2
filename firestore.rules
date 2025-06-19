@@ -1,0 +1,107 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // By default, deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users collection
+    // - Users can create their own profile upon signup.
+    // - Authenticated users can read their own profile.
+    // - Authenticated users can update their own profile (specific fields, not role).
+    // - Admins can read any user profile.
+    // - Admins can update any user profile (e.g., for approvals).
+    match /users/{userId} {
+      allow create: if request.auth != null && request.auth.uid == userId
+                    // Ensure role is set correctly on creation and not to admin by default by a user
+                    && request.resource.data.role in ['student', 'va', 'print-center']
+                    && (!('adminNotes' in request.resource.data) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') // Only admin can set adminNotes
+                    && request.resource.data.uid == userId; // Ensure UID matches
+
+      allow read: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+
+      allow update: if request.auth != null &&
+                       (
+                         // User updating their own profile
+                         (request.auth.uid == userId &&
+                           // Prevent users from changing their own role or critical fields like email after creation (email is handled by auth)
+                           !('role' in request.resource.data && request.resource.data.role != resource.data.role) &&
+                           !('email' in request.resource.data && request.resource.data.email != resource.data.email) &&
+                           !('uid' in request.resource.data && request.resource.data.uid != resource.data.uid) &&
+                           (!('adminNotes' in request.resource.data) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') // Only admin can update adminNotes
+                         ) ||
+                         // Admin updating any profile (can change role, status, etc.)
+                         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+                       );
+      // Deletion should typically be handled by admins or through a soft-delete mechanism
+      allow delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Tasks collection
+    // - Authenticated students can create tasks for themselves.
+    // - Students can read tasks they submitted.
+    // - Students can update certain fields of their tasks based on status (e.g., cancel before VA assigned, accept/reject quote).
+    // - Assigned VAs can read tasks assigned to them.
+    // - Assigned VAs can update task status (e.g., submit work).
+    // - Admins can read and write all tasks.
+    match /tasks/{taskId} {
+      allow create: if request.auth != null &&
+                       request.resource.data.studentUid == request.auth.uid &&
+                       // Ensure required fields are present and studentUid matches auth
+                       request.resource.data.taskTitle is string &&
+                       request.resource.data.taskType is string &&
+                       request.resource.data.pages is number &&
+                       request.resource.data.status == 'Pending Approval'; // Initial status check
+
+      allow read: if request.auth != null &&
+                     (
+                       resource.data.studentUid == request.auth.uid || // Student owns the task
+                       (resource.data.assignedVaId != null && resource.data.assignedVaId == request.auth.uid) || // Assigned VA
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' // Admin
+                     );
+
+      allow update: if request.auth != null &&
+                       (
+                         // Student updating their task (e.g., accept/reject quote, cancel)
+                         (resource.data.studentUid == request.auth.uid &&
+                           (
+                             // Allow student to update status to "Quote Rejected" from "VA Quote Received - Action Needed"
+                             (resource.data.status == "VA Quote Received - Action Needed" && request.resource.data.status == "Quote Rejected") ||
+                             // Allow student to update status to "Approved - Payment Due" from "VA Quote Received - Action Needed"
+                             (resource.data.status == "VA Quote Received - Action Needed" && request.resource.data.status == "Approved - Payment Due") ||
+                             // Allow student to update status to "In Progress" (after simulated payment)
+                             (resource.data.status == "Approved - Payment Due" && request.resource.data.status == "In Progress" && request.resource.data.paymentStatus == "Paid by Student")
+                             // Add other student-allowed updates here if needed
+                           ) &&
+                           // Prevent student from changing critical fields directly
+                           !('adminSetPriceNGN' in request.resource.data) &&
+                           !('assignedVaId' in request.resource.data && request.resource.data.assignedVaId != resource.data.assignedVaId)
+                         ) ||
+                         // Assigned VA updating task (e.g., submit work, accept/reject task if applicable from My Tasks)
+                         (resource.data.assignedVaId == request.auth.uid &&
+                           (
+                             (resource.data.status == "In Progress" && request.resource.data.status == "Submitted - Awaiting Review") ||
+                             (resource.data.status == "Revision Requested" && request.resource.data.status == "Submitted - Awaiting Review")
+                             // Add other VA-allowed updates here
+                           )
+                         ) ||
+                         // Admin updating any task field
+                         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+                       );
+
+      // Deletion should typically be handled by admins or through a soft-delete mechanism (e.g., changing status to 'Cancelled')
+      allow delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Future collections (e.g., announcements, printJobs, withdrawalRequests) would go here
+    // match /announcements/{announcementId} { ... }
+    // match /printJobs/{jobId} { ... }
+    // match /withdrawalRequests/{requestId} { ... }
+  }
+}
+
+    
