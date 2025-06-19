@@ -6,12 +6,13 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, MessageSquare, Paperclip, DollarSign, CheckCircle, Clock, AlertCircle, Check, X, Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Added Alert
+import { ArrowLeft, Edit, MessageSquare, Paperclip, DollarSign, CheckCircle, Clock, AlertCircle, Check, X, Loader2, XCircle as XCircleIcon, Info } from "lucide-react"; // Renamed XCircle
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { doc, onSnapshot, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 
 // Task status as defined for student view / interactions
@@ -29,14 +30,14 @@ interface TaskDetail {
   title: string;
   taskType: string;
   pages: number;
-  submissionDate: string; // Should be ISO string or formatted date
+  submissionDate: string; // Formatted date string
   status: TaskStatusStudent;
   taskDescription: string;
-  attachments?: { name: string; url: string; size?: string }[]; // url for download, size optional
-  estimatedCost?: string | null; // Could be null if not yet quoted
+  attachments?: { name: string; url: string; size?: string }[];
+  estimatedCost?: string | null; 
   vaName?: string | null;
-  deadline?: string | null; // Should be ISO string or formatted date
-  studentComments?: { user: string; text: string; timestamp: string }[]; // Kept as mock for now
+  deadline?: string | null; // Formatted date string
+  studentComments?: { user: string; text: string; timestamp: string }[]; 
   paymentStatus?: "Unpaid" | "Paid by Student" | "VA Payout Pending" | "VA Paid" | "Refunded";
 }
 
@@ -58,7 +59,7 @@ const studentStatusIcons: Record<TaskStatusStudent, React.ElementType> = {
   "In Progress": Clock,
   "Completed": CheckCircle,
   "Rejected": AlertCircle,
-  "Quote Rejected": X,
+  "Quote Rejected": XCircleIcon,
 };
 
 
@@ -71,52 +72,67 @@ export default function TaskDetailPage() {
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null); // Added error state
 
   useEffect(() => {
     if (!taskId) {
       setIsLoading(false);
+      setError("Task ID is missing.");
       toast({ title: "Error", description: "Task ID is missing.", variant: "destructive" });
-      router.push("/dashboard/tasks");
+      // No router.push here, let error display handle it.
       return;
     }
 
     setIsLoading(true);
+    setError(null);
     const taskRef = doc(db, "tasks", taskId);
     const unsubscribe = onSnapshot(taskRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
+        let formattedSubmissionDate = 'N/A';
+        if (data.submissionDate) {
+            try {
+                formattedSubmissionDate = format(new Date(data.submissionDate), "PPP p");
+            } catch (e) {
+                 formattedSubmissionDate = typeof data.submissionDate === 'string' ? data.submissionDate : 'Invalid Date';
+            }
+        } else if (data.createdAt && data.createdAt.toDate) {
+             try {
+                formattedSubmissionDate = format(data.createdAt.toDate(), "PPP p");
+            } catch (e) {}
+        }
         setTask({
           id: docSnap.id,
           title: data.taskTitle,
           taskType: data.taskType,
           pages: data.pages,
-          submissionDate: data.submissionDate ? format(new Date(data.submissionDate), "PPP") : 'N/A',
+          submissionDate: formattedSubmissionDate,
           status: data.status as TaskStatusStudent,
           taskDescription: data.taskDescription,
-          attachments: data.attachments || [], // Assuming attachments are stored in Firestore
-          estimatedCost: data.estimatedCost || null,
+          attachments: data.attachments || [],
+          estimatedCost: data.estimatedCost || (data.adminSetPriceNGN ? `₦${parseFloat(data.adminSetPriceNGN).toFixed(2)}` : null),
           vaName: data.assignedVaName || null,
           deadline: data.deadline ? format(new Date(data.deadline), "PPP") : null,
-          studentComments: data.studentComments || [], // Assuming comments are stored
+          studentComments: data.studentComments || [], 
           paymentStatus: data.paymentStatus,
         });
       } else {
+        setError("Task not found.");
         toast({ title: "Not Found", description: "Task not found.", variant: "destructive" });
         setTask(null);
-        router.push("/dashboard/tasks");
       }
       setIsLoading(false);
-    }, (error) => {
-      console.error("Error fetching task details:", error);
+    }, (err) => {
+      console.error("Error fetching task details:", err);
+      setError("Could not fetch task details. Please try again later.");
       toast({ title: "Error", description: "Could not fetch task details.", variant: "destructive" });
       setIsLoading(false);
-      router.push("/dashboard/tasks");
     });
 
     return () => unsubscribe();
   }, [taskId, toast, router]);
 
-  const updateTaskStatus = async (newStatus: TaskStatusStudent, updates: Record<string, any> = {}) => {
+  const updateTaskStatusInFirestore = async (newStatus: TaskStatusStudent, updates: Record<string, any> = {}) => {
     if (!task) return;
     setIsUpdating(true);
     try {
@@ -140,7 +156,7 @@ export default function TaskDetailPage() {
 
   const handleAcceptQuote = () => {
     if (!task || task.status !== "VA Quote Received - Action Needed") return;
-    updateTaskStatus("Approved - Payment Due");
+    updateTaskStatusInFirestore("Approved - Payment Due");
     toast({
       title: "VA Quote Accepted!",
       description: `You have accepted the quote of ${task.estimatedCost}. Please proceed with payment. VA ${task.vaName} will be notified.`,
@@ -150,7 +166,7 @@ export default function TaskDetailPage() {
 
   const handleRejectQuote = () => {
     if (!task || task.status !== "VA Quote Received - Action Needed") return;
-    updateTaskStatus("Quote Rejected");
+    updateTaskStatusInFirestore("Quote Rejected");
     toast({
       title: "VA Quote Rejected",
       description: `You have rejected the quote from VA ${task.vaName}. The VA will be notified. You may need to discuss further or the task might be reassigned.`,
@@ -161,18 +177,18 @@ export default function TaskDetailPage() {
 
   const handleProceedToPayment = () => {
     if (!task || task.status !== "Approved - Payment Due") return;
-    setIsUpdating(true);
+    setIsUpdating(true); // Keep this to disable button immediately
     toast({
       title: "Initiating Flutterwave Payment...",
       description: `Preparing payment for task: ${task.title} (Amount: ${task.estimatedCost}). Please wait.`,
     });
-    setTimeout(() => {
-      updateTaskStatus("In Progress", { paymentStatus: "Paid by Student" });
+    setTimeout(async () => { // Make async to await Firestore update
+      await updateTaskStatusInFirestore("In Progress", { paymentStatus: "Paid by Student" }); // This will set isUpdating to false
       toast({
         title: "Payment Successful (Simulated)",
         description: `Payment for ${task.title} processed. Task is now In Progress.`,
       });
-      setIsUpdating(false);
+      // No router.push here, onSnapshot will update the task state.
     }, 2500);
   };
 
@@ -186,11 +202,32 @@ export default function TaskDetailPage() {
     );
   }
 
-  if (!task) {
-    // This case should be handled by the redirect in useEffect, but as a fallback:
+  if (error) {
     return (
       <div>
-        <PageHeader title="Task Not Found" description="The requested task could not be found." />
+        <PageHeader title="Error" description="Could not load task details." icon={AlertCircle}/>
+        <Card>
+          <CardContent className="pt-6">
+            <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Failed to Load Task</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <Button asChild variant="outline" className="mt-4">
+              <Link href="/dashboard/tasks">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Task List
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!task) {
+    return (
+      <div>
+        <PageHeader title="Task Not Found" description="The requested task could not be found or does not exist." icon={AlertCircle}/>
         <Card>
           <CardContent className="pt-6">
             <p>Sorry, we couldn't find details for this task. It might have been removed or the ID is incorrect.</p>
@@ -205,7 +242,7 @@ export default function TaskDetailPage() {
     );
   }
 
-  const StatusIcon = studentStatusIcons[task.status];
+  const StatusIcon = studentStatusIcons[task.status] || Info; // Fallback icon
 
   return (
     <div className="space-y-8">
@@ -268,8 +305,8 @@ export default function TaskDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center">
-                <StatusIcon className={`h-5 w-5 mr-2 ${studentStatusColors[task.status].split(' ')[1]}`} />
-                <Badge variant="outline" className={`text-sm ${studentStatusColors[task.status]}`}>{task.status}</Badge>
+                <StatusIcon className={`h-5 w-5 mr-2 ${studentStatusColors[task.status]?.split(' ')[1] || 'text-gray-700'}`} />
+                <Badge variant="outline" className={`text-sm ${studentStatusColors[task.status] || "bg-gray-100 text-gray-700 border-gray-300"}`}>{task.status}</Badge>
               </div>
               <p className="text-sm"><span className="font-medium text-muted-foreground">Submitted:</span> {task.submissionDate}</p>
               {task.deadline && <p className="text-sm"><span className="font-medium text-muted-foreground">Deadline:</span> {task.deadline}</p>}

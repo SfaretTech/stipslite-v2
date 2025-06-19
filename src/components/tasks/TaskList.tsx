@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowRight, MoreHorizontal, CheckCircle, Clock, AlertCircle, DollarSign, ClipboardList, Loader2 } from "lucide-react"; 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Added Alert
+import { ArrowRight, MoreHorizontal, CheckCircle, Clock, AlertCircle, DollarSign, ClipboardList, Loader2, XCircle as XCircleIcon, Info } from "lucide-react"; // Renamed XCircle to XCircleIcon
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast"; 
 import { useRouter } from "next/navigation"; 
@@ -30,10 +31,10 @@ interface TaskListItem {
   title: string;
   type: string; // maps to taskType from Firestore
   pages: number;
-  submittedDate: string; // ISO string from Firestore's submissionDate
+  submittedDate: string; // Formatted date string
   status: StudentTaskStatus;
   estimatedCost?: string;
-  deadline?: string; // ISO string from Firestore
+  deadline?: string; // Formatted date string or undefined
 }
 
 const studentStatusColors: Record<StudentTaskStatus, string> = {
@@ -48,14 +49,13 @@ const studentStatusColors: Record<StudentTaskStatus, string> = {
 
 const studentStatusIcons: Record<StudentTaskStatus, React.ElementType> = {
   "Pending Approval": Clock,
-  "VA Quote Received - Action Needed": AlertCircle, // Or another icon like Edit
+  "VA Quote Received - Action Needed": AlertCircle, 
   "Approved - Payment Due": DollarSign,
   "In Progress": Clock, 
   "Completed": CheckCircle,
   "Rejected": AlertCircle,
-  "Quote Rejected": XCircle, // Assuming XCircle is available or use X
+  "Quote Rejected": XCircleIcon, 
 };
-import { XCircle } from "lucide-react"; // Ensure XCircle is imported if used
 
 
 export function TaskList() {
@@ -64,15 +64,17 @@ export function TaskList() {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<TaskListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null); // Added error state
 
   useEffect(() => {
     if (!user) {
       setIsLoading(false);
-      // Optionally, redirect to login or show a message if user is not authenticated
+      setError("You must be logged in to view tasks.");
       return;
     }
 
     setIsLoading(true);
+    setError(null);
     const q = query(
       collection(db, "tasks"), 
       where("studentUid", "==", user.uid),
@@ -83,26 +85,46 @@ export function TaskList() {
       const fetchedTasks: TaskListItem[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
+        // Ensure createdAt is handled correctly, might be null initially or a Firestore Timestamp
+        let formattedSubmittedDate = 'N/A';
+        if (data.submissionDate) {
+            try {
+                 // Assuming submissionDate is stored as an ISO string or can be converted to Date
+                formattedSubmittedDate = format(new Date(data.submissionDate), "yyyy-MM-dd");
+            } catch (e) {
+                console.warn("Error formatting submissionDate:", e);
+                // If it's already a string or number that format doesn't like, try to use as is or default
+                formattedSubmittedDate = typeof data.submissionDate === 'string' ? data.submissionDate : 'Invalid Date';
+            }
+        } else if (data.createdAt && data.createdAt.toDate) { // Fallback to createdAt if submissionDate is missing
+             try {
+                formattedSubmittedDate = format(data.createdAt.toDate(), "yyyy-MM-dd");
+            } catch (e) {
+                 console.warn("Error formatting createdAt as submissionDate:", e);
+            }
+        }
+
         fetchedTasks.push({
           id: doc.id,
           title: data.taskTitle,
           type: data.taskType,
           pages: data.pages,
-          submittedDate: data.submissionDate ? format(new Date(data.submissionDate), "yyyy-MM-dd") : 'N/A',
-          status: data.status as StudentTaskStatus, // Ensure status matches
-          estimatedCost: data.estimatedCost,
+          submittedDate: formattedSubmittedDate,
+          status: data.status as StudentTaskStatus, 
+          estimatedCost: data.estimatedCost || (data.adminSetPriceNGN ? `₦${parseFloat(data.adminSetPriceNGN).toFixed(2)}` : undefined),
           deadline: data.deadline ? format(new Date(data.deadline), "yyyy-MM-dd") : undefined,
         });
       });
       setTasks(fetchedTasks);
       setIsLoading(false);
-    }, (error) => {
-      console.error("Error fetching tasks:", error);
+    }, (err) => {
+      console.error("Error fetching tasks:", err);
+      setError("Failed to fetch tasks. Please try again later.");
       toast({ title: "Error", description: "Could not fetch tasks.", variant: "destructive" });
       setIsLoading(false);
     });
 
-    return () => unsubscribe(); // Cleanup listener on component unmount
+    return () => unsubscribe();
   }, [user, toast]);
 
 
@@ -111,19 +133,48 @@ export function TaskList() {
       title: "Initiating Flutterwave Payment...",
       description: `Preparing payment for task: ${taskTitle} (Amount: ${amount || 'N/A'}). Please wait.`,
     });
-    // Simulate API call and redirection
     setTimeout(() => {
       toast({
         title: "Payment Successful (Simulated)",
         description: `Payment for ${taskTitle} processed. Task status will update shortly.`,
         variant: "default",
       });
-      // For UI simulation, navigate and let TaskDetailPage handle status from query param
-      // In a real app, this might trigger a Firestore update which onSnapshot would then pick up.
       router.push(`/dashboard/tasks/${taskId}?payment_success=true`);
     }, 2500);
   };
 
+
+  if (isLoading) {
+    return (
+        <Card className="shadow-xl">
+            <CardHeader>
+                <CardTitle className="font-headline text-2xl">My Submitted Tasks</CardTitle>
+                <CardDescription>Track the status and details of all your tasks.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="ml-2 text-muted-foreground">Loading your tasks...</p>
+            </CardContent>
+        </Card>
+    );
+  }
+
+  if (error) {
+    return (
+        <Card className="shadow-xl">
+             <CardHeader>
+                <CardTitle className="font-headline text-2xl">My Submitted Tasks</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error Loading Tasks</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            </CardContent>
+        </Card>
+    );
+  }
 
   return (
     <Card className="shadow-xl">
@@ -132,12 +183,7 @@ export function TaskList() {
         <CardDescription>Track the status and details of all your tasks.</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-            <div className="flex justify-center items-center py-10">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-2 text-muted-foreground">Loading your tasks...</p>
-            </div>
-        ) : tasks.length === 0 ? (
+        {tasks.length === 0 ? (
           <div className="text-center py-12">
             <ClipboardList className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-medium">No tasks submitted yet</h3>
@@ -164,7 +210,7 @@ export function TaskList() {
             </TableHeader>
             <TableBody>
               {tasks.map((task) => {
-                const StatusIcon = studentStatusIcons[task.status];
+                const StatusIcon = studentStatusIcons[task.status] || Info; // Fallback icon
                 return (
                   <TableRow key={task.id}>
                     <TableCell className="font-medium font-mono text-xs">{task.id.substring(0,8)}...</TableCell>
@@ -173,7 +219,7 @@ export function TaskList() {
                     <TableCell>{task.pages}</TableCell>
                     <TableCell>{task.submittedDate}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={`text-xs ${studentStatusColors[task.status]}`}>
+                      <Badge variant="outline" className={`text-xs ${studentStatusColors[task.status] || "bg-gray-100 text-gray-700 border-gray-300"}`}>
                         <StatusIcon className="h-3.5 w-3.5 mr-1.5" />
                         {task.status}
                       </Badge>
@@ -200,9 +246,6 @@ export function TaskList() {
                             >
                                 <DollarSign className="mr-2 h-4 w-4" /> Proceed to Payment
                             </DropdownMenuItem>
-                          )}
-                          {task.status === "Pending Approval" && ( // Example of another action
-                            <DropdownMenuItem disabled>Cancel Submission (Future)</DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>

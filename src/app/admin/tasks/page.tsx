@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Added Alert
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,7 +39,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClipboardList, Check, X, Eye, DollarSign, UserCheck, FileText, MoreHorizontal, Search, Paperclip, MessageSquare, AlertTriangle, Send, UserX, RefreshCw, Loader2 } from "lucide-react";
+import { ClipboardList, Check, X, Eye, DollarSign, UserCheck, FileText, MoreHorizontal, Search, Paperclip, MessageSquare, AlertTriangle, Send, UserX, RefreshCw, Loader2, Info } from "lucide-react"; // Added Info
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -61,12 +62,12 @@ type AdminTaskStatus =
   | "Revision Requested (to VA)";
 
 interface AdminTask {
-  id: string; // Firestore document ID
+  id: string; 
   title: string;
   studentName: string;
-  studentId: string; // studentUid from Firestore
-  submittedDate: string; // Should be ISO string or formatted date
-  type: string; // taskType from Firestore
+  studentId: string; 
+  submittedDate: string; 
+  type: string; 
   pages: number;
   description: string;
   attachments: { name: string; url: string }[];
@@ -77,13 +78,13 @@ interface AdminTask {
   assignedVaName: string | null;
   adminNotes?: string;
   vaRejectionReason?: string; 
-  vaSubmissionDate?: string | null; // ISO string or formatted date
+  vaSubmissionDate?: string | null; 
   vaSubmissionNotes?: string;
   vaSubmissionAttachments?: { name: string; url: string }[];
-  deadline?: string | null; // ISO string or formatted date
-  completionDate?: string | null; // ISO string or formatted date
-  createdAt?: Timestamp; // Firestore timestamp
-  updatedAt?: Timestamp; // Firestore timestamp
+  deadline?: string | null; 
+  completionDate?: string | null; 
+  createdAt?: Timestamp; 
+  updatedAt?: Timestamp; 
 }
 
 const adminTaskStatusColors: Record<AdminTaskStatus, string> = {
@@ -100,7 +101,7 @@ const adminTaskStatusColors: Record<AdminTaskStatus, string> = {
   "Cancelled": "bg-gray-100 text-gray-700 border-gray-300",
 };
 
-const mockVAs = [ // Kept as mock for VA assignment dialog
+const mockVAs = [ 
     { id: "VA001", name: "Aisha Bello (Academic Writing)" },
     { id: "VA002", name: "Chinedu Okoro (Technical & STEM)" },
     { id: "VA003", name: "Fatima Diallo (Business & Presentations)" },
@@ -111,6 +112,7 @@ const mockVAs = [ // Kept as mock for VA assignment dialog
 export default function AdminTasksPage() {
   const [allTasks, setAllTasks] = useState<AdminTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null); // Added fetchError state
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<AdminTaskStatus | "all">("all");
   const [selectedTask, setSelectedTask] = useState<AdminTask | null>(null);
@@ -126,22 +128,37 @@ export default function AdminTasksPage() {
   const [adminNotesInput, setAdminNotesInput] = useState("");
   const [selectedVaForAssignment, setSelectedVaForAssignment] = useState<string | undefined>();
   const [adminReviewNotesInput, setAdminReviewNotesInput] = useState("");
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false); // Added for dialog actions
 
   const { toast } = useToast();
 
   useEffect(() => {
     setIsLoading(true);
+    setFetchError(null);
     const q = query(collection(db, "tasks"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const fetchedTasks: AdminTask[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
+        let formattedSubmittedDate = 'N/A';
+        if (data.submissionDate) {
+             try {
+                formattedSubmittedDate = format(new Date(data.submissionDate), "yyyy-MM-dd HH:mm");
+            } catch (e) {
+                 formattedSubmittedDate = typeof data.submissionDate === 'string' ? data.submissionDate : 'Invalid Date';
+            }
+        } else if (data.createdAt && data.createdAt.toDate) {
+            try {
+                formattedSubmittedDate = format(data.createdAt.toDate(), "yyyy-MM-dd HH:mm");
+            } catch (e) {}
+        }
+        
         fetchedTasks.push({
           id: doc.id,
           title: data.taskTitle,
           studentName: data.studentName,
           studentId: data.studentUid,
-          submittedDate: data.submissionDate ? format(new Date(data.submissionDate), "yyyy-MM-dd") : 'N/A',
+          submittedDate: formattedSubmittedDate,
           type: data.taskType,
           pages: data.pages,
           description: data.taskDescription,
@@ -166,6 +183,7 @@ export default function AdminTasksPage() {
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching tasks:", error);
+      setFetchError("Failed to load tasks. Please check your connection or try again later.");
       toast({ title: "Error", description: "Could not fetch tasks.", variant: "destructive" });
       setIsLoading(false);
     });
@@ -195,14 +213,17 @@ export default function AdminTasksPage() {
     dialogSetter(true);
   };
 
-  const updateTaskInFirestore = async (taskId: string, updates: Partial<AdminTask>) => {
+  const updateTaskInFirestore = async (taskId: string, updates: Partial<AdminTask>): Promise<boolean> => { // Return boolean for success
     const taskRef = doc(db, "tasks", taskId);
+    setIsSubmittingAction(true);
     try {
       await updateDoc(taskRef, { ...updates, updatedAt: serverTimestamp() });
+      setIsSubmittingAction(false);
       return true;
     } catch (error) {
       console.error("Error updating task in Firestore:", error);
       toast({ title: "Update Failed", description: "Could not update task in Firestore.", variant: "destructive"});
+      setIsSubmittingAction(false);
       return false;
     }
   };
@@ -226,7 +247,11 @@ export default function AdminTasksPage() {
 
   const handleRejectTask = async () => {
     if (!selectedTask) return;
-    const success = await updateTaskInFirestore(selectedTask.id, { status: "Rejected by Admin", adminNotes: adminNotesInput || "Rejected by admin." });
+    if (!adminNotesInput.trim()) {
+        toast({ title: "Rejection Note Required", description: "Please provide a reason/note for rejecting the task.", variant: "destructive" });
+        return;
+    }
+    const success = await updateTaskInFirestore(selectedTask.id, { status: "Rejected by Admin", adminNotes: adminNotesInput });
     if (success) {
         toast({ title: "Task Rejected", description: `${selectedTask.title} has been rejected.`, variant: "destructive" });
         setIsReviewPriceOpen(false);
@@ -298,7 +323,7 @@ export default function AdminTasksPage() {
         <CardHeader>
            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-                <CardTitle className="font-headline">Tasks Overview ({filteredTasks.length})</CardTitle>
+                <CardTitle className="font-headline">Tasks Overview ({isLoading ? "..." : filteredTasks.length})</CardTitle>
                 <CardDescription>Filter tasks or search by ID, title, student, or VA.</CardDescription>
             </div>
             <div className="flex gap-2">
@@ -328,6 +353,12 @@ export default function AdminTasksPage() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="ml-2 text-muted-foreground">Loading tasks...</p>
             </div>
+          ) : fetchError ? (
+             <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Error Loading Tasks</AlertTitle>
+                <AlertDescription>{fetchError}</AlertDescription>
+             </Alert>
           ) : filteredTasks.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
                 <ClipboardList className="mx-auto h-12 w-12 mb-3" />
@@ -349,7 +380,9 @@ export default function AdminTasksPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTasks.map(task => (
+                {filteredTasks.map(task => {
+                  const StatusIcon = (adminTaskStatusColors[task.status] && Info); // Fallback icon if needed
+                  return (
                   <TableRow key={task.id}>
                     <TableCell className="font-mono text-xs">{task.id.substring(0,8)}...</TableCell>
                     <TableCell className="font-medium max-w-xs truncate">{task.title}</TableCell>
@@ -363,7 +396,10 @@ export default function AdminTasksPage() {
                         </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={`text-xs whitespace-nowrap ${adminTaskStatusColors[task.status]}`}>{task.status}</Badge>
+                      <Badge variant="outline" className={`text-xs whitespace-nowrap ${adminTaskStatusColors[task.status] || 'bg-gray-100 text-gray-700'}`}>
+                        {/* {StatusIcon && <StatusIcon className="h-3.5 w-3.5 mr-1" />} Can add icons back here */}
+                        {task.status}
+                        </Badge>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -388,7 +424,7 @@ export default function AdminTasksPage() {
                             </DropdownMenuItem>
                           )}
                            {task.status === "Rejected by VA" && (
-                             <DropdownMenuItem onClick={() => openDialog(setIsReviewPriceOpen, task)} className="text-red-600 focus:bg-red-50 focus:text-red-700">
+                             <DropdownMenuItem onClick={() => {setSelectedTask(task); setAdminNotesInput(task.adminNotes || `Task previously rejected by VA ${task.assignedVaName}. Reason: ${task.vaRejectionReason || 'Not specified'}. Review and re-price or reject.`); setIsReviewPriceOpen(true);}} className="text-red-600 focus:bg-red-50 focus:text-red-700">
                               <UserX className="mr-2 h-4 w-4" /> Reject Task for Student
                             </DropdownMenuItem>
                            )}
@@ -414,7 +450,8 @@ export default function AdminTasksPage() {
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))}
+                );
+              })}
               </TableBody>
             </Table>
             </div>
@@ -434,10 +471,10 @@ export default function AdminTasksPage() {
                     <div className="space-y-2">
                         <h4 className="font-semibold text-primary">Task Information</h4>
                         <div><strong className="text-muted-foreground">Student:</strong> {selectedTask.studentName} ({selectedTask.studentId ? selectedTask.studentId.substring(0,8) + '...' : 'N/A'})</div>
-                        <div><strong className="text-muted-foreground">Submitted:</strong> {selectedTask.submittedDate ? format(new Date(selectedTask.submittedDate), "PPP p") : 'N/A'}</div>
+                        <div><strong className="text-muted-foreground">Submitted:</strong> {selectedTask.submittedDate}</div>
                         <div><strong className="text-muted-foreground">Type:</strong> {selectedTask.type}</div>
                         <div><strong className="text-muted-foreground">Pages/Units:</strong> {selectedTask.pages}</div>
-                        <div><strong className="text-muted-foreground">Deadline:</strong> {selectedTask.deadline ? format(new Date(selectedTask.deadline), "PPP") : "Not set"}</div>
+                        <div><strong className="text-muted-foreground">Deadline:</strong> {selectedTask.deadline || "Not set"}</div>
                         <div><strong className="text-muted-foreground">Description:</strong></div>
                         <div className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask.description}</div>
                         {selectedTask.attachments && selectedTask.attachments.length > 0 && (
@@ -466,7 +503,7 @@ export default function AdminTasksPage() {
                         <h4 className="font-semibold text-primary">Assignment & Progress</h4>
                         <div>
                           <strong className="text-muted-foreground">Current Status:</strong> 
-                          <Badge variant="outline" className={`text-xs ml-1 ${adminTaskStatusColors[selectedTask.status]}`}>
+                          <Badge variant="outline" className={`text-xs ml-1 ${adminTaskStatusColors[selectedTask.status] || 'bg-gray-100 text-gray-700'}`}>
                             {selectedTask.status}
                           </Badge>
                         </div>
@@ -476,7 +513,7 @@ export default function AdminTasksPage() {
                         )}
                         {selectedTask.vaSubmissionDate && (
                             <>
-                                <div><strong className="text-muted-foreground">VA Submission Date:</strong> {format(new Date(selectedTask.vaSubmissionDate), "PPP p")}</div>
+                                <div><strong className="text-muted-foreground">VA Submission Date:</strong> {selectedTask.vaSubmissionDate}</div>
                                 <div><strong className="text-muted-foreground">VA Submission Notes:</strong></div>
                                 <div className="text-sm bg-muted/30 p-2 rounded whitespace-pre-wrap">{selectedTask.vaSubmissionNotes || "No notes from VA."}</div>
                                 {selectedTask.vaSubmissionAttachments && selectedTask.vaSubmissionAttachments.length > 0 && (
@@ -495,7 +532,7 @@ export default function AdminTasksPage() {
                                 )}
                             </>
                         )}
-                        {selectedTask.completionDate && <div><strong className="text-muted-foreground">Completion Date:</strong> {format(new Date(selectedTask.completionDate), "PPP")}</div>}
+                        {selectedTask.completionDate && <div><strong className="text-muted-foreground">Completion Date:</strong> {selectedTask.completionDate}</div>}
                     </div>
                     {selectedTask.adminNotes && (
                         <>
@@ -510,7 +547,7 @@ export default function AdminTasksPage() {
             </ScrollArea>
           )}
           <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
+            <DialogClose asChild><Button type="button" variant="outline" disabled={isSubmittingAction}>Close</Button></DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -528,17 +565,21 @@ export default function AdminTasksPage() {
               <Label htmlFor="adminPrice">Set Price (NGN)</Label>
               <div className="relative">
                 <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
-                <Input id="adminPrice" type="number" placeholder="e.g., 100.00" value={adminPriceInput} onChange={(e) => setAdminPriceInput(e.target.value)} className="pl-8" />
+                <Input id="adminPrice" type="number" placeholder="e.g., 100.00" value={adminPriceInput} onChange={(e) => setAdminPriceInput(e.target.value)} className="pl-8" disabled={isSubmittingAction}/>
               </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="adminNotesPricing">Admin Notes (Optional for approval, Required for rejection)</Label>
-              <Textarea id="adminNotesPricing" placeholder="Notes for VA or internal records..." value={adminNotesInput} onChange={(e) => setAdminNotesInput(e.target.value)} rows={2}/>
+              <Textarea id="adminNotesPricing" placeholder="Notes for VA or internal records..." value={adminNotesInput} onChange={(e) => setAdminNotesInput(e.target.value)} rows={2} disabled={isSubmittingAction}/>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="destructive" onClick={handleRejectTask} disabled={!adminNotesInput.trim() && selectedTask?.status === "Pending Admin Review"}>Reject Task</Button>
-            <Button onClick={handleApproveTask} className="bg-green-600 hover:bg-green-700 text-white">Approve & Set Price</Button>
+            <Button variant="destructive" onClick={handleRejectTask} disabled={(!adminNotesInput.trim() && selectedTask?.status === "Pending Admin Review") || isSubmittingAction}>
+              {isSubmittingAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Reject Task
+            </Button>
+            <Button onClick={handleApproveTask} className="bg-green-600 hover:bg-green-700 text-white" disabled={!adminPriceInput.trim() || isSubmittingAction}>
+              {isSubmittingAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Approve & Set Price
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -559,7 +600,7 @@ export default function AdminTasksPage() {
           <div className="grid gap-4 py-4">
             <div className="space-y-1.5">
               <Label htmlFor="assignVaSelect">Select VA</Label>
-              <Select onValueChange={setSelectedVaForAssignment} value={selectedVaForAssignment}>
+              <Select onValueChange={setSelectedVaForAssignment} value={selectedVaForAssignment} disabled={isSubmittingAction}>
                 <SelectTrigger id="assignVaSelect">
                   <SelectValue placeholder="Choose a VA" />
                 </SelectTrigger>
@@ -574,9 +615,9 @@ export default function AdminTasksPage() {
             </div>
           </div>
           <DialogFooter>
-            <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-            <Button onClick={handleAssignVa}>
-                {selectedTask?.status === "Rejected by VA" ? <RefreshCw className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
+            <DialogClose asChild><Button variant="outline" disabled={isSubmittingAction}>Cancel</Button></DialogClose>
+            <Button onClick={handleAssignVa} disabled={!selectedVaForAssignment || isSubmittingAction}>
+                {isSubmittingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (selectedTask?.status === "Rejected by VA" ? <RefreshCw className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />)}
                 {selectedTask?.status === "Rejected by VA" ? "Re-assign Selected VA" : "Assign Selected VA"}
             </Button>
           </DialogFooter>
@@ -602,9 +643,9 @@ export default function AdminTasksPage() {
                     </div>
                 </div>
                 <DialogFooter>
-                    <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                    <Button onClick={handleConfirmPayment} className="bg-green-600 hover:bg-green-700 text-white">
-                       <Check className="mr-2 h-4 w-4"/> Yes, Payment Confirmed
+                    <DialogClose asChild><Button variant="outline" disabled={isSubmittingAction}>Cancel</Button></DialogClose>
+                    <Button onClick={handleConfirmPayment} className="bg-green-600 hover:bg-green-700 text-white" disabled={isSubmittingAction}>
+                       {isSubmittingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Check className="mr-2 h-4 w-4"/>} Yes, Payment Confirmed
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -615,7 +656,7 @@ export default function AdminTasksPage() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Review VA Submission for: {selectedTask?.title}</DialogTitle>
-            <DialogDescription>VA: {selectedTask?.assignedVaName} | Submitted: {selectedTask?.vaSubmissionDate ? format(new Date(selectedTask.vaSubmissionDate), "PPP p") : 'N/A'}</DialogDescription>
+            <DialogDescription>VA: {selectedTask?.assignedVaName} | Submitted: {selectedTask?.vaSubmissionDate}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
             <div className="space-y-1.5">
@@ -638,12 +679,16 @@ export default function AdminTasksPage() {
             )}
             <div className="space-y-1.5 pt-3 border-t">
               <Label htmlFor="adminReviewNotes">Admin Review Notes / Feedback (Required for Revision)</Label>
-              <Textarea id="adminReviewNotes" placeholder="Notes for student or internal record..." value={adminReviewNotesInput} onChange={(e) => setAdminReviewNotesInput(e.target.value)} rows={3}/>
+              <Textarea id="adminReviewNotes" placeholder="Notes for student or internal record..." value={adminReviewNotesInput} onChange={(e) => setAdminReviewNotesInput(e.target.value)} rows={3} disabled={isSubmittingAction}/>
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={handleRequestRevisionFromVA} disabled={!adminReviewNotesInput.trim()}>Request Revision from VA</Button>
-            <Button onClick={handleApproveVaWork} className="bg-green-600 hover:bg-green-700 text-white">Approve & Complete Task</Button>
+            <Button variant="outline" onClick={handleRequestRevisionFromVA} disabled={!adminReviewNotesInput.trim() || isSubmittingAction}>
+              {isSubmittingAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Request Revision from VA
+            </Button>
+            <Button onClick={handleApproveVaWork} className="bg-green-600 hover:bg-green-700 text-white" disabled={isSubmittingAction}>
+              {isSubmittingAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Approve & Complete Task
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -658,8 +703,10 @@ export default function AdminTasksPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsCancelTaskOpen(false)}>Keep Task</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancelTask} className="bg-destructive hover:bg-destructive/90">Proceed to Cancel</AlertDialogAction>
+            <AlertDialogCancel onClick={() => setIsCancelTaskOpen(false)} disabled={isSubmittingAction}>Keep Task</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelTask} className="bg-destructive hover:bg-destructive/90" disabled={isSubmittingAction}>
+                {isSubmittingAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Proceed to Cancel
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
