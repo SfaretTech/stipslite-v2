@@ -2,7 +2,7 @@
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Printer, LayoutDashboard, ListChecks, DollarSign, UserCircle, Settings, MessageSquare, ArrowRight, Banknote, FileText } from "lucide-react";
 import Link from "next/link";
 
