@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -6,21 +7,131 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UploadCloud, Save } from "lucide-react";
+import { UploadCloud, Save, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth, type UserProfile } from "@/context/AuthContext"; // Import useAuth and UserProfile
+import { useState, useEffect } from "react";
+import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore"; // Import Firestore functions
+import { db } from "@/lib/firebase"; // Import db instance
 
 export function UserProfileForm() {
   const { toast } = useToast();
+  const { user, setUser: setAuthUser } = useAuth(); // Get user from AuthContext
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [bio, setBio] = useState("");
+  const [passportNumber, setPassportNumber] = useState("");
+  // File handling for avatar and passport would require storage integration, simplified for now
+  const [isLoading, setIsLoading] = useState(false);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+
+
+  useEffect(() => {
+    if (user) {
+      // Pre-fill form if user data is available in AuthContext
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+      setPhoneNumber(user.phoneNumber || "");
+      setBio(user.bio || "");
+      setPassportNumber(user.passportNumber || "");
+      setIsProfileLoading(false);
+    } else {
+      // Could fetch here if not in context, but AuthContext should handle it
+      setIsProfileLoading(false); // Assume no user or already handled by AuthContext
+    }
+  }, [user]);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // UI-only: Simulate profile update
-    toast({
-      title: "Profile Updated!",
-      description: "Your personal details have been saved successfully.",
-    });
+    if (!user) {
+      toast({ title: "Not Authenticated", description: "You must be logged in to update your profile.", variant: "destructive" });
+      return;
+    }
+    if (!firstName.trim() || !lastName.trim()) {
+      toast({ title: "Name Required", description: "First and last name cannot be empty.", variant: "destructive" });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      const displayName = `${firstName.trim()} ${lastName.trim()}`;
+      
+      const profileDataToSave: Partial<UserProfile> = {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        displayName: displayName,
+        phoneNumber: phoneNumber.trim() || null, // Store as null if empty
+        bio: bio.trim() || null,
+        passportNumber: passportNumber.trim() || null,
+        // photoURL: (handle avatar upload and get URL)
+        // passportFileURL: (handle passport upload and get URL)
+      };
+
+      // Check if document exists, if not, add createdAt
+      const docSnap = await getDoc(userDocRef);
+      if (!docSnap.exists()) {
+        profileDataToSave.createdAt = serverTimestamp();
+        profileDataToSave.email = user.email; // Should be there from auth
+        profileDataToSave.role = user.role || "student"; // Preserve existing or default
+      }
+      
+      await setDoc(userDocRef, profileDataToSave, { merge: true });
+
+      // Update AuthContext user state
+      setAuthUser(prevUser => prevUser ? { ...prevUser, ...profileDataToSave } : null);
+
+      toast({
+        title: "Profile Updated!",
+        description: "Your personal details have been saved successfully to Firestore.",
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Update Failed",
+        description: "Could not save profile changes. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   
+  if (isProfileLoading && !user) { // Show skeleton only if profile is loading and user is not yet defined by AuthContext
+     return (
+        <Card className="w-full max-w-3xl mx-auto shadow-xl">
+            <CardHeader>
+                <Skeleton className="h-8 w-3/5" />
+                <Skeleton className="h-4 w-4/5" />
+            </CardHeader>
+            <CardContent className="space-y-8">
+                <div className="flex flex-col items-center space-y-4 md:flex-row md:space-y-0 md:space-x-6">
+                    <Skeleton className="h-24 w-24 rounded-full" />
+                    <div className="flex-grow space-y-1.5 w-full">
+                        <Skeleton className="h-4 w-1/3" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                </div>
+                <div className="space-y-4">
+                    <Skeleton className="h-6 w-1/4 mb-2" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-1.5"><Skeleton className="h-4 w-1/3" /><Skeleton className="h-10 w-full" /></div>
+                        <div className="space-y-1.5"><Skeleton className="h-4 w-1/3" /><Skeleton className="h-10 w-full" /></div>
+                    </div>
+                    <div className="space-y-1.5"><Skeleton className="h-4 w-1/3" /><Skeleton className="h-10 w-full" /></div>
+                    <div className="space-y-1.5"><Skeleton className="h-4 w-1/3" /><Skeleton className="h-10 w-full" /></div>
+                </div>
+            </CardContent>
+            <CardFooter className="pt-6 border-t">
+                <Skeleton className="h-10 w-24 ml-auto" />
+            </CardFooter>
+        </Card>
+     );
+  }
+
+
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-xl">
       <CardHeader>
@@ -31,11 +142,11 @@ export function UserProfileForm() {
         <CardContent className="space-y-8">
           <div className="flex flex-col items-center space-y-4 md:flex-row md:space-y-0 md:space-x-6">
             <Avatar className="h-24 w-24 ring-2 ring-primary ring-offset-2">
-              <AvatarImage src="https://placehold.co/100x100.png" alt="User Avatar" data-ai-hint="person avatar" />
-              <AvatarFallback>SL</AvatarFallback>
+              <AvatarImage src={user?.photoURL || "https://placehold.co/100x100.png"} alt={user?.displayName || "User"} data-ai-hint="person avatar" />
+              <AvatarFallback>{user?.displayName?.substring(0,1).toUpperCase() || "SL"}</AvatarFallback>
             </Avatar>
             <div className="flex-grow space-y-1.5">
-              <Label htmlFor="avatarUpload">Change Profile Picture</Label>
+              <Label htmlFor="avatarUpload">Change Profile Picture (UI Only)</Label>
               <Input id="avatarUpload" type="file" accept="image/*" />
               <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 5MB.</p>
             </div>
@@ -46,24 +157,24 @@ export function UserProfileForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1.5">
                 <Label htmlFor="firstName">First Name</Label>
-                <Input id="firstName" defaultValue="Student" />
+                <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required disabled={isLoading}/>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="lastName">Last Name</Label>
-                <Input id="lastName" defaultValue="Lite" />
+                <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required disabled={isLoading}/>
               </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="email">Email Address (Cannot be changed)</Label>
-              <Input id="email" type="email" defaultValue="student@example.com" readOnly disabled />
+              <Input id="email" type="email" value={user?.email || ""} readOnly disabled />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="phoneNumber">Phone Number</Label>
-              <Input id="phoneNumber" type="tel" placeholder="e.g., +254 712 345678" />
+              <Input id="phoneNumber" type="tel" placeholder="e.g., +254 712 345678" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} disabled={isLoading}/>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="bio">Short Bio (Optional)</Label>
-              <Textarea id="bio" placeholder="Tell us a little about yourself..." rows={3} />
+              <Textarea id="bio" placeholder="Tell us a little about yourself..." rows={3} value={bio} onChange={(e) => setBio(e.target.value)} disabled={isLoading}/>
             </div>
           </div>
 
@@ -74,10 +185,10 @@ export function UserProfileForm() {
             </p>
             <div className="space-y-1.5">
               <Label htmlFor="passportNumber">Passport Number</Label>
-              <Input id="passportNumber" placeholder="Enter your passport number" />
+              <Input id="passportNumber" placeholder="Enter your passport number" value={passportNumber} onChange={(e) => setPassportNumber(e.target.value)} disabled={isLoading}/>
             </div>
             <div className="space-y-1.5">
-                <Label htmlFor="passportUpload">Upload Passport Copy</Label>
+                <Label htmlFor="passportUpload">Upload Passport Copy (UI Only)</Label>
                 <div className="flex items-center justify-center w-full">
                     <Label 
                       htmlFor="passport-file" 
@@ -90,7 +201,7 @@ export function UserProfileForm() {
                             </p>
                             <p className="text-xs text-muted-foreground">PDF, JPG, PNG (MAX. 5MB)</p>
                         </div>
-                        <Input id="passport-file" type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" />
+                        <Input id="passport-file" type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" disabled={isLoading}/>
                     </Label>
                 </div> 
               </div>
@@ -98,8 +209,9 @@ export function UserProfileForm() {
 
         </CardContent>
         <CardFooter className="pt-6 border-t">
-          <Button type="submit" size="lg" className="ml-auto bg-accent hover:bg-accent/90 text-accent-foreground">
-            <Save className="mr-2 h-4 w-4" /> Save Changes
+          <Button type="submit" size="lg" className="ml-auto bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isLoading || !user}>
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+             Save Changes
           </Button>
         </CardFooter>
       </form>

@@ -9,13 +9,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { auth } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, type FirebaseError } from "firebase/auth";
+import { auth, db } from "@/lib/firebase"; // Import db
+import { createUserWithEmailAndPassword, type FirebaseError, updateProfile } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"; // Import Firestore functions
 import { Loader2 } from "lucide-react";
 
 export function RegisterForm() {
   const router = useRouter();
   const { toast } = useToast();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,13 +33,41 @@ export function RegisterForm() {
       });
       return;
     }
+    if (!firstName.trim() || !lastName.trim()) {
+      toast({
+        title: "Name Required",
+        description: "First and last name cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      // In a real app, you might want to send a verification email or add user role to Firestore here.
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
+      const displayName = `${firstName.trim()} ${lastName.trim()}`;
+
+      // Update Firebase Auth profile (optional, but good practice)
+      await updateProfile(firebaseUser, { displayName });
+
+      // Create user document in Firestore
+      const userDocRef = doc(db, "users", firebaseUser.uid);
+      await setDoc(userDocRef, {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        displayName: displayName,
+        role: "student", // Default role for this registration form
+        createdAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp(),
+        isEmailVerified: firebaseUser.emailVerified,
+        // Add any other initial fields, e.g., photoURL: null, phoneNumber: null
+      });
+      
       toast({
         title: "Registration Successful!",
-        description: "Your account has been created. Please login or await admin approval if required by the platform.",
+        description: "Your account has been created. Please login.",
         variant: "default",
       });
       router.push("/auth/login"); 
@@ -66,11 +97,27 @@ export function RegisterForm() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="firstName">First Name</Label>
-          <Input id="firstName" type="text" placeholder="John" required disabled={isLoading} />
+          <Input 
+            id="firstName" 
+            type="text" 
+            placeholder="John" 
+            required 
+            disabled={isLoading}
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)} 
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="lastName">Last Name</Label>
-          <Input id="lastName" type="text" placeholder="Doe" required disabled={isLoading} />
+          <Input 
+            id="lastName" 
+            type="text" 
+            placeholder="Doe" 
+            required 
+            disabled={isLoading}
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
         </div>
       </div>
       <div className="space-y-2">
