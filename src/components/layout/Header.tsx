@@ -12,16 +12,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, LifeBuoy, LogOut, Settings, UserCircle, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye, Briefcase, Printer, MessageSquare as MessageSquareIcon, AlertCircle as AlertCircleIcon, Gift, LayoutDashboard, Activity, Megaphone } from "lucide-react"; // Removed PanelLeft, Search
+import { Bell, LifeBuoy, LogOut, Settings, UserCircle, Sparkles, CheckCircle, Users as UsersIcon, CreditCard, DollarSign as DollarIcon, Eye, Briefcase, Printer, MessageSquare as MessageSquareIcon, AlertCircle as AlertCircleIcon, Gift, LayoutDashboard, Activity, Megaphone } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { AiSearchDialog } from "@/components/ai/AiSearchDialog";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area"; 
 import { cn } from "@/lib/utils"; 
 import { useAuth } from "@/context/AuthContext"; // Import useAuth
-import { auth } from "@/lib/firebase"; // Import auth for signOut
+import { getAuthInstance } from "@/lib/firebase"; // Changed from 'auth' to 'getAuthInstance'
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock notifications for the dropdown - ideally fetch this or share from a context
 const mockStudentNotifications = [
@@ -61,6 +62,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
   const { isMobile } = useSidebar();
   const { user } = useAuth(); // Get user from AuthContext
   const router = useRouter();
+  const { toast } = useToast(); 
 
   let userName = "Guest";
   let userEmail = "Not logged in";
@@ -74,7 +76,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
   let notificationsLinkText = "Notifications";
   let NotificationsLinkIconComponent = Bell;
 
-  if (user) { // If user is logged in
+  if (user) { 
     userName = user.displayName || user.email?.split('@')[0] || "User";
     userEmail = user.email || "No email";
   }
@@ -92,13 +94,13 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     currentNotifications = mockVaNotifications;
     NotificationsLinkIconComponent = Bell;
   } else if (role === "admin") {
-    userName = "Admin User"; // Admin might not use Firebase Auth directly
+    userName = "Admin User"; 
     userEmail = "admin@stipslite.com"; 
     profileLink = "/admin/settings"; 
     notificationsLink = "/admin/notifications"; 
     subscriptionSettingsLink = ""; 
     supportLink = "/admin/dashboard"; 
-    logoutLink = "/admin/login"; // Admin login is separate
+    logoutLink = "/admin/login"; 
     referralsLink = "/admin/settings"; 
     currentNotifications = mockAdminNotifications; 
     notificationsLinkText = "Activity Log";
@@ -114,7 +116,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     referralsLink = "/print-center/referrals";
     currentNotifications = mockPrintCenterNotifications;
     NotificationsLinkIconComponent = Bell;
-  } else { // Student role (default)
+  } else { 
      if (user) {
        profileLink = "/dashboard/profile";
        notificationsLink = "/dashboard/notifications";
@@ -125,7 +127,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
        currentNotifications = mockStudentNotifications;
        NotificationsLinkIconComponent = Bell;
      } else {
-        // For logged out users, some links might not be relevant or should redirect to login
+        
         profileLink = "/auth/login";
         notificationsLink = "/auth/login";
         subscriptionSettingsLink = "/auth/login";
@@ -137,18 +139,31 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
   const unreadNotificationsCount = currentNotifications.filter(n => !n.read).length;
 
   const handleLogout = async () => {
+    const authService = getAuthInstance(); // Use the getter
+    if (!authService) {
+      toast({
+        title: "Logout Failed",
+        description: "Authentication service is not available.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
-      await signOut(auth);
-      // The onAuthStateChanged listener in AuthContext will handle user state update.
-      // Redirect to login page based on role or a general landing page.
+      await signOut(authService);
+      
       const appropriateLogoutLink = role === "admin" ? "/admin/login" 
                                  : role === "va" ? "/va/login"
                                  : role === "print-center" ? "/print-center/login"
                                  : "/auth/login";
       router.push(appropriateLogoutLink);
+      toast({ title: "Logged Out", description: "You have been successfully logged out." });
     } catch (error) {
       console.error("Logout error:", error);
-      // Handle logout error (e.g., show toast)
+      toast({
+        title: "Logout Error",
+        description: "An error occurred while trying to log out. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -170,7 +185,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon" className="rounded-full relative">
               <Bell className="h-5 w-5" />
-              {user && unreadNotificationsCount > 0 && ( // Only show count if user is logged in
+              {user && unreadNotificationsCount > 0 && ( 
                 <Badge 
                   variant="destructive" 
                   className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs rounded-full"
@@ -243,7 +258,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
                 </Link>
                 </DropdownMenuItem>
             )}
-            {role === 'admin' && ( // Admin settings link
+            {role === 'admin' && ( 
                 <DropdownMenuItem asChild>
                 <Link href={profileLink}> 
                     <Settings className="mr-2 h-4 w-4" />
@@ -274,7 +289,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
                   </Link>
                 </DropdownMenuItem>
             )}
-             {role === 'admin' && ( // Admin referral settings link
+             {role === 'admin' && ( 
                 <DropdownMenuItem asChild>
                 <Link href="/admin/settings#referralProgramActive"> 
                     <Gift className="mr-2 h-4 w-4" />
@@ -290,7 +305,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
                 </Link>
                 </DropdownMenuItem>
              )}
-             {role === 'admin' && ( // Admin dashboard overview
+             {role === 'admin' && ( 
                  <DropdownMenuItem asChild>
                  <Link href="/admin/dashboard">
                      <LayoutDashboard className="mr-2 h-4 w-4" />
