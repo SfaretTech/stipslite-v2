@@ -4,11 +4,12 @@
 import type { User as FirebaseUser } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import type { Dispatch, ReactNode, SetStateAction} from "react";
-import { createContext, useContext, useEffect, useState } from "react";
-import { auth as firebaseAuthInstance, db } from "@/lib/firebase"; // Import potentially null auth
+import { createContext, useContext, useEffect, useState, useMemo } from "react";
+// Import the getter functions instead of direct instances
+import { getAuthInstance, getDbInstance } from "@/lib/firebase"; 
 import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle } from "lucide-react"; // For error display
+import { AlertTriangle } from "lucide-react";
 
 export interface UserProfile {
   uid: string;
@@ -30,7 +31,7 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   setUser: Dispatch<SetStateAction<UserProfile | null>>;
-  firebaseAuthInitialized: boolean; // To indicate if Firebase Auth is usable
+  firebaseAuthInitialized: boolean; 
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,18 +41,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [firebaseAuthInitialized, setFirebaseAuthInitialized] = useState(false);
 
-  useEffect(() => {
-    if (!firebaseAuthInstance) {
-      console.error("AuthContext: Firebase Auth service is not available from firebase.ts. User functionality will be disabled.");
-      setLoading(false);
-      setFirebaseAuthInitialized(false);
-      return; // Stop here if auth service itself isn't initialized
-    }
-    setFirebaseAuthInitialized(true); // Mark auth as available
+  // Get Auth and DB instances using the new getter functions
+  // useMemo ensures this is only called once per component lifecycle unless dependencies change (none here)
+  const authService = useMemo(() => getAuthInstance(), []);
+  const dbService = useMemo(() => getDbInstance(), []);
 
-    const unsubscribe = onAuthStateChanged(firebaseAuthInstance, async (fbUser: FirebaseUser | null) => {
+
+  useEffect(() => {
+    if (!authService) { 
+      console.error("AuthContext: Firebase Auth service instance is null from getAuthInstance(). Aborting onAuthStateChanged setup.");
+      setFirebaseAuthInitialized(false);
+      setLoading(false);
+      return;
+    }
+    setFirebaseAuthInitialized(true); 
+
+    const unsubscribe = onAuthStateChanged(authService, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
-        const userRef = doc(db, "users", fbUser.uid);
+        if (!dbService) {
+          console.error("AuthContext: Firestore service is null. Cannot fetch user profile for UID:", fbUser.uid);
+          setUser({ // Set a basic profile if DB is unavailable
+            uid: fbUser.uid,
+            email: fbUser.email,
+            displayName: fbUser.displayName || fbUser.email?.split('@')[0] || "User",
+            photoURL: fbUser.photoURL,
+            role: "student", // Default role
+            isEmailVerified: fbUser.emailVerified,
+          });
+          setLoading(false);
+          return;
+        }
+        const userRef = doc(dbService, "users", fbUser.uid);
         try {
           const docSnap = await getDoc(userRef);
           if (docSnap.exists()) {
@@ -76,8 +96,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               lastLoginAt: serverTimestamp(),
               isEmailVerified: fbUser.emailVerified,
             };
-            // Optionally create a basic doc here if it's critical that it exists
-            // await setDoc(userRef, basicProfile, { merge: true });
             setUser(basicProfile);
           }
         } catch (error) {
@@ -97,35 +115,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, []); // Removed firebaseAuthInstance from deps, it should be stable or null
+  }, [authService, dbService]); // Add authService and dbService to dependencies
 
-  if (loading && !firebaseAuthInitialized) { // Initial check before we know if auth is even available
+  if (!firebaseAuthInitialized && loading) { 
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
         <Skeleton className="h-12 w-1/2 mb-4" />
         <Skeleton className="h-8 w-1/3" />
-        <p className="text-sm text-muted-foreground mt-2">Checking authentication service...</p>
+        <p className="text-sm text-muted-foreground mt-2">Initializing authentication...</p>
       </div>
     );
   }
   
-  if (!firebaseAuthInitialized) { // If Firebase Auth service failed to initialize in firebase.ts
+  if (!firebaseAuthInitialized && !loading) {
      return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 text-center">
         <AlertTriangle className="h-16 w-16 text-destructive mb-4" />
         <h1 className="text-2xl font-bold text-destructive">Authentication Service Error</h1>
         <p className="text-muted-foreground mt-2 max-w-md">
-          The application could not connect to the authentication services. This might be due to a configuration issue. Please contact support or try again later.
+          The application could not initialize authentication services. This might be due to a configuration issue or network problem. Please contact support or try refreshing the page.
         </p>
-        <p className="text-xs text-muted-foreground mt-2">
-          (Technical detail: Firebase Auth component failed to register. Check browser console and server logs for Firebase configuration errors.)
+         <p className="text-xs text-muted-foreground mt-2">
+          (Technical detail: Firebase Auth service from getAuthInstance() was null.)
         </p>
       </div>
     );
   }
   
-  // If auth service IS initialized, but we are still loading actual user state
-  if (loading) {
+  if (loading) { // Auth service is initialized, but user state is still loading
      return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
         <Skeleton className="h-12 w-1/2 mb-4" />
