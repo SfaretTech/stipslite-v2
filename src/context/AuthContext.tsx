@@ -5,11 +5,11 @@ import type { User as FirebaseUser } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import type { Dispatch, ReactNode, SetStateAction} from "react";
 import { createContext, useContext, useEffect, useState } from "react";
-import { auth, db } from "@/lib/firebase"; // Import db
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore"; // Import Firestore functions
+import { auth as firebaseAuthInstance, db } from "@/lib/firebase"; // Import potentially null auth
+import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AlertTriangle } from "lucide-react"; // For error display
 
-// Define a more detailed user profile structure
 export interface UserProfile {
   uid: string;
   email: string | null;
@@ -21,16 +21,16 @@ export interface UserProfile {
   phoneNumber?: string;
   bio?: string;
   passportNumber?: string;
-  // Add other fields you expect in your Firestore user document
-  createdAt?: any; // Consider using Firestore Timestamp type after fetch
-  lastLoginAt?: any;
+  createdAt?: Timestamp | any; 
+  lastLoginAt?: Timestamp | any;
+  isEmailVerified?: boolean;
 }
 
 interface AuthContextType {
-  user: UserProfile | null; // User type will now be our richer UserProfile
+  user: UserProfile | null;
   loading: boolean;
-  // setUser will now expect UserProfile or null
   setUser: Dispatch<SetStateAction<UserProfile | null>>;
+  firebaseAuthInitialized: boolean; // To indicate if Firebase Auth is usable
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,74 +38,105 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [firebaseAuthInitialized, setFirebaseAuthInitialized] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        // User is signed in, try to fetch their profile from Firestore
-        const userRef = doc(db, "users", firebaseUser.uid);
+    if (!firebaseAuthInstance) {
+      console.error("AuthContext: Firebase Auth service is not available from firebase.ts. User functionality will be disabled.");
+      setLoading(false);
+      setFirebaseAuthInitialized(false);
+      return; // Stop here if auth service itself isn't initialized
+    }
+    setFirebaseAuthInitialized(true); // Mark auth as available
+
+    const unsubscribe = onAuthStateChanged(firebaseAuthInstance, async (fbUser: FirebaseUser | null) => {
+      if (fbUser) {
+        const userRef = doc(db, "users", fbUser.uid);
         try {
           const docSnap = await getDoc(userRef);
           if (docSnap.exists()) {
-            // User document exists in Firestore
             const firestoreUser = docSnap.data() as Omit<UserProfile, 'uid'>;
             setUser({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email, // Auth email is source of truth
-              displayName: firestoreUser.displayName || firebaseUser.displayName, // Prefer Firestore, fallback to Auth
-              photoURL: firebaseUser.photoURL, // Auth photoURL
-              ...firestoreUser, // Spread the rest of Firestore data
+              uid: fbUser.uid,
+              email: fbUser.email,
+              displayName: firestoreUser.displayName || fbUser.displayName,
+              photoURL: fbUser.photoURL,
+              ...firestoreUser,
+              isEmailVerified: fbUser.emailVerified,
             });
           } else {
-            // User document doesn't exist in Firestore (e.g., new registration, or old auth user)
-            // The RegisterForm will handle creating the initial document.
-            // For an existing auth user without a Firestore profile, we set basic info.
-            // This could also be a point to create a default profile if needed.
-            console.warn(`User document not found in Firestore for UID: ${firebaseUser.uid}. A basic profile will be used. RegisterForm or UserProfileForm should create/update it.`);
+            console.warn(`AuthContext: User document not found in Firestore for UID: ${fbUser.uid}. Using basic auth profile.`);
             const basicProfile: UserProfile = {
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || "New User",
-              photoURL: firebaseUser.photoURL,
-              role: "student", // Default role, can be updated
-              createdAt: serverTimestamp(),
+              uid: fbUser.uid,
+              email: fbUser.email,
+              displayName: fbUser.displayName || fbUser.email?.split('@')[0] || "New User",
+              photoURL: fbUser.photoURL,
+              role: "student", 
+              createdAt: serverTimestamp(), 
               lastLoginAt: serverTimestamp(),
+              isEmailVerified: fbUser.emailVerified,
             };
-             // Optionally, create a basic Firestore document here if it's truly missing
-            // await setDoc(userRef, { email: firebaseUser.email, displayName: basicProfile.displayName, role: 'student', createdAt: serverTimestamp(), lastLoginAt: serverTimestamp() }, { merge: true });
+            // Optionally create a basic doc here if it's critical that it exists
+            // await setDoc(userRef, basicProfile, { merge: true });
             setUser(basicProfile);
           }
         } catch (error) {
-          console.error("Error fetching user profile from Firestore:", error);
-          // Fallback to just Firebase Auth user data if Firestore fetch fails
+          console.error("AuthContext: Error fetching user profile from Firestore:", error);
           setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL,
+            uid: fbUser.uid,
+            email: fbUser.email,
+            displayName: fbUser.displayName,
+            photoURL: fbUser.photoURL,
+            isEmailVerified: fbUser.emailVerified,
           });
         }
       } else {
-        // User is signed out
         setUser(null);
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, []); // Removed firebaseAuthInstance from deps, it should be stable or null
 
-  if (loading) {
+  if (loading && !firebaseAuthInitialized) { // Initial check before we know if auth is even available
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
         <Skeleton className="h-12 w-1/2 mb-4" />
         <Skeleton className="h-8 w-1/3" />
+        <p className="text-sm text-muted-foreground mt-2">Checking authentication service...</p>
+      </div>
+    );
+  }
+  
+  if (!firebaseAuthInitialized) { // If Firebase Auth service failed to initialize in firebase.ts
+     return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 text-center">
+        <AlertTriangle className="h-16 w-16 text-destructive mb-4" />
+        <h1 className="text-2xl font-bold text-destructive">Authentication Service Error</h1>
+        <p className="text-muted-foreground mt-2 max-w-md">
+          The application could not connect to the authentication services. This might be due to a configuration issue. Please contact support or try again later.
+        </p>
+        <p className="text-xs text-muted-foreground mt-2">
+          (Technical detail: Firebase Auth component failed to register. Check browser console and server logs for Firebase configuration errors.)
+        </p>
+      </div>
+    );
+  }
+  
+  // If auth service IS initialized, but we are still loading actual user state
+  if (loading) {
+     return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+        <Skeleton className="h-12 w-1/2 mb-4" />
+        <Skeleton className="h-8 w-1/3" />
+        <p className="text-sm text-muted-foreground mt-2">Loading user session...</p>
       </div>
     );
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, setUser }}>
+    <AuthContext.Provider value={{ user, loading, setUser, firebaseAuthInitialized }}>
       {children}
     </AuthContext.Provider>
   );
