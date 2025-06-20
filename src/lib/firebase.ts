@@ -16,13 +16,14 @@ const firebaseConfigValues = {
 };
 
 // Log all Firebase related env vars for debugging
-console.log("Attempting to load Firebase Config from process.env:");
-console.log("NEXT_PUBLIC_FIREBASE_API_KEY:", firebaseConfigValues.apiKey ? "Loaded" : "MISSING or EMPTY");
-console.log("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:", firebaseConfigValues.authDomain ? "Loaded" : "MISSING or EMPTY");
-console.log("NEXT_PUBLIC_FIREBASE_PROJECT_ID:", firebaseConfigValues.projectId ? "Loaded" : "MISSING or EMPTY");
-console.log("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET:", firebaseConfigValues.storageBucket ? "Loaded" : "Optional - MISSING or EMPTY");
-console.log("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID:", firebaseConfigValues.messagingSenderId ? "Loaded" : "Optional - MISSING or EMPTY");
-console.log("NEXT_PUBLIC_FIREBASE_APP_ID:", firebaseConfigValues.appId ? "Loaded" : "Optional - MISSING or EMPTY");
+if (typeof window === 'undefined') { // Server-side logging
+    console.log("SERVER-SIDE: Reading Firebase Config from process.env:");
+    Object.entries(firebaseConfigValues).forEach(([key, value]) => {
+        const envVarName = `NEXT_PUBLIC_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`.replace('__','_');
+        const valueExists = value && value.trim() !== "" && value.toLowerCase() !== 'null' && value.toLowerCase() !== 'undefined';
+        console.log(`${envVarName}:`, valueExists ? "Exists" : `MISSING, EMPTY, or INVALID PLACEHOLDER ('${String(value)}')`);
+    });
+}
 
 
 const requiredKeys: (keyof typeof firebaseConfigValues)[] = [
@@ -33,20 +34,20 @@ const requiredKeys: (keyof typeof firebaseConfigValues)[] = [
 
 let missingKeysMessages: string[] = [];
 for (const key of requiredKeys) {
-  if (!firebaseConfigValues[key]) {
+  const value = firebaseConfigValues[key];
+  const valueStr = String(value).toLowerCase();
+  if (!value || value.trim() === "" || valueStr === 'null' || valueStr === 'undefined') {
     const envVarName = `NEXT_PUBLIC_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`.replace('__','_');
     missingKeysMessages.push(envVarName);
   }
 }
 
 if (missingKeysMessages.length > 0) {
-  const errorMessage = `Firebase configuration error: The following required environment variables are missing or empty: ${missingKeysMessages.join(", ")}. Please ensure they are set correctly in your .env.local file (or hosting provider's settings) and that the server has been restarted.`;
+  const errorMessage = `Firebase configuration error: The following required environment variables are missing, empty, or invalid placeholders (e.g., "null", "undefined"): ${missingKeysMessages.join(", ")}. Please ensure they are set correctly in your .env.local file (or hosting provider's settings) and that the server has been restarted.`;
   console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
   console.error("!!! FIREBASE CONFIGURATION ERROR !!!");
   console.error(errorMessage);
   console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-  // Forcing a more visible error in case the one below is caught and re-thrown differently by Next.js
-  // This error will likely stop execution if the environment variables are not properly set.
   throw new Error(errorMessage);
 }
 
@@ -62,18 +63,36 @@ const firebaseConfig = {
 
 // Initialize Firebase
 let app: FirebaseApp;
+
 if (!getApps().length) {
+  // This block runs only once per process (e.g., server start, or first client load)
   try {
+    if (typeof window === 'undefined') { // Server-side logging
+      console.log("SERVER-SIDE: Initializing Firebase for the first time with config:", JSON.stringify(firebaseConfig, (key, value) => value === undefined ? "UNDEFINED_IN_CONFIG_OBJECT" : value, 2));
+    }
     app = initializeApp(firebaseConfig);
-    console.log("Firebase app initialized successfully.");
+    if (typeof window === 'undefined') { // Server-side logging AFTER initialization
+      console.log("SERVER-SIDE: Firebase app initialized (first time). Name:", app.name, "Options:", JSON.stringify(app.options, (key, value) => value === undefined ? "UNDEFINED_IN_APP_OPTIONS" : value, 2));
+    } else {
+      // console.log("CLIENT-SIDE: Firebase app initialized (first time). Name:", app.name); // More verbose for client
+    }
   } catch (e) {
-    console.error("Firebase initialization failed with config:", firebaseConfig);
+    if (typeof window === 'undefined') {
+        console.error("SERVER-SIDE: Firebase FIRST initialization FAILED. Config used:", JSON.stringify(firebaseConfig, (key, value) => value === undefined ? "UNDEFINED_IN_CONFIG_OBJECT" : value, 2));
+    } else {
+        console.error("CLIENT-SIDE: Firebase FIRST initialization FAILED.");
+    }
     console.error("Error during initializeApp:", e);
-    throw e; // Re-throw the error to make it visible
+    throw e;
   }
 } else {
+  // This block runs if Firebase is already initialized
   app = getApp();
-  console.log("Existing Firebase app retrieved.");
+   if (typeof window === 'undefined') { // Log only on server when retrieving existing app
+     console.log("SERVER-SIDE: Retrieving existing Firebase app. Name:", app.name, "Options:", JSON.stringify(app.options, (key, value) => value === undefined ? "UNDEFINED_IN_APP_OPTIONS" : value, 2));
+  } else {
+    // console.log("CLIENT-SIDE: Retrieving existing Firebase app."); // Can be noisy on client
+  }
 }
 
 const auth: Auth = getAuth(app);
