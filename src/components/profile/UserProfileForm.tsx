@@ -9,28 +9,27 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UploadCloud, Save, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth, type UserProfile } from "@/context/AuthContext"; // Import useAuth and UserProfile
+import { useAuth, type UserProfile } from "@/context/AuthContext"; 
 import { useState, useEffect } from "react";
-import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore"; // Import Firestore functions
-import { db } from "@/lib/firebase"; // Import db instance
+import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore"; 
+import { getDbInstance } from "@/lib/firebase"; // Import getter
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function UserProfileForm() {
   const { toast } = useToast();
-  const { user, setUser: setAuthUser } = useAuth(); // Get user from AuthContext
+  const { user, setUser: setAuthUser } = useAuth(); 
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [bio, setBio] = useState("");
   const [passportNumber, setPassportNumber] = useState("");
-  // File handling for avatar and passport would require storage integration, simplified for now
   const [isLoading, setIsLoading] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
 
 
   useEffect(() => {
     if (user) {
-      // Pre-fill form if user data is available in AuthContext
       setFirstName(user.firstName || "");
       setLastName(user.lastName || "");
       setPhoneNumber(user.phoneNumber || "");
@@ -38,8 +37,7 @@ export function UserProfileForm() {
       setPassportNumber(user.passportNumber || "");
       setIsProfileLoading(false);
     } else {
-      // Could fetch here if not in context, but AuthContext should handle it
-      setIsProfileLoading(false); // Assume no user or already handled by AuthContext
+      setIsProfileLoading(false); 
     }
   }, [user]);
 
@@ -55,6 +53,17 @@ export function UserProfileForm() {
     }
 
     setIsLoading(true);
+    const db = getDbInstance();
+    if (!db) {
+      toast({
+        title: "Database Error",
+        description: "Firestore service is not available. Please try again later.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const userDocRef = doc(db, "users", user.uid);
       const displayName = `${firstName.trim()} ${lastName.trim()}`;
@@ -63,24 +72,20 @@ export function UserProfileForm() {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         displayName: displayName,
-        phoneNumber: phoneNumber.trim() || null, // Store as null if empty
+        phoneNumber: phoneNumber.trim() || null, 
         bio: bio.trim() || null,
         passportNumber: passportNumber.trim() || null,
-        // photoURL: (handle avatar upload and get URL)
-        // passportFileURL: (handle passport upload and get URL)
       };
 
-      // Check if document exists, if not, add createdAt
       const docSnap = await getDoc(userDocRef);
       if (!docSnap.exists()) {
         profileDataToSave.createdAt = serverTimestamp();
-        profileDataToSave.email = user.email; // Should be there from auth
-        profileDataToSave.role = user.role || "student"; // Preserve existing or default
+        profileDataToSave.email = user.email; 
+        profileDataToSave.role = user.role || "student"; 
       }
       
       await setDoc(userDocRef, profileDataToSave, { merge: true });
 
-      // Update AuthContext user state
       setAuthUser(prevUser => prevUser ? { ...prevUser, ...profileDataToSave } : null);
 
       toast({
@@ -99,7 +104,7 @@ export function UserProfileForm() {
     }
   };
   
-  if (isProfileLoading && !user) { // Show skeleton only if profile is loading and user is not yet defined by AuthContext
+  if (isProfileLoading && !user) { 
      return (
         <Card className="w-full max-w-3xl mx-auto shadow-xl">
             <CardHeader>

@@ -11,7 +11,7 @@ import { ArrowLeft, Edit, MessageSquare, Paperclip, DollarSign, CheckCircle, Clo
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
+import { getDbInstance } from "@/lib/firebase"; // Import getter
 import { doc, onSnapshot, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 
@@ -83,6 +83,14 @@ export default function TaskDetailPage() {
 
     setIsLoading(true);
     setError(null);
+    const db = getDbInstance();
+    if (!db) {
+        setError("Database service is not available.");
+        toast({ title: "Error", description: "Database service not available.", variant: "destructive" });
+        setIsLoading(false);
+        return;
+    }
+
     const taskRef = doc(db, "tasks", taskId);
     const unsubscribe = onSnapshot(taskRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -133,6 +141,12 @@ export default function TaskDetailPage() {
   const updateTaskStatusInFirestore = async (newStatus: TaskStatusStudent, updates: Record<string, any> = {}) => {
     if (!task) return;
     setIsUpdating(true);
+    const db = getDbInstance();
+    if (!db) {
+      toast({ title: "Database Error", description: "Firestore service is not available for update.", variant: "destructive" });
+      setIsUpdating(false);
+      return;
+    }
     try {
       const taskRef = doc(db, "tasks", task.id);
       await updateDoc(taskRef, {
@@ -181,9 +195,8 @@ export default function TaskDetailPage() {
       description: `Preparing payment for task: ${task.title} (Amount: ${task.estimatedCost}). Please wait.`,
     });
 
-    // Simulate Flutterwave payment process
     setTimeout(async () => {
-      const paymentSuccessful = true; // Simulate success
+      const paymentSuccessful = true; 
 
       if (paymentSuccessful) {
         await updateTaskStatusInFirestore("In Progress", { paymentStatus: "Paid by Student" });
@@ -191,16 +204,15 @@ export default function TaskDetailPage() {
           title: "Payment Successful (Simulated via Flutterwave)",
           description: `Payment for ${task.title} processed. Task is now In Progress.`,
         });
-        // The onSnapshot listener will automatically update the UI with the new task status
       } else {
         toast({
           title: "Payment Failed (Simulated)",
           description: `Payment for ${task.title} could not be processed. Please try again or contact support.`,
           variant: "destructive",
         });
-        setIsUpdating(false); // Re-enable button if payment fails
+        setIsUpdating(false); 
       }
-    }, 2500); // Simulate 2.5 seconds for payment processing
+    }, 2500); 
   };
 
 
@@ -396,5 +408,3 @@ export default function TaskDetailPage() {
     </div>
   );
 }
-
-    

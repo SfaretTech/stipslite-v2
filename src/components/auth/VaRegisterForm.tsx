@@ -8,29 +8,27 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react"; // Added useState
-import { db } from "@/lib/firebase"; // Import db
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"; // Import Firestore functions
-import { Loader2 } from "lucide-react"; // Added Loader2
+import { useState } from "react"; 
+import { getDbInstance } from "@/lib/firebase"; // Import getter
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
+import { Loader2 } from "lucide-react"; 
 
 export function VaRegisterForm() {
   const router = useRouter();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false); // Added isLoading state
+  const [isLoading, setIsLoading] = useState(false); 
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
 
-    // UI-only: Simulate VA registration
     toast({
       title: "VA Registration Submitted",
       description: "Your VA account application is pending admin approval. You will be notified via email once approved.",
       variant: "default",
-      duration: 3000, // Shortened duration as another toast will follow
+      duration: 3000, 
     });
 
-    // Simulate UID - In a real app, this would come from Firebase Auth userCredential.user.uid
     const simulatedUid = `VA_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const formData = new FormData(event.currentTarget);
     const firstName = formData.get("vaFirstName") as string;
@@ -39,6 +37,17 @@ export function VaRegisterForm() {
     const skillsInput = formData.get("vaSkills") as string;
     const skills = skillsInput ? skillsInput.split(',').map(s => s.trim()).filter(s => s) : [];
     const displayName = `${firstName.trim()} ${lastName.trim()}`;
+
+    const db = getDbInstance();
+    if (!db) {
+      toast({
+        title: "Database Error",
+        description: "Firestore service is not available. Please try again or contact support.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const userDocRef = doc(db, "users", simulatedUid);
@@ -51,9 +60,8 @@ export function VaRegisterForm() {
         role: "va",
         skills: skills,
         createdAt: serverTimestamp(),
-        lastLoginAt: serverTimestamp(), // Set lastLogin to now, as they are "logging in" after register
-        isEmailVerified: false, // Default for new registrations
-        // Add other VA-specific fields as needed
+        lastLoginAt: serverTimestamp(), 
+        isEmailVerified: false, 
       });
       toast({
         title: "VA Registration Data Saved",
@@ -67,10 +75,8 @@ export function VaRegisterForm() {
         description: "Could not save VA details to the database. Please try again or contact support.",
         variant: "destructive",
       });
-      setIsLoading(false); // Ensure loading is false on error before potential redirect
+      setIsLoading(false); 
     }
-    // No finally setIsLoading(false) here, as router.push will navigate away
-    // setIsLoading(false) only on explicit error before navigation.
   };
 
   return (

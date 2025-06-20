@@ -1,17 +1,373 @@
 
+"use client";
+
+import Link from "next/link"; 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"; // Removed DialogClose
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge"; 
+
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon, UploadCloud, DollarSign, Users, Shuffle, AlertTriangle, Loader2, FilePlus2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { getDbInstance } from "@/lib/firebase"; // Import getter
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { TaskSubmissionForm } from "@/components/tasks/TaskSubmissionForm";
-import { FilePlus2 } from "lucide-react";
+
+const durationOptions = [
+  { value: "1_hour", label: "1 Hour" },
+  { value: "2_hours", label: "2 Hours" },
+  { value: "3_hours", label: "3 Hours" },
+  { value: "4_hours", label: "4 Hours" },
+  { value: "6_hours", label: "6 Hours" },
+  { value: "8_hours", label: "8 Hours (1 Work Day)" },
+  { value: "1_day", label: "1 Day" },
+  { value: "2_days", label: "2 Days" },
+  { value: "3_days", label: "3 Days" },
+  { value: "4_days", label: "4 Days" },
+  { value: "5_days", label: "5 Days" },
+  { value: "1_week", label: "1 Week" },
+  { value: "2_weeks", label: "2 Weeks" },
+  { value: "3_weeks", label: "3 Weeks" },
+  { value: "1_month", label: "1 Month" },
+];
+
+const taskTypeOptions = [
+  { value: "assignment", label: "Assignment" },
+  { value: "term_paper", label: "Term Paper" },
+  { value: "project_work", label: "Project Work" },
+  { value: "research_paper", label: "Research Paper" },
+  { value: "essay_writing", label: "Essay Writing" },
+  { value: "thesis", label: "Thesis" },
+  { value: "dissertation", label: "Dissertation" },
+  { value: "coursework", label: "Coursework" },
+  { value: "group_project", label: "Group Project" },
+  { value: "book_article_review", label: "Book/Article Review" },
+  { value: "annotated_bibliography", label: "Annotated Bibliography" },
+  { value: "literature_review", label: "Literature Review" },
+  { value: "field_work_report", label: "Field Work Report" },
+  { value: "seminar_paper", label: "Seminar Paper" },
+  { value: "internship_report", label: "Internship Report" },
+  { value: "position_paper", label: "Position Paper" },
+  { value: "concept_note_proposal", label: "Concept Note / Proposal Writing" },
+  { value: "abstract_writing", label: "Abstract Writing" },
+  { value: "business_plan_feasibility", label: "Business Plan / Feasibility Study" },
+  { value: "academic_debate_prep", label: "Academic Debate Preparation" },
+  { value: "mock_exam_questions", label: "Mock/ Exam Questions setup" },
+  { value: "other", label: "Other" },
+];
+
+
+interface SelectableVa {
+  id: string;
+  name: string;
+  avatarUrl: string;
+  tagline: string;
+  isAvailableForDirectAssignment: boolean; 
+}
+
+
+const mockSelectableVAs: SelectableVa[] = [
+  { id: "VA001", name: "Aisha Bello", avatarUrl: "https://placehold.co/40x40.png?text=AB", tagline: "Expert academic writer and researcher.", isAvailableForDirectAssignment: true },
+  { id: "VA002", name: "Chinedu Okoro", avatarUrl: "https://placehold.co/40x40.png?text=CO", tagline: "Technical task wizard, specializing in STEM.", isAvailableForDirectAssignment: true },
+  { id: "VA003", name: "Fatima Diallo", avatarUrl: "https://placehold.co/40x40.png?text=FD", tagline: "Creative presentations and business support.", isAvailableForDirectAssignment: false }, 
+  { id: "VA004", name: "David Adebayo", avatarUrl: "https://placehold.co/40x40.png?text=DA", tagline: "Reliable VA for diverse tasks.", isAvailableForDirectAssignment: true },
+];
+
 
 export default function SubmitTaskPage() {
+  const [submissionDate, setSubmissionDate] = useState<Date | undefined>(new Date());
+  const [deadline, setDeadline] = useState<Date | undefined>();
+  const { toast } = useToast();
+  const router = useRouter();
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [isVaSelectionDialogOpen, setIsVaSelectionDialogOpen] = useState(false);
+  const [selectedVaId, setSelectedVaId] = useState<string | undefined>();
+  const [isSubscribedToExpertVaPlan, setIsSubscribedToExpertVaPlan] = useState(false); 
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const planStatus = localStorage.getItem('stipsLiteActivePlanId'); 
+      if (planStatus === 'expert_va') { 
+        setIsSubscribedToExpertVaPlan(true);
+      }
+    }
+  }, []);
+
+  const performActualSubmission = async (vaPreference: "specific" | "random", vaIdToAssign?: string) => {
+    if (!user) {
+      toast({ title: "Authentication Error", description: "You must be logged in to submit a task.", variant: "destructive" });
+      return;
+    }
+
+    const form = document.getElementById("taskSubmissionFormInternal") as HTMLFormElement; // Changed ID
+    if (!form) {
+        toast({ title: "Form Error", description: "Could not find the task submission form.", variant: "destructive"});
+        return;
+    }
+    const formData = new FormData(form);
+    const taskType = formData.get("taskType") as string;
+    const taskTitle = formData.get("taskTitle") as string;
+    const taskDescription = formData.get("taskDescription") as string;
+    const pages = formData.get("pages") as string;
+    const estimatedDuration = formData.get("estimatedDuration") as string;
+    
+    if (!taskType || !taskTitle || !taskDescription || !pages || !estimatedDuration) {
+        toast({ title: "Missing Fields", description: "Please fill all required task details.", variant: "destructive"});
+        return;
+    }
+    
+    setIsLoading(true);
+    const db = getDbInstance();
+    if (!db) {
+      toast({
+        title: "Database Error",
+        description: "Firestore service is not available. Please try again later.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+
+    let vaMessage = "";
+    let taskData: any = {
+        taskType,
+        taskTitle,
+        taskDescription,
+        pages: parseInt(pages, 10),
+        estimatedDuration,
+        submissionDate: submissionDate ? submissionDate.toISOString() : new Date().toISOString(),
+        deadline: deadline ? deadline.toISOString() : null,
+        studentUid: user.uid,
+        studentName: user.displayName || "Student",
+        status: "Pending Approval",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        paymentStatus: "Unpaid",
+        vaPreference: vaPreference,
+    };
+
+    if (vaPreference === "specific" && vaIdToAssign) {
+        const va = mockSelectableVAs.find(v => v.id === vaIdToAssign);
+        taskData.assignedVaId = vaIdToAssign;
+        taskData.assignedVaName = va?.name;
+
+        if (va && !va.isAvailableForDirectAssignment) {
+            toast({
+            title: "VA Currently Unavailable",
+            description: `${va.name} is not accepting direct assignments at the moment. Your task will be sent to the general pool, or you can cancel and choose another VA.`,
+            variant: "destructive",
+            duration: 7000,
+            });
+            taskData.vaPreference = "random"; 
+            vaMessage = `Your task has been submitted. Note: ${va.name} was selected but is currently unavailable for direct tasks, so it has been added to the general pool.`;
+        } else {
+            vaMessage = `Your task has been submitted and will be assigned to ${va ? va.name : 'your chosen VA'} for review, quoting, and acceptance. This is a feature of the Expert VA Plan.`;
+        }
+    } else {
+        vaMessage = "Your task has been submitted and a Virtual Assistant will be assigned randomly from the general pool. This task will have a platform-set price upon approval.";
+    }
+
+    try {
+        await addDoc(collection(db, "tasks"), taskData);
+        toast({
+            title: "Task Submitted Successfully!",
+            description: `${vaMessage} Your task is now pending review and admin approval. Payment will be requested upon approval (or after VA quote acceptance if applicable).`,
+            variant: "default",
+            duration: 9000, 
+        });
+        router.push('/dashboard/tasks');
+    } catch (error) {
+        console.error("Error submitting task to Firestore:", error);
+        toast({ title: "Submission Failed", description: "Could not save your task. Please try again.", variant: "destructive"});
+    } finally {
+        setIsLoading(false);
+        setIsVaSelectionDialogOpen(false); 
+        setSelectedVaId(undefined);
+        form.reset();
+        setSubmissionDate(new Date());
+        setDeadline(undefined);
+    }
+  };
+
+
   return (
-    <div>
+    <>
       <PageHeader 
         title="Submit a New Task"
         description="Provide details for your e-academic task. We'll review it and get back to you."
         icon={FilePlus2}
       />
-      <TaskSubmissionForm />
-    </div>
+      <TaskSubmissionForm 
+        id="taskSubmissionFormInternal" // Added ID here
+        onSubmit={(e) => e.preventDefault()} // Prevent default on the internal form
+        isLoading={isLoading}
+        submissionDate={submissionDate}
+        setSubmissionDate={setSubmissionDate}
+        deadline={deadline}
+        setDeadline={setDeadline}
+        taskTypeOptions={taskTypeOptions}
+        durationOptions={durationOptions}
+        isSubscribedToExpertVaPlan={isSubscribedToExpertVaPlan}
+        onFinalSubmitTrigger={() => { /* This button is now inside AlertDialogFooter */}}
+        showVaSelectionDialog={() => setIsVaSelectionDialogOpen(true)}
+      />
+      <div className="max-w-2xl mx-auto mt-0"> 
+        <CardFooter className="pt-0">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button type="button" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isLoading}>
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null} Submit Task for Approval
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Virtual Assistant Preference</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You can have a Virtual Assistant assigned randomly from our general pool (platform-set price upon approval). 
+                  Alternatively, if you have an active <strong>Expert VA Plan</strong>, you can request a specific VA who will then provide a custom quote for your task. This is a premium feature.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="sm:flex-col sm:gap-2"> 
+                <AlertDialogAction
+                  onClick={() => {
+                    if (isSubscribedToExpertVaPlan) {
+                      setIsVaSelectionDialogOpen(true);
+                    } else {
+                      toast({
+                        title: "Expert VA Plan Required",
+                        description: "To request a specific VA and receive custom quotes, please subscribe to the Expert VA Plan from the Subscription page.",
+                        variant: "destructive",
+                        action: <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/subscription')}>Go to Subscription</Button>
+                      });
+                    }
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+                  disabled={isLoading}
+                >
+                  <Users className="mr-2 h-4 w-4" /> Request Specific VA (Expert VA Plan)
+                </AlertDialogAction>
+                <AlertDialogAction
+                  onClick={() => performActualSubmission("random")}
+                  className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
+                  disabled={isLoading}
+                >
+                 <Shuffle className="mr-2 h-4 w-4" /> Assign Random VA
+                </AlertDialogAction>
+                 <AlertDialogCancel className="w-full sm:w-auto" disabled={isLoading}>Cancel</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardFooter>
+      </div>
+
+
+      <Dialog open={isVaSelectionDialogOpen} onOpenChange={setIsVaSelectionDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Select a Virtual Assistant</DialogTitle>
+            <DialogDescription>
+              Choose a VA to assign this task to. VAs who are currently unavailable for direct assignments are indicated.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[50vh] p-1 pr-3"> 
+              <RadioGroup value={selectedVaId} onValueChange={setSelectedVaId} className="space-y-3 py-2">
+              {mockSelectableVAs.map((va) => (
+                  <Label
+                    key={va.id}
+                    htmlFor={`va-${va.id}`}
+                    className={cn(
+                        "flex items-center space-x-3 p-3 border rounded-md hover:bg-accent/30 cursor-pointer transition-colors",
+                        selectedVaId === va.id && "bg-accent/50 border-accent ring-2 ring-accent",
+                        !va.isAvailableForDirectAssignment && "opacity-60 bg-muted/30 hover:bg-muted/40"
+                    )}
+                  >
+                  <Avatar className="h-10 w-10">
+                      <AvatarImage src={va.avatarUrl} alt={va.name} data-ai-hint="person avatar" />
+                      <AvatarFallback>{va.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-grow">
+                      <span className="font-medium text-sm">{va.name}</span>
+                      <p className="text-xs text-muted-foreground">{va.tagline}</p>
+                      {!va.isAvailableForDirectAssignment && (
+                          <Badge variant="destructive" className="mt-1 text-xs">Unavailable for Direct Tasks</Badge>
+                      )}
+                  </div>
+                  <RadioGroupItem value={va.id} id={`va-${va.id}`} className="shrink-0" disabled={!va.isAvailableForDirectAssignment}/>
+                  </Label>
+              ))}
+              {mockSelectableVAs.length === 0 && (
+                  <p className="text-center text-muted-foreground py-4">No VAs available for selection.</p>
+              )}
+              </RadioGroup>
+          </ScrollArea>
+          {selectedVaId && !mockSelectableVAs.find(va => va.id === selectedVaId)?.isAvailableForDirectAssignment && (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 flex items-start mt-2 text-sm">
+                  <AlertTriangle className="h-5 w-5 mr-2 mt-0.5 shrink-0"/>
+                  <p>
+                      The selected VA is currently not available for direct assignments. If you proceed, your task will be sent to the general pool.
+                  </p>
+              </div>
+          )}
+          <DialogFooter className="sm:justify-between items-center pt-4 border-t"> 
+            {selectedVaId && mockSelectableVAs.find(va => va.id === selectedVaId) && (
+              <p className="text-sm text-muted-foreground hidden sm:block">
+                  Selected: {mockSelectableVAs.find(va => va.id === selectedVaId)?.name || 'N/A'}
+              </p>
+            )}
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="outline" onClick={() => {setIsVaSelectionDialogOpen(false); setSelectedVaId(undefined);}} className="flex-1 sm:flex-none" disabled={isLoading}>Cancel</Button>
+              <Button
+                onClick={() => {
+                  if (selectedVaId) {
+                    performActualSubmission("specific", selectedVaId);
+                  } else {
+                    toast({ title: "No VA Selected", description: "Please select a VA to proceed or cancel.", variant: "destructive"});
+                  }
+                }}
+                disabled={!selectedVaId || isLoading}
+                className="bg-accent hover:bg-accent/90 text-accent-foreground flex-1 sm:flex-none"
+              >
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null} Submit with Selected VA
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

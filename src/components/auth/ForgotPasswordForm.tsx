@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { auth } from "@/lib/firebase";
+import { getAuthInstance } from "@/lib/firebase"; // Import getter
 import { sendPasswordResetEmail, type FirebaseError } from "firebase/auth";
 import { Loader2 } from "lucide-react";
 
@@ -21,6 +21,18 @@ export function ForgotPasswordForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
+
+    const auth = getAuthInstance();
+    if (!auth) {
+      toast({
+        title: "Authentication Error",
+        description: "Firebase Auth service is not available. Please try again later.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       await sendPasswordResetEmail(auth, email);
       toast({

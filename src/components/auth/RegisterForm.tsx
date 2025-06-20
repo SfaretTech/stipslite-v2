@@ -9,9 +9,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { auth, db } from "@/lib/firebase"; // Import db
+import { getAuthInstance, getDbInstance } from "@/lib/firebase"; // Import getters
 import { createUserWithEmailAndPassword, type FirebaseError, updateProfile } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"; // Import Firestore functions
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
 import { Loader2 } from "lucide-react";
 
 export function RegisterForm() {
@@ -42,15 +42,27 @@ export function RegisterForm() {
       return;
     }
     setIsLoading(true);
+
+    const auth = getAuthInstance();
+    const db = getDbInstance();
+
+    if (!auth || !db) {
+      toast({
+        title: "Initialization Error",
+        description: "Firebase services are not available. Please try again later.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
       const displayName = `${firstName.trim()} ${lastName.trim()}`;
 
-      // Update Firebase Auth profile (optional, but good practice)
       await updateProfile(firebaseUser, { displayName });
 
-      // Create user document in Firestore
       const userDocRef = doc(db, "users", firebaseUser.uid);
       await setDoc(userDocRef, {
         uid: firebaseUser.uid,
@@ -58,11 +70,10 @@ export function RegisterForm() {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         displayName: displayName,
-        role: "student", // Default role for this registration form
+        role: "student", 
         createdAt: serverTimestamp(),
         lastLoginAt: serverTimestamp(),
         isEmailVerified: firebaseUser.emailVerified,
-        // Add any other initial fields, e.g., photoURL: null, phoneNumber: null
       });
       
       toast({

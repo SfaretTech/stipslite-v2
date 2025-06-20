@@ -9,29 +9,27 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react"; // Added useState
-import { db } from "@/lib/firebase"; // Import db
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"; // Import Firestore functions
-import { Loader2 } from "lucide-react"; // Added Loader2
+import { useState } from "react"; 
+import { getDbInstance } from "@/lib/firebase"; // Import getter
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
+import { Loader2 } from "lucide-react"; 
 
 export function PrintCenterRegisterForm() {
   const router = useRouter();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false); // Added isLoading state
+  const [isLoading, setIsLoading] = useState(false); 
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
 
-    // UI-only: Simulate Print Center registration
     toast({
       title: "Shop Registration Submitted",
       description: "Your Print Center account application is pending admin approval. You will be notified via email once approved.",
       variant: "default",
-      duration: 3000, // Shortened duration
+      duration: 3000, 
     });
 
-    // Simulate UID
     const simulatedUid = `PC_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const formData = new FormData(event.currentTarget);
     const shopName = formData.get("pc-shopName") as string;
@@ -41,12 +39,23 @@ export function PrintCenterRegisterForm() {
     const servicesInput = formData.get("pc-services") as string;
     const services = servicesInput ? servicesInput.split(',').map(s => s.trim()).filter(s => s) : [];
 
+    const db = getDbInstance();
+    if (!db) {
+      toast({
+        title: "Database Error",
+        description: "Firestore service is not available. Please try again or contact support.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const userDocRef = doc(db, "users", simulatedUid);
       await setDoc(userDocRef, {
         uid: simulatedUid,
         email: email,
-        displayName: shopName.trim(), // Using shopName as displayName for print centers
+        displayName: shopName.trim(), 
         shopName: shopName.trim(),
         address: address.trim(),
         phone: phone.trim(),
@@ -54,8 +63,7 @@ export function PrintCenterRegisterForm() {
         services: services,
         createdAt: serverTimestamp(),
         lastLoginAt: serverTimestamp(),
-        isEmailVerified: false, // Default for new registrations
-        // Other Print Center-specific fields can be added here or in their profile management
+        isEmailVerified: false, 
       });
       toast({
         title: "Print Center Data Saved",

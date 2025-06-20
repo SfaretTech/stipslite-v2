@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Added Alert
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,8 +26,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogClose,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"; // Removed DialogClose
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,12 +38,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClipboardList, Check, X, Eye, DollarSign, UserCheck, FileText, MoreHorizontal, Search, Paperclip, MessageSquare, AlertTriangle, Send, UserX, RefreshCw, Loader2, Info } from "lucide-react"; // Added Info
+import { ClipboardList, Check, X, Eye, DollarSign, UserCheck, FileText, MoreHorizontal, Search, Paperclip, MessageSquare, AlertTriangle, Send, UserX, RefreshCw, Loader2, Info } from "lucide-react"; 
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { db } from "@/lib/firebase";
+import { getDbInstance } from "@/lib/firebase"; // Import getter
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 
@@ -112,7 +111,7 @@ const mockVAs = [
 export default function AdminTasksPage() {
   const [allTasks, setAllTasks] = useState<AdminTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null); // Added fetchError state
+  const [fetchError, setFetchError] = useState<string | null>(null); 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<AdminTaskStatus | "all">("all");
   const [selectedTask, setSelectedTask] = useState<AdminTask | null>(null);
@@ -128,13 +127,20 @@ export default function AdminTasksPage() {
   const [adminNotesInput, setAdminNotesInput] = useState("");
   const [selectedVaForAssignment, setSelectedVaForAssignment] = useState<string | undefined>();
   const [adminReviewNotesInput, setAdminReviewNotesInput] = useState("");
-  const [isSubmittingAction, setIsSubmittingAction] = useState(false); // Added for dialog actions
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false); 
 
   const { toast } = useToast();
 
   useEffect(() => {
     setIsLoading(true);
     setFetchError(null);
+    const db = getDbInstance();
+    if (!db) {
+        setFetchError("Database service is not available.");
+        toast({ title: "Error", description: "Database service not available.", variant: "destructive" });
+        setIsLoading(false);
+        return;
+    }
     const q = query(collection(db, "tasks"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const fetchedTasks: AdminTask[] = [];
@@ -213,7 +219,12 @@ export default function AdminTasksPage() {
     dialogSetter(true);
   };
 
-  const updateTaskInFirestore = async (taskId: string, updates: Partial<AdminTask>): Promise<boolean> => { // Return boolean for success
+  const updateTaskInFirestore = async (taskId: string, updates: Partial<AdminTask>): Promise<boolean> => { 
+    const db = getDbInstance();
+    if (!db) {
+      toast({ title: "Database Error", description: "Firestore service is not available for update.", variant: "destructive" });
+      return false;
+    }
     const taskRef = doc(db, "tasks", taskId);
     setIsSubmittingAction(true);
     try {
@@ -381,7 +392,7 @@ export default function AdminTasksPage() {
               </TableHeader>
               <TableBody>
                 {filteredTasks.map(task => {
-                  const StatusIcon = (adminTaskStatusColors[task.status] && Info); // Fallback icon if needed
+                  const StatusIcon = (adminTaskStatusColors[task.status] && Info); 
                   return (
                   <TableRow key={task.id}>
                     <TableCell className="font-mono text-xs">{task.id.substring(0,8)}...</TableCell>
@@ -397,7 +408,6 @@ export default function AdminTasksPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={`text-xs whitespace-nowrap ${adminTaskStatusColors[task.status] || 'bg-gray-100 text-gray-700'}`}>
-                        {/* {StatusIcon && <StatusIcon className="h-3.5 w-3.5 mr-1" />} Can add icons back here */}
                         {task.status}
                         </Badge>
                     </TableCell>
@@ -547,7 +557,7 @@ export default function AdminTasksPage() {
             </ScrollArea>
           )}
           <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="outline" disabled={isSubmittingAction}>Close</Button></DialogClose>
+            <Button type="button" variant="outline" onClick={() => setIsViewDetailsOpen(false)} disabled={isSubmittingAction}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -615,7 +625,7 @@ export default function AdminTasksPage() {
             </div>
           </div>
           <DialogFooter>
-            <DialogClose asChild><Button variant="outline" disabled={isSubmittingAction}>Cancel</Button></DialogClose>
+            <Button variant="outline" onClick={() => setIsAssignVaOpen(false)} disabled={isSubmittingAction}>Cancel</Button>
             <Button onClick={handleAssignVa} disabled={!selectedVaForAssignment || isSubmittingAction}>
                 {isSubmittingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (selectedTask?.status === "Rejected by VA" ? <RefreshCw className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />)}
                 {selectedTask?.status === "Rejected by VA" ? "Re-assign Selected VA" : "Assign Selected VA"}
@@ -643,7 +653,7 @@ export default function AdminTasksPage() {
                     </div>
                 </div>
                 <DialogFooter>
-                    <DialogClose asChild><Button variant="outline" disabled={isSubmittingAction}>Cancel</Button></DialogClose>
+                    <Button variant="outline" onClick={() => setIsConfirmPaymentOpen(false)} disabled={isSubmittingAction}>Cancel</Button>
                     <Button onClick={handleConfirmPayment} className="bg-green-600 hover:bg-green-700 text-white" disabled={isSubmittingAction}>
                        {isSubmittingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Check className="mr-2 h-4 w-4"/>} Yes, Payment Confirmed
                     </Button>
