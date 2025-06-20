@@ -28,7 +28,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"; // Removed DialogClose
+  DialogClose, 
+} from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -41,7 +42,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { getDbInstance } from "@/lib/firebase"; // Import getter
+import { getDbInstance } from "@/lib/firebase"; 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { PageHeader } from "@/components/shared/PageHeader";
 
@@ -106,6 +107,188 @@ const mockSelectableVAs: SelectableVa[] = [
 ];
 
 
+interface TaskSubmissionFormProps {
+    id?: string; // For internal form element ID
+    onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void; // To allow parent to preventDefault if needed
+    isLoading: boolean;
+    submissionDate: Date | undefined;
+    setSubmissionDate: (date: Date | undefined) => void;
+    deadline: Date | undefined;
+    setDeadline: (date: Date | undefined) => void;
+    taskTypeOptions: { value: string; label: string }[];
+    durationOptions: { value: string; label: string }[];
+    isSubscribedToExpertVaPlan: boolean;
+    onFinalSubmitTrigger: () => void; // This prop might be redundant now
+    showVaSelectionDialog: () => void;
+}
+
+function TaskSubmissionForm({
+  id = "taskSubmissionForm", // Default ID
+  onSubmit,
+  isLoading,
+  submissionDate,
+  setSubmissionDate,
+  deadline,
+  setDeadline,
+  taskTypeOptions,
+  durationOptions,
+}: TaskSubmissionFormProps) {
+  // Form-specific logic (if any moved from the page) can go here.
+  // For now, it's mainly a presentation component.
+  return (
+    <Card className="w-full max-w-2xl mx-auto shadow-xl">
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">Task Details</CardTitle>
+        <CardDescription>Fill in the details below to submit your task for processing.</CardDescription>
+      </CardHeader>
+      <form onSubmit={onSubmit} id={id}>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="taskType">Task Type</Label>
+              <Select name="taskType" required disabled={isLoading}>
+                <SelectTrigger id="taskType">
+                  <SelectValue placeholder="Select task type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {taskTypeOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="taskTitle">Task Title</Label>
+              <Input id="taskTitle" name="taskTitle" placeholder="e.g., Q1 Marketing Report" required disabled={isLoading} />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="taskDescription">Task Description</Label>
+            <Textarea id="taskDescription" name="taskDescription" placeholder="Provide a detailed description of the task requirements including formatting (e.g., APA 7th ed., font size 12, font name: Times New Roman), specific sources to use, or any other instructions." rows={4} required disabled={isLoading}/>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="pages">Number of Pages/Slides</Label>
+              <Input id="pages" name="pages" type="number" placeholder="e.g., 10" min="1" required disabled={isLoading}/>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="estimatedDuration">Estimated Duration</Label>
+              <Select name="estimatedDuration" required disabled={isLoading}>
+                <SelectTrigger id="estimatedDuration">
+                  <SelectValue placeholder="Select estimated duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  {durationOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="submissionDate">Submission Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !submissionDate && "text-muted-foreground"
+                    )}
+                    disabled={isLoading}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {submissionDate ? format(submissionDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={submissionDate}
+                    onSelect={setSubmissionDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="deadline">Preferred Deadline</Label>
+               <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !deadline && "text-muted-foreground"
+                    )}
+                    disabled={isLoading}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {deadline ? format(deadline, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={deadline}
+                    onSelect={setDeadline}
+                    disabled={(date) =>
+                      date < new Date(new Date().setHours(0,0,0,0)) || (submissionDate && date < new Date(new Date(submissionDate).setHours(0,0,0,0)))
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="attachments">Attachments (Optional)</Label>
+            <div className="flex items-center justify-center w-full">
+                <Label 
+                  htmlFor="dropzone-file" 
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/80 transition-colors"
+                >
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                        <p className="mb-1 text-sm text-muted-foreground">
+                          <span className="font-semibold">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-muted-foreground">PDF, DOCX, PPTX, ZIP (MAX. 10MB)</p>
+                    </div>
+                    <Input id="dropzone-file" type="file" className="hidden" multiple name="attachments" disabled={isLoading}/>
+                </Label>
+            </div> 
+          </div>
+
+          <div className="p-4 bg-primary/10 rounded-md border border-primary/20">
+            <div className="flex items-center">
+              <DollarSign className="h-6 w-6 mr-3 text-primary" />
+              <div>
+                <h4 className="font-semibold text-primary">Payment Information</h4>
+                <p className="text-sm text-muted-foreground">
+                  If a specific VA is requested (an <Link href="/dashboard/subscription" className="font-medium text-accent hover:underline">Expert VA Plan</Link> feature), they will provide a quote. Otherwise, an estimated cost will be provided upon task approval for randomly assigned VAs. Payment will be required to start processing.
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </CardContent>
+        {/* Footer and main submit button moved to page.tsx to handle AlertDialog */}
+      </form>
+    </Card>
+  );
+}
+
+
 export default function SubmitTaskPage() {
   const [submissionDate, setSubmissionDate] = useState<Date | undefined>(new Date());
   const [deadline, setDeadline] = useState<Date | undefined>();
@@ -133,7 +316,7 @@ export default function SubmitTaskPage() {
       return;
     }
 
-    const form = document.getElementById("taskSubmissionFormInternal") as HTMLFormElement; // Changed ID
+    const form = document.getElementById("taskSubmissionFormInternal") as HTMLFormElement; 
     if (!form) {
         toast({ title: "Form Error", description: "Could not find the task submission form.", variant: "destructive"});
         return;
@@ -211,9 +394,13 @@ export default function SubmitTaskPage() {
             duration: 9000, 
         });
         router.push('/dashboard/tasks');
-    } catch (error) {
-        console.error("Error submitting task to Firestore:", error);
-        toast({ title: "Submission Failed", description: "Could not save your task. Please try again.", variant: "destructive"});
+    } catch (error: any) {
+      console.error("Error submitting task to Firestore:", error);
+      let description = "Could not save your task. Please try again.";
+      if (error.code === 'permission-denied') {
+        description = "Task submission failed due to Firestore permission issues. Please check your security rules or contact support.";
+      }
+      toast({ title: "Submission Failed", description, variant: "destructive"});
     } finally {
         setIsLoading(false);
         setIsVaSelectionDialogOpen(false); 
@@ -233,8 +420,8 @@ export default function SubmitTaskPage() {
         icon={FilePlus2}
       />
       <TaskSubmissionForm 
-        id="taskSubmissionFormInternal" // Added ID here
-        onSubmit={(e) => e.preventDefault()} // Prevent default on the internal form
+        id="taskSubmissionFormInternal" 
+        onSubmit={(e) => e.preventDefault()} 
         isLoading={isLoading}
         submissionDate={submissionDate}
         setSubmissionDate={setSubmissionDate}
@@ -305,69 +492,70 @@ export default function SubmitTaskPage() {
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[50vh] p-1 pr-3"> 
-              <RadioGroup value={selectedVaId} onValueChange={setSelectedVaId} className="space-y-3 py-2">
-              {mockSelectableVAs.map((va) => (
-                  <Label
-                    key={va.id}
-                    htmlFor={`va-${va.id}`}
-                    className={cn(
-                        "flex items-center space-x-3 p-3 border rounded-md hover:bg-accent/30 cursor-pointer transition-colors",
-                        selectedVaId === va.id && "bg-accent/50 border-accent ring-2 ring-accent",
-                        !va.isAvailableForDirectAssignment && "opacity-60 bg-muted/30 hover:bg-muted/40"
+            <RadioGroup value={selectedVaId} onValueChange={setSelectedVaId} className="space-y-3 py-2">
+            {mockSelectableVAs.map((va) => (
+                <Label
+                  key={va.id}
+                  htmlFor={`va-${va.id}`}
+                  className={cn(
+                      "flex items-center space-x-3 p-3 border rounded-md hover:bg-accent/30 cursor-pointer transition-colors",
+                      selectedVaId === va.id && "bg-accent/50 border-accent ring-2 ring-accent",
+                      !va.isAvailableForDirectAssignment && "opacity-60 bg-muted/30 hover:bg-muted/40"
+                  )}
+                >
+                <Avatar className="h-10 w-10">
+                    <AvatarImage src={va.avatarUrl} alt={va.name} data-ai-hint="person avatar" />
+                    <AvatarFallback>{va.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="flex-grow">
+                    <span className="font-medium text-sm">{va.name}</span>
+                    <p className="text-xs text-muted-foreground">{va.tagline}</p>
+                    {!va.isAvailableForDirectAssignment && (
+                        <Badge variant="destructive" className="mt-1 text-xs">Unavailable for Direct Tasks</Badge>
                     )}
-                  >
-                  <Avatar className="h-10 w-10">
-                      <AvatarImage src={va.avatarUrl} alt={va.name} data-ai-hint="person avatar" />
-                      <AvatarFallback>{va.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-grow">
-                      <span className="font-medium text-sm">{va.name}</span>
-                      <p className="text-xs text-muted-foreground">{va.tagline}</p>
-                      {!va.isAvailableForDirectAssignment && (
-                          <Badge variant="destructive" className="mt-1 text-xs">Unavailable for Direct Tasks</Badge>
-                      )}
-                  </div>
-                  <RadioGroupItem value={va.id} id={`va-${va.id}`} className="shrink-0" disabled={!va.isAvailableForDirectAssignment}/>
-                  </Label>
-              ))}
-              {mockSelectableVAs.length === 0 && (
-                  <p className="text-center text-muted-foreground py-4">No VAs available for selection.</p>
-              )}
-              </RadioGroup>
-          </ScrollArea>
-          {selectedVaId && !mockSelectableVAs.find(va => va.id === selectedVaId)?.isAvailableForDirectAssignment && (
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 flex items-start mt-2 text-sm">
-                  <AlertTriangle className="h-5 w-5 mr-2 mt-0.5 shrink-0"/>
-                  <p>
-                      The selected VA is currently not available for direct assignments. If you proceed, your task will be sent to the general pool.
-                  </p>
-              </div>
-          )}
-          <DialogFooter className="sm:justify-between items-center pt-4 border-t"> 
-            {selectedVaId && mockSelectableVAs.find(va => va.id === selectedVaId) && (
-              <p className="text-sm text-muted-foreground hidden sm:block">
-                  Selected: {mockSelectableVAs.find(va => va.id === selectedVaId)?.name || 'N/A'}
-              </p>
+                </div>
+                <RadioGroupItem value={va.id} id={`va-${va.id}`} className="shrink-0" disabled={!va.isAvailableForDirectAssignment}/>
+                </Label>
+            ))}
+            {mockSelectableVAs.length === 0 && (
+                <p className="text-center text-muted-foreground py-4">No VAs available for selection.</p>
             )}
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button variant="outline" onClick={() => {setIsVaSelectionDialogOpen(false); setSelectedVaId(undefined);}} className="flex-1 sm:flex-none" disabled={isLoading}>Cancel</Button>
-              <Button
-                onClick={() => {
-                  if (selectedVaId) {
-                    performActualSubmission("specific", selectedVaId);
-                  } else {
-                    toast({ title: "No VA Selected", description: "Please select a VA to proceed or cancel.", variant: "destructive"});
-                  }
-                }}
-                disabled={!selectedVaId || isLoading}
-                className="bg-accent hover:bg-accent/90 text-accent-foreground flex-1 sm:flex-none"
-              >
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null} Submit with Selected VA
-              </Button>
+            </RadioGroup>
+        </ScrollArea>
+         {selectedVaId && !mockSelectableVAs.find(va => va.id === selectedVaId)?.isAvailableForDirectAssignment && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 flex items-start mt-2 text-sm">
+                <AlertTriangle className="h-5 w-5 mr-2 mt-0.5 shrink-0"/>
+                <p>
+                    The selected VA is currently not available for direct assignments. If you proceed, your task will be sent to the general pool.
+                </p>
             </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        )}
+        <DialogFooter className="sm:justify-between items-center pt-4 border-t"> 
+          {selectedVaId && mockSelectableVAs.find(va => va.id === selectedVaId) && (
+            <p className="text-sm text-muted-foreground hidden sm:block">
+                Selected: {mockSelectableVAs.find(va => va.id === selectedVaId)?.name || 'N/A'}
+            </p>
+          )}
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={() => {setIsVaSelectionDialogOpen(false); setSelectedVaId(undefined);}} className="flex-1 sm:flex-none" disabled={isLoading}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (selectedVaId) {
+                  performActualSubmission("specific", selectedVaId);
+                } else {
+                  toast({ title: "No VA Selected", description: "Please select a VA to proceed or cancel.", variant: "destructive"});
+                }
+              }}
+              disabled={!selectedVaId || isLoading}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground flex-1 sm:flex-none"
+            >
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null} Submit with Selected VA
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }
+

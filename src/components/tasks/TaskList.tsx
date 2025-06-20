@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Added Alert
-import { ArrowRight, MoreHorizontal, CheckCircle, Clock, AlertCircle, DollarSign, ClipboardList, Loader2, XCircle as XCircleIcon, Info } from "lucide-react"; // Renamed XCircle to XCircleIcon
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; 
+import { ArrowRight, MoreHorizontal, CheckCircle, Clock, AlertCircle, DollarSign, ClipboardList, Loader2, XCircle as XCircleIcon, Info } from "lucide-react"; 
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast"; 
 import { useRouter } from "next/navigation"; 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase";
+import { getDbInstance } from "@/lib/firebase"; 
 import { collection, query, where, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 
@@ -27,14 +27,14 @@ type StudentTaskStatus =
   | "Quote Rejected";
 
 interface TaskListItem {
-  id: string; // Document ID
+  id: string; 
   title: string;
-  type: string; // maps to taskType from Firestore
+  type: string; 
   pages: number;
-  submittedDate: string; // Formatted date string
+  submittedDate: string; 
   status: StudentTaskStatus;
   estimatedCost?: string;
-  deadline?: string; // Formatted date string or undefined
+  deadline?: string; 
 }
 
 const studentStatusColors: Record<StudentTaskStatus, string> = {
@@ -64,12 +64,20 @@ export function TaskList() {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<TaskListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // Added error state
+  const [error, setError] = useState<string | null>(null); 
 
   useEffect(() => {
     if (!user) {
       setIsLoading(false);
       setError("You must be logged in to view tasks.");
+      return;
+    }
+
+    const db = getDbInstance();
+    if (!db) {
+      setError("Database service is not available. Cannot fetch tasks.");
+      toast({ title: "Error", description: "Database service not available.", variant: "destructive" });
+      setIsLoading(false);
       return;
     }
 
@@ -85,18 +93,15 @@ export function TaskList() {
       const fetchedTasks: TaskListItem[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        // Ensure createdAt is handled correctly, might be null initially or a Firestore Timestamp
         let formattedSubmittedDate = 'N/A';
         if (data.submissionDate) {
             try {
-                 // Assuming submissionDate is stored as an ISO string or can be converted to Date
                 formattedSubmittedDate = format(new Date(data.submissionDate), "yyyy-MM-dd");
             } catch (e) {
-                console.warn("Error formatting submissionDate:", e);
-                // If it's already a string or number that format doesn't like, try to use as is or default
+                 console.warn("Error formatting submissionDate:", e);
                 formattedSubmittedDate = typeof data.submissionDate === 'string' ? data.submissionDate : 'Invalid Date';
             }
-        } else if (data.createdAt && data.createdAt.toDate) { // Fallback to createdAt if submissionDate is missing
+        } else if (data.createdAt && data.createdAt.toDate) { 
              try {
                 formattedSubmittedDate = format(data.createdAt.toDate(), "yyyy-MM-dd");
             } catch (e) {
@@ -117,10 +122,14 @@ export function TaskList() {
       });
       setTasks(fetchedTasks);
       setIsLoading(false);
-    }, (err) => {
+    }, (err: any) => { // Explicitly type err as any or FirebaseError
       console.error("Error fetching tasks:", err);
-      setError("Failed to fetch tasks. Please try again later.");
-      toast({ title: "Error", description: "Could not fetch tasks.", variant: "destructive" });
+      let description = "Could not fetch tasks. Please try again later.";
+      if (err.code === 'permission-denied') {
+        description = "Failed to fetch tasks due to Firestore permission issues. Please check your security rules in the Firebase console. For development, you might need to allow reads to the 'tasks' collection for authenticated users.";
+      }
+      setError(description);
+      toast({ title: "Error Loading Tasks", description: description, variant: "destructive" });
       setIsLoading(false);
     });
 
@@ -210,7 +219,7 @@ export function TaskList() {
             </TableHeader>
             <TableBody>
               {tasks.map((task) => {
-                const StatusIcon = studentStatusIcons[task.status] || Info; // Fallback icon
+                const StatusIcon = studentStatusIcons[task.status] || Info; 
                 return (
                   <TableRow key={task.id}>
                     <TableCell className="font-medium font-mono text-xs">{task.id.substring(0,8)}...</TableCell>
@@ -268,3 +277,4 @@ export function TaskList() {
     </Card>
   );
 }
+

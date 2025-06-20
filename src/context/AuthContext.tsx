@@ -39,33 +39,53 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [firebaseAuthInitialized, setFirebaseAuthInitialized] = useState(false);
+  const [authServiceInitialized, setAuthServiceInitialized] = useState(false);
+  const [dbServiceInitialized, setDbServiceInitialized] = useState(false);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
 
-  // Get Auth and DB instances using the new getter functions
-  // useMemo ensures this is only called once per component lifecycle unless dependencies change (none here)
+
   const authService = useMemo(() => getAuthInstance(), []);
   const dbService = useMemo(() => getDbInstance(), []);
 
 
   useEffect(() => {
     if (!authService) { 
-      console.error("AuthContext: Firebase Auth service instance is null from getAuthInstance(). Aborting onAuthStateChanged setup.");
-      setFirebaseAuthInitialized(false);
+      console.error("AuthContext: Firebase Auth service instance is null. Auth will not function.");
+      setAuthServiceInitialized(false);
+      setInitializationError("Authentication service could not be initialized. Please contact support or try again later.");
       setLoading(false);
+      // DB service check is independent
+      if (!dbService) {
+        console.error("AuthContext: Firestore service instance is null. Database operations will not function.");
+        setDbServiceInitialized(false);
+        // If auth also failed, the auth error is more critical for initial loading state
+        if (!initializationError) {
+          setInitializationError("Database service could not be initialized. Some features may be unavailable.");
+        }
+      } else {
+        setDbServiceInitialized(true);
+      }
       return;
     }
-    setFirebaseAuthInitialized(true); 
+    setAuthServiceInitialized(true); 
+    if (!dbService) {
+        console.warn("AuthContext: Firestore service instance is null. User profile enhancement from DB will not occur.");
+        setDbServiceInitialized(false);
+    } else {
+        setDbServiceInitialized(true);
+    }
+
 
     const unsubscribe = onAuthStateChanged(authService, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
         if (!dbService) {
-          console.error("AuthContext: Firestore service is null. Cannot fetch user profile for UID:", fbUser.uid);
-          setUser({ // Set a basic profile if DB is unavailable
+          console.warn("AuthContext: Firestore is not available. Using basic profile for UID:", fbUser.uid);
+          setUser({ 
             uid: fbUser.uid,
             email: fbUser.email,
             displayName: fbUser.displayName || fbUser.email?.split('@')[0] || "User",
             photoURL: fbUser.photoURL,
-            role: "student", // Default role
+            role: "student", 
             isEmailVerified: fbUser.emailVerified,
           });
           setLoading(false);
@@ -85,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               isEmailVerified: fbUser.emailVerified,
             });
           } else {
-            console.warn(`AuthContext: User document not found in Firestore for UID: ${fbUser.uid}. Using basic auth profile.`);
+            console.warn(`AuthContext: User document not found in Firestore for UID: ${fbUser.uid}. Using basic auth profile, will attempt to create one if it's a new registration scenario.`);
             const basicProfile: UserProfile = {
               uid: fbUser.uid,
               email: fbUser.email,
@@ -97,16 +117,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               isEmailVerified: fbUser.emailVerified,
             };
             setUser(basicProfile);
+            // Optionally, attempt to create the document if it's truly a new user and this is part of registration flow.
+            // For now, just sets a basic profile. Creation should happen during registration form submission.
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error("AuthContext: Error fetching user profile from Firestore:", error);
-          setUser({
+           let profileFetchError = "Could not load your profile information.";
+          if (error.code === 'permission-denied') {
+            profileFetchError = "Failed to load profile due to permission issues. Please check Firestore rules or contact support.";
+          }
+          setUser({ // Fallback to basic auth user info
             uid: fbUser.uid,
             email: fbUser.email,
             displayName: fbUser.displayName,
             photoURL: fbUser.photoURL,
             isEmailVerified: fbUser.emailVerified,
           });
+          // Potentially set a global error state or toast here for the profile fetch failure
+           console.error("AuthContext - Profile Fetch Error:", profileFetchError);
         }
       } else {
         setUser(null);
@@ -115,9 +143,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [authService, dbService]); // Add authService and dbService to dependencies
+  }, [authService, dbService, initializationError]); 
 
-  if (!firebaseAuthInitialized && loading) { 
+  if (!authServiceInitialized && loading) { 
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
         <Skeleton className="h-12 w-1/2 mb-4" />
@@ -127,22 +155,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   }
   
-  if (!firebaseAuthInitialized && !loading) {
+  if (initializationError) {
      return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 text-center">
         <AlertTriangle className="h-16 w-16 text-destructive mb-4" />
-        <h1 className="text-2xl font-bold text-destructive">Authentication Service Error</h1>
+        <h1 className="text-2xl font-bold text-destructive">Service Initialization Error</h1>
         <p className="text-muted-foreground mt-2 max-w-md">
-          The application could not initialize authentication services. This might be due to a configuration issue or network problem. Please contact support or try refreshing the page.
-        </p>
-         <p className="text-xs text-muted-foreground mt-2">
-          (Technical detail: Firebase Auth service from getAuthInstance() was null.)
+          {initializationError}
         </p>
       </div>
     );
   }
   
-  if (loading) { // Auth service is initialized, but user state is still loading
+  if (loading) {
      return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
         <Skeleton className="h-12 w-1/2 mb-4" />
@@ -153,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, setUser, firebaseAuthInitialized }}>
+    <AuthContext.Provider value={{ user, loading, setUser, firebaseAuthInitialized: authServiceInitialized }}>
       {children}
     </AuthContext.Provider>
   );
@@ -166,3 +191,4 @@ export function useAuth(): AuthContextType {
   }
   return context;
 }
+
