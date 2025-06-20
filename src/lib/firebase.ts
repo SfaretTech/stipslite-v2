@@ -1,12 +1,17 @@
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
+// Changed from "firebase/auth" to "@firebase/auth"
+import { getAuth, type Auth } from "@firebase/auth"; 
 import { getFirestore, type Firestore } from "firebase/firestore";
 // import { getStorage, type FirebaseStorage } from "firebase/storage";
 // import { getFunctions, type Functions } from "firebase/functions";
 
 // Helper for logging config to avoid repeating JSON.stringify with replacer
-const replacer = (key: string, value: any) => value === undefined ? "ENV_VAR_OR_CONFIG_VALUE_UNDEFINED" : value;
+const replacer = (key: string, value: any) => {
+  if (value === undefined) return "ENV_VAR_OR_CONFIG_VALUE_UNDEFINED";
+  if (value === null) return "CONFIG_VALUE_NULL"; // Differentiate from undefined
+  return value;
+};
 
 // 1. Read environment variables ONCE at the module scope.
 const firebaseConfigValues = {
@@ -19,11 +24,13 @@ const firebaseConfigValues = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+const errorContextGlobal = typeof window === 'undefined' ? "SERVER-SIDE" : "CLIENT-SIDE";
+
 // Client-side specific logging for the raw values read from process.env
 if (typeof window !== 'undefined') {
   console.log("CLIENT-SIDE: Raw Firebase Config Values from process.env:", JSON.stringify(firebaseConfigValues, replacer, 2));
 } else {
-  console.log("SERVER-SIDE: Raw Firebase Config Values from process.env:", JSON.stringify(firebaseConfigValues, replacer, 2));
+  // console.log("SERVER-SIDE: Raw Firebase Config Values from process.env:", JSON.stringify(firebaseConfigValues, replacer, 2));
 }
 
 // 2. Perform validation ONCE and IMMEDIATELY.
@@ -46,13 +53,12 @@ if (missingKeysMessages.length > 0) {
   const errorMessage = `Firebase configuration error: The following required environment variables are missing, empty, or invalid placeholders (e.g., "null", "undefined"): ${missingKeysMessages.join(", ")}. Please ensure they are set correctly in your .env.local file (or hosting provider's settings) and that the server/build process has been restarted/re-run.`;
   const currentConfigForError = JSON.stringify(firebaseConfigValues, (key, value) => value === undefined ? "ENV_VAR_UNDEFINED_AT_ERROR" : value, 2);
   
-  const errorContextLog = typeof window === 'undefined' ? "SERVER-SIDE" : "CLIENT-SIDE";
-  console.error(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ${errorContextLog} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
-  console.error(`!!! FIREBASE CONFIGURATION ERROR !!! (${errorContextLog})`);
+  console.error(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ${errorContextGlobal} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
+  console.error(`!!! FIREBASE CONFIGURATION ERROR !!! (${errorContextGlobal})`);
   console.error(errorMessage);
-  console.error(`Current firebaseConfigValues that failed validation (${errorContextLog}):`, currentConfigForError);
-  console.error(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ${errorContextLog} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
-  throw new Error(errorMessage);
+  console.error(`Current firebaseConfigValues that failed validation (${errorContextGlobal}):`, currentConfigForError);
+  console.error(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ${errorContextGlobal} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
+  throw new Error(errorMessage); // This will halt execution if config is bad
 }
 
 // 3. Construct the final config object ONCE.
@@ -73,56 +79,64 @@ let dbInstance: Firestore | null = null;
 // let storageInstance: FirebaseStorage | null = null; // Uncomment if used
 // let functionsInstance: Functions | null = null; // Uncomment if used
 
-const errorContext = typeof window === 'undefined' ? "SERVER-SIDE" : "CLIENT-SIDE";
 
-try {
-  if (!getApps().length) {
-    console.log(`${errorContext}: Initializing Firebase for the first time with effective config:`, JSON.stringify(firebaseConfig, replacer, 2));
-    app = initializeApp(firebaseConfig);
-    console.log(`${errorContext}: Firebase app initialized (first time). Name:`, app.name);
-  } else {
-    app = getApp();
-    console.log(`${errorContext}: Retrieving existing Firebase app. Name:`, app.name);
-  }
-
-  // Attempt to initialize Auth only if authDomain is plausible
-  if (firebaseConfig.authDomain && firebaseConfig.authDomain.includes('.') && firebaseConfig.authDomain.length > 3) {
-    try {
-      authInstance = getAuth(app);
-      console.log(`${errorContext}: Firebase Auth service obtained.`);
-    } catch (e) {
-      console.error(`${errorContext}: Firebase Auth initialization FAILED. Config used for app:`, JSON.stringify(app.options, replacer, 2), "Error:", e);
-    }
-  } else {
-    console.error(`${errorContext}: Firebase Auth initialization SKIPPED due to invalid or missing authDomain in effective config:`, firebaseConfig.authDomain);
-  }
-
-  // Attempt to initialize Firestore
-  try {
-    dbInstance = getFirestore(app);
-    console.log(`${errorContext}: Firebase Firestore service obtained.`);
-  } catch (e) {
-    console.error(`${errorContext}: Firebase Firestore initialization FAILED. Config used for app:`, JSON.stringify(app.options, replacer, 2), "Error:", e);
-  }
-
-  // Initialize other services similarly if needed
-  // try {
-  //   storageInstance = getStorage(app);
-  //   console.log(`${errorContext}: Firebase Storage service obtained.`);
-  // } catch (e) {
-  //    console.error(`${errorContext}: Firebase Storage initialization FAILED. Error:`, e);
-  // }
-
-} catch (e) {
-  console.error(`${errorContext}: Firebase App main initialization FAILED. Effective config used:`, JSON.stringify(firebaseConfig, replacer, 2));
-  console.error(`${errorContext}: Full error during app initialization:`, e);
-  // If app itself fails to initialize, re-throw. Services failing might be recoverable by the app.
-  // However, auth is critical for AuthContext.
-  throw e; 
+if (!getApps().length) {
+  console.log(`${errorContextGlobal}: Effective firebaseConfig for initializeApp:`, JSON.stringify(firebaseConfig, replacer, 2));
+  app = initializeApp(firebaseConfig);
+  console.log(`${errorContextGlobal}: Firebase app initialized (first time). Name:`, app.name, "Options:", JSON.stringify(app.options, replacer, 2));
+} else {
+  app = getApp();
+  console.log(`${errorContextGlobal}: Retrieving existing Firebase app. Name:`, app.name, "Options:", JSON.stringify(app.options, replacer, 2));
 }
 
-export const firebaseApp = app; // Export the app instance
+if (typeof window !== 'undefined') { // Client-side
+  console.log("CLIENT-SIDE: Firebase app object before service init:", app ? { name: app.name, options: app.options } : "App object not available");
+  if (app && firebaseConfig.authDomain && firebaseConfig.authDomain.includes('.') && firebaseConfig.authDomain !== "ENV_VAR_OR_CONFIG_VALUE_UNDEFINED") {
+    try {
+      authInstance = getAuth(app);
+      console.log("CLIENT-SIDE: Firebase Auth service obtained.");
+    } catch (e) {
+      console.error(`CLIENT-SIDE: Firebase Auth initialization FAILED. App Name: ${app?.name}. App Options:`, JSON.stringify(app?.options, replacer, 2), "Error:", e);
+      authInstance = null;
+    }
+  } else {
+    console.error("CLIENT-SIDE: Firebase Auth initialization SKIPPED due to invalid or missing authDomain. Auth Domain:", firebaseConfig.authDomain);
+    authInstance = null;
+  }
+
+  try {
+    dbInstance = getFirestore(app);
+    console.log("CLIENT-SIDE: Firebase Firestore service obtained.");
+  } catch (e) {
+    console.error("CLIENT-SIDE: Firebase Firestore initialization FAILED. Error:", e);
+    dbInstance = null;
+  }
+} else { // Server-side
+  if (app && firebaseConfig.authDomain && firebaseConfig.authDomain.includes('.') && firebaseConfig.authDomain !== "ENV_VAR_OR_CONFIG_VALUE_UNDEFINED") {
+    try {
+      authInstance = getAuth(app);
+      console.log("SERVER-SIDE: Firebase Auth service obtained.");
+    } catch (e) {
+      console.error("SERVER-SIDE: Firebase Auth initialization FAILED. Error:", e);
+      authInstance = null;
+    }
+  } else {
+    console.error("SERVER-SIDE: Firebase Auth initialization SKIPPED due to invalid or missing authDomain. Auth Domain:", firebaseConfig.authDomain);
+    authInstance = null;
+  }
+
+  try {
+    dbInstance = getFirestore(app);
+    console.log("SERVER-SIDE: Firebase Firestore service obtained.");
+  } catch (e) {
+    console.error("SERVER-SIDE: Firebase Firestore initialization FAILED. Error:", e);
+    dbInstance = null;
+  }
+}
+
+export const firebaseApp = app;
 export const auth = authInstance;
 export const db = dbInstance;
 // export const storage = storageInstance;
 // export const functions = functionsInstance;
+
