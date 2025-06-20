@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getDbInstance } from "@/lib/firebase"; 
-import { collection, query, where, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, Timestamp, FirebaseError } from "firebase/firestore"; // Added FirebaseError
 import { format } from "date-fns";
 
 type StudentTaskStatus = 
@@ -122,14 +122,16 @@ export function TaskList() {
       });
       setTasks(fetchedTasks);
       setIsLoading(false);
-    }, (err: any) => { // Explicitly type err as any or FirebaseError
+    }, (err: FirebaseError | any) => { 
       console.error("Error fetching tasks:", err);
       let description = "Could not fetch tasks. Please try again later.";
       if (err.code === 'permission-denied') {
-        description = "Failed to fetch tasks due to Firestore permission issues. Please check your security rules in the Firebase console. For development, you might need to allow reads to the 'tasks' collection for authenticated users.";
+        description = "Failed to fetch tasks due to Firestore permission issues. Please check your security rules in the Firebase console.";
+      } else if (err.code === 'failed-precondition' && err.message?.toLowerCase().includes('index')) {
+        description = "The query for fetching tasks requires a Firestore index that hasn't been created yet. Please check the Firebase console for a link to create the required index, or see the error details in your browser console for the link. It usually looks like 'https://console.firebase.google.com/project/.../firestore/indexes?create_composite=...'";
       }
       setError(description);
-      toast({ title: "Error Loading Tasks", description: description, variant: "destructive" });
+      toast({ title: "Error Loading Tasks", description: description, variant: "destructive", duration: 10000 });
       setIsLoading(false);
     });
 
