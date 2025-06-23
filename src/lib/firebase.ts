@@ -1,14 +1,14 @@
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+// Explicitly import the services we will need.
+// This ensures their side-effects (component registration) run when this module is loaded.
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
-// Side-effect only imports are now handled in the RootLayout to ensure client-side execution.
-
 // --- Singleton instances for services ---
 let app: FirebaseApp | null = null;
-let auth: Auth | null = null;
-let db: Firestore | null = null;
+let authInstance: Auth | null = null;
+let dbInstance: Firestore | null = null;
 
 const getFirebaseApp = (): FirebaseApp | null => {
   // If the app is already initialized, return it.
@@ -72,15 +72,15 @@ const getFirebaseApp = (): FirebaseApp | null => {
 
 // Getter function for Auth
 export function getAuthInstance(): Auth | null {
-  if (auth) {
-    return auth;
+  if (authInstance) {
+    return authInstance;
   }
   
   const firebaseApp = getFirebaseApp();
   if (firebaseApp) {
     try {
-        auth = getAuth(firebaseApp);
-        return auth;
+        authInstance = getAuth(firebaseApp);
+        return authInstance;
     } catch (e) {
         console.error("Failed to get Firebase Auth instance:", e);
         return null;
@@ -91,15 +91,15 @@ export function getAuthInstance(): Auth | null {
 
 // Getter function for Firestore
 export function getDbInstance(): Firestore | null {
-  if (db) {
-    return db;
+  if (dbInstance) {
+    return dbInstance;
   }
   
   const firebaseApp = getFirebaseApp();
   if (firebaseApp) {
     try {
-      db = getFirestore(firebaseApp);
-      return db;
+      dbInstance = getFirestore(firebaseApp);
+      return dbInstance;
     } catch(e) {
        console.error("Failed to get Firebase DB instance:", e);
        return null;

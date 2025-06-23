@@ -1,10 +1,6 @@
 
 "use client"; // Required for client-side side-effect imports
 
-// Side-effect only imports to ensure Firebase services are registered client-side
-import "firebase/auth";
-import "firebase/firestore";
-
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/context/AuthContext"; 
