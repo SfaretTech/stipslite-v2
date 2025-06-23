@@ -3,9 +3,7 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
-// Side-effect only imports to ensure modules are registered
-import "firebase/auth";
-import "firebase/firestore";
+// Side-effect only imports are now handled in the RootLayout to ensure client-side execution.
 
 // --- Singleton instances for services ---
 let app: FirebaseApp | null = null;
@@ -31,20 +29,22 @@ const getFirebaseApp = (): FirebaseApp | null => {
 
   // Perform validation.
   const requiredKeys: (keyof typeof firebaseConfigValues)[] = ["apiKey", "authDomain", "projectId"];
-  const missingKeys: string[] = [];
+  const missingKeysMessages: string[] = [];
   for (const key of requiredKeys) {
     const value = firebaseConfigValues[key];
-    if (!value || String(value).trim() === "") {
-        missingKeys.push(`NEXT_PUBLIC_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`);
+    if (!value || String(value).trim() === "" || value.startsWith("NEXT_PUBLIC_")) {
+        missingKeysMessages.push(`NEXT_PUBLIC_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`);
     }
   }
 
   // If keys are missing, log a clear error and return null.
-  if (missingKeys.length > 0) {
-    const context = typeof window === 'undefined' ? "SERVER-SIDE" : "CLIENT-SIDE";
-    console.error(
-        `Firebase Init Error (${context}): The following required environment variables are missing or empty: ${missingKeys.join(", ")}. Please create a .env file and set them correctly. Your app will run, but Firebase services will be disabled.`
-    );
+  if (missingKeysMessages.length > 0) {
+    const errorContextGlobal = typeof window === 'undefined' ? "SERVER-SIDE" : "CLIENT-SIDE";
+    const errorMessage = `Firebase configuration error (${errorContextGlobal}): The following required environment variables are missing, empty, or invalid placeholders: ${missingKeysMessages.join(", ")}. Please ensure they are set correctly.`;
+    
+    // Instead of throwing, log the error and return null.
+    // This allows the app to run without crashing, albeit with Firebase features disabled.
+    console.error(errorMessage);
     return null;
   }
   
