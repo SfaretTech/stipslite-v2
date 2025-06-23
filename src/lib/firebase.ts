@@ -1,7 +1,9 @@
 
+// Side-effect import to ensure the auth component is registered before use.
+import "firebase/auth";
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 // Explicitly import the services we will need.
-// This ensures their side-effects (component registration) run when this module is loaded.
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
