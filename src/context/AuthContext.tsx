@@ -4,7 +4,7 @@
 import type { User as FirebaseUser } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import type { Dispatch, ReactNode, SetStateAction} from "react";
-import { createContext, useContext, useEffect, useState, useMemo } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 // Import the getter functions instead of direct instances
 import { getAuthInstance, getDbInstance } from "@/lib/firebase"; 
 import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
@@ -39,43 +39,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authServiceInitialized, setAuthServiceInitialized] = useState(false);
-  const [dbServiceInitialized, setDbServiceInitialized] = useState(false);
+  const [firebaseAuthInitialized, setFirebaseAuthInitialized] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
 
-
-  const authService = useMemo(() => getAuthInstance(), []);
-  const dbService = useMemo(() => getDbInstance(), []);
-
-
   useEffect(() => {
-    if (!authService) { 
-      console.error("AuthContext: Firebase Auth service instance is null. Auth will not function.");
-      setAuthServiceInitialized(false);
-      setInitializationError("Authentication service could not be initialized. Please contact support or try again later.");
+    // Get instances inside useEffect to ensure this runs client-side after mount
+    const authService = getAuthInstance();
+    const dbService = getDbInstance();
+
+    if (!authService) {
+      setInitializationError("Authentication service could not be initialized. Please check your environment variables or contact support.");
       setLoading(false);
-      // DB service check is independent
-      if (!dbService) {
-        console.error("AuthContext: Firestore service instance is null. Database operations will not function.");
-        setDbServiceInitialized(false);
-        // If auth also failed, the auth error is more critical for initial loading state
-        if (!initializationError) {
-          setInitializationError("Database service could not be initialized. Some features may be unavailable.");
-        }
-      } else {
-        setDbServiceInitialized(true);
-      }
       return;
     }
-    setAuthServiceInitialized(true); 
-    if (!dbService) {
-        console.warn("AuthContext: Firestore service instance is null. User profile enhancement from DB will not occur.");
-        setDbServiceInitialized(false);
-    } else {
-        setDbServiceInitialized(true);
-    }
-
-
+    setFirebaseAuthInitialized(true);
+    
     const unsubscribe = onAuthStateChanged(authService, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
         if (!dbService) {
@@ -91,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoading(false);
           return;
         }
+
         const userRef = doc(dbService, "users", fbUser.uid);
         try {
           const docSnap = await getDoc(userRef);
@@ -105,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               isEmailVerified: fbUser.emailVerified,
             });
           } else {
-            console.warn(`AuthContext: User document not found in Firestore for UID: ${fbUser.uid}. Using basic auth profile, will attempt to create one if it's a new registration scenario.`);
+            console.warn(`AuthContext: User document not found in Firestore for UID: ${fbUser.uid}. This may happen for new registrations before the document is created.`);
             const basicProfile: UserProfile = {
               uid: fbUser.uid,
               email: fbUser.email,
@@ -117,8 +96,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               isEmailVerified: fbUser.emailVerified,
             };
             setUser(basicProfile);
-            // Optionally, attempt to create the document if it's truly a new user and this is part of registration flow.
-            // For now, just sets a basic profile. Creation should happen during registration form submission.
           }
         } catch (error: any) {
           console.error("AuthContext: Error fetching user profile from Firestore:", error);
@@ -133,7 +110,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             photoURL: fbUser.photoURL,
             isEmailVerified: fbUser.emailVerified,
           });
-          // Potentially set a global error state or toast here for the profile fetch failure
            console.error("AuthContext - Profile Fetch Error:", profileFetchError);
         }
       } else {
@@ -143,18 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [authService, dbService, initializationError]); 
+  }, []); // Empty dependency array ensures this runs once on mount.
 
-  if (!authServiceInitialized && loading) { 
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-        <Skeleton className="h-12 w-1/2 mb-4" />
-        <Skeleton className="h-8 w-1/3" />
-        <p className="text-sm text-muted-foreground mt-2">Initializing authentication...</p>
-      </div>
-    );
-  }
-  
   if (initializationError) {
      return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 text-center">
@@ -178,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, setUser, firebaseAuthInitialized: authServiceInitialized }}>
+    <AuthContext.Provider value={{ user, loading, setUser, firebaseAuthInitialized }}>
       {children}
     </AuthContext.Provider>
   );
@@ -191,4 +157,3 @@ export function useAuth(): AuthContextType {
   }
   return context;
 }
-
