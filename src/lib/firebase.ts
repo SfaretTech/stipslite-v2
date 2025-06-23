@@ -7,11 +7,12 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 
 // --- Singleton instances for services ---
 let app: FirebaseApp | null = null;
-let authInstance: Auth | null = null;
-let dbInstance: Firestore | null = null;
+let auth: Auth | null = null;
+let db: Firestore | null = null;
 
-const getFirebaseApp = (): FirebaseApp | null => {
-  // If the app is already initialized, return it.
+// Centralized initialization function that runs only once.
+const initializeFirebase = (): FirebaseApp | null => {
+  // If the app is already initialized, return it to prevent re-initialization.
   if (app) {
     return app;
   }
@@ -42,13 +43,10 @@ const getFirebaseApp = (): FirebaseApp | null => {
     const errorContextGlobal = typeof window === 'undefined' ? "SERVER-SIDE" : "CLIENT-SIDE";
     const errorMessage = `Firebase configuration error (${errorContextGlobal}): The following required environment variables are missing, empty, or invalid placeholders: ${missingKeysMessages.join(", ")}. Please ensure they are set correctly.`;
     
-    // Instead of throwing, log the error and return null.
-    // This allows the app to run without crashing, albeit with Firebase features disabled.
     console.error(errorMessage);
     return null;
   }
   
-  // Construct the final config object.
   const firebaseConfig = {
     apiKey: firebaseConfigValues.apiKey!,
     authDomain: firebaseConfigValues.authDomain!,
@@ -66,44 +64,30 @@ const getFirebaseApp = (): FirebaseApp | null => {
     app = getApp();
   }
   
+  // Eagerly initialize services right after app is available.
+  try {
+    auth = getAuth(app);
+  } catch (e) {
+    console.error("Failed to initialize Firebase Auth immediately:", e);
+  }
+
+  try {
+    db = getFirestore(app);
+  } catch(e) {
+    console.error("Failed to initialize Firebase Firestore immediately:", e);
+  }
+  
   return app;
 }
 
-
-// Getter function for Auth
+// Getter function for Auth. It ensures initialization has run, then returns the instance.
 export function getAuthInstance(): Auth | null {
-  if (authInstance) {
-    return authInstance;
-  }
-  
-  const firebaseApp = getFirebaseApp();
-  if (firebaseApp) {
-    try {
-        authInstance = getAuth(firebaseApp);
-        return authInstance;
-    } catch (e) {
-        console.error("Failed to get Firebase Auth instance:", e);
-        return null;
-    }
-  }
-  return null;
+  initializeFirebase();
+  return auth;
 }
 
-// Getter function for Firestore
+// Getter function for Firestore. It ensures initialization has run, then returns the instance.
 export function getDbInstance(): Firestore | null {
-  if (dbInstance) {
-    return dbInstance;
-  }
-  
-  const firebaseApp = getFirebaseApp();
-  if (firebaseApp) {
-    try {
-      dbInstance = getFirestore(firebaseApp);
-      return dbInstance;
-    } catch(e) {
-       console.error("Failed to get Firebase DB instance:", e);
-       return null;
-    }
-  }
-  return null;
+  initializeFirebase();
+  return db;
 }
