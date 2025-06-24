@@ -5,8 +5,7 @@ import type { User as FirebaseUser } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import type { Dispatch, ReactNode, SetStateAction} from "react";
 import { createContext, useContext, useEffect, useState } from "react";
-// Import the getter functions instead of direct instances
-import { getAuthInstance, getDbInstance } from "@/lib/firebase"; 
+import { auth, db } from "@/lib/firebase"; // Import direct instances
 import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle } from "lucide-react";
@@ -43,20 +42,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initializationError, setInitializationError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get instances inside useEffect to ensure this runs client-side after mount
-    const authService = getAuthInstance();
-    const dbService = getDbInstance();
-
-    if (!authService) {
+    if (!auth) {
       setInitializationError("Authentication service could not be initialized. Please check your environment variables or contact support.");
       setLoading(false);
+      setFirebaseAuthInitialized(false);
       return;
     }
     setFirebaseAuthInitialized(true);
     
-    const unsubscribe = onAuthStateChanged(authService, async (fbUser: FirebaseUser | null) => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
-        if (!dbService) {
+        if (!db) {
           console.warn("AuthContext: Firestore is not available. Using basic profile for UID:", fbUser.uid);
           setUser({ 
             uid: fbUser.uid,
@@ -70,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const userRef = doc(dbService, "users", fbUser.uid);
+        const userRef = doc(db, "users", fbUser.uid);
         try {
           const docSnap = await getDoc(userRef);
           if (docSnap.exists()) {

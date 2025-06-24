@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react"; 
-import { getDbInstance } from "@/lib/firebase"; // Import getter
+import { db } from "@/lib/firebase"; 
 import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
 import { Loader2 } from "lucide-react"; 
 
@@ -39,7 +39,6 @@ export function PrintCenterRegisterForm() {
     const servicesInput = formData.get("pc-services") as string;
     const services = servicesInput ? servicesInput.split(',').map(s => s.trim()).filter(s => s) : [];
 
-    const db = getDbInstance();
     if (!db) {
       toast({
         title: "Database Error",

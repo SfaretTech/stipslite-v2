@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react"; 
-import { getDbInstance } from "@/lib/firebase"; // Import getter
+import { db } from "@/lib/firebase"; 
 import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
 import { Loader2 } from "lucide-react"; 
 
@@ -38,7 +38,6 @@ export function VaRegisterForm() {
     const skills = skillsInput ? skillsInput.split(',').map(s => s.trim()).filter(s => s) : [];
     const displayName = `${firstName.trim()} ${lastName.trim()}`;
 
-    const db = getDbInstance();
     if (!db) {
       toast({
         title: "Database Error",

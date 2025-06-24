@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth, type UserProfile } from "@/context/AuthContext"; 
 import { useState, useEffect } from "react";
 import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore"; 
-import { getDbInstance } from "@/lib/firebase"; // Import getter
+import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function UserProfileForm() {
@@ -53,7 +53,7 @@ export function UserProfileForm() {
     }
 
     setIsLoading(true);
-    const db = getDbInstance();
+
     if (!db) {
       toast({
         title: "Database Error",

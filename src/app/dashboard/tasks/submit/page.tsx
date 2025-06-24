@@ -42,7 +42,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { getDbInstance } from "@/lib/firebase"; 
+import { db } from "@/lib/firebase"; 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { PageHeader } from "@/components/shared/PageHeader";
 
@@ -334,7 +334,6 @@ export default function SubmitTaskPage() {
     }
     
     setIsLoading(true);
-    const db = getDbInstance();
     if (!db) {
       toast({
         title: "Database Error",
@@ -558,4 +557,3 @@ export default function SubmitTaskPage() {
     </>
   );
 }
-

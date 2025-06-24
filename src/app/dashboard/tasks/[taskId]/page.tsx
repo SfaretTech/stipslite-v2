@@ -11,7 +11,7 @@ import { ArrowLeft, Edit, MessageSquare, Paperclip, DollarSign, CheckCircle, Clo
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { getDbInstance } from "@/lib/firebase"; // Import getter
+import { db } from "@/lib/firebase"; 
 import { doc, onSnapshot, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 
@@ -83,7 +83,6 @@ export default function TaskDetailPage() {
 
     setIsLoading(true);
     setError(null);
-    const db = getDbInstance();
     if (!db) {
         setError("Database service is not available.");
         toast({ title: "Error", description: "Database service not available.", variant: "destructive" });
@@ -141,7 +140,6 @@ export default function TaskDetailPage() {
   const updateTaskStatusInFirestore = async (newStatus: TaskStatusStudent, updates: Record<string, any> = {}) => {
     if (!task) return;
     setIsUpdating(true);
-    const db = getDbInstance();
     if (!db) {
       toast({ title: "Database Error", description: "Firestore service is not available for update.", variant: "destructive" });
       setIsUpdating(false);

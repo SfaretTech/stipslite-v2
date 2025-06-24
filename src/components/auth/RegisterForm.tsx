@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { getAuthInstance, getDbInstance } from "@/lib/firebase"; // Import getters
+import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, type FirebaseError, updateProfile } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
 import { Loader2 } from "lucide-react";
@@ -42,9 +42,6 @@ export function RegisterForm() {
       return;
     }
     setIsLoading(true);
-
-    const auth = getAuthInstance();
-    const db = getDbInstance();
 
     if (!auth || !db) {
       toast({

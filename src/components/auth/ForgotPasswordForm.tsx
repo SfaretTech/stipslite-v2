@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { getAuthInstance } from "@/lib/firebase"; // Import getter
+import { auth } from "@/lib/firebase";
 import { sendPasswordResetEmail, type FirebaseError } from "firebase/auth";
 import { Loader2 } from "lucide-react";
 
@@ -22,7 +22,6 @@ export function ForgotPasswordForm() {
     event.preventDefault();
     setIsLoading(true);
 
-    const auth = getAuthInstance();
     if (!auth) {
       toast({
         title: "Authentication Error",

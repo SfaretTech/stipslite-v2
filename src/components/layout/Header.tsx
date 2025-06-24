@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area"; 
 import { cn } from "@/lib/utils"; 
 import { useAuth } from "@/context/AuthContext"; // Import useAuth
-import { getAuthInstance } from "@/lib/firebase"; // Changed from 'auth' to 'getAuthInstance'
+import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -139,8 +139,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
   const unreadNotificationsCount = currentNotifications.filter(n => !n.read).length;
 
   const handleLogout = async () => {
-    const authService = getAuthInstance(); // Use the getter
-    if (!authService) {
+    if (!auth) {
       toast({
         title: "Logout Failed",
         description: "Authentication service is not available.",
@@ -149,7 +148,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
       return;
     }
     try {
-      await signOut(authService);
+      await signOut(auth);
       
       const appropriateLogoutLink = role === "admin" ? "/admin/login" 
                                  : role === "va" ? "/va/login"
@@ -296,7 +295,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
                     <span>Referral Settings</span>
                 </Link>
                 </DropdownMenuItem>
-            )}
+             )}
              {user && role !== 'admin' && (
                 <DropdownMenuItem asChild>
                 <Link href={supportLink}>

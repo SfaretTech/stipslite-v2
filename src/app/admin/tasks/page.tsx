@@ -43,7 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { getDbInstance } from "@/lib/firebase"; // Import getter
+import { db } from "@/lib/firebase"; 
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 
@@ -134,7 +134,6 @@ export default function AdminTasksPage() {
   useEffect(() => {
     setIsLoading(true);
     setFetchError(null);
-    const db = getDbInstance();
     if (!db) {
         setFetchError("Database service is not available.");
         toast({ title: "Error", description: "Database service not available.", variant: "destructive" });
@@ -220,7 +219,6 @@ export default function AdminTasksPage() {
   };
 
   const updateTaskInFirestore = async (taskId: string, updates: Partial<AdminTask>): Promise<boolean> => { 
-    const db = getDbInstance();
     if (!db) {
       toast({ title: "Database Error", description: "Firestore service is not available for update.", variant: "destructive" });
       return false;

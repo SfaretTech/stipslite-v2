@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation"; 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { getDbInstance } from "@/lib/firebase"; 
+import { db } from "@/lib/firebase"; 
 import { collection, query, where, orderBy, onSnapshot, Timestamp, FirebaseError } from "firebase/firestore"; // Added FirebaseError
 import { format } from "date-fns";
 
@@ -24,7 +24,7 @@ type StudentTaskStatus =
   | "In Progress" 
   | "Completed" 
   | "Rejected"
-  | "Quote Rejected";
+  | "Quote Rejected"; 
 
 interface TaskListItem {
   id: string; 
@@ -73,7 +73,6 @@ export function TaskList() {
       return;
     }
 
-    const db = getDbInstance();
     if (!db) {
       setError("Database service is not available. Cannot fetch tasks.");
       toast({ title: "Error", description: "Database service not available.", variant: "destructive" });
@@ -279,4 +278,3 @@ export function TaskList() {
     </Card>
   );
 }
-
