@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area"; 
 import { cn } from "@/lib/utils"; 
 import { useAuth } from "@/context/AuthContext"; // Import useAuth
-import { auth } from "@/lib/firebase";
+import { auth } from "../../lib/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";

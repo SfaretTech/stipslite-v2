@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { auth } from "@/lib/firebase";
+import { auth } from "../../lib/firebase";
 import { sendPasswordResetEmail, type FirebaseError } from "firebase/auth";
 import { Loader2 } from "lucide-react";
 

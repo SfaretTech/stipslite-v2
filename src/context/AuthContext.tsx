@@ -5,7 +5,7 @@ import type { User as FirebaseUser } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import type { Dispatch, ReactNode, SetStateAction} from "react";
 import { createContext, useContext, useEffect, useState } from "react";
-import { auth, db } from "@/lib/firebase"; // Import direct instances
+import { auth, db } from "../lib/firebase"; // Directly import the initialized services
 import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle } from "lucide-react";
@@ -30,7 +30,6 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   setUser: Dispatch<SetStateAction<UserProfile | null>>;
-  firebaseAuthInitialized: boolean; 
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,34 +37,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [firebaseAuthInitialized, setFirebaseAuthInitialized] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!auth) {
-      setInitializationError("Authentication service could not be initialized. Please check your environment variables or contact support.");
-      setLoading(false);
-      setFirebaseAuthInitialized(false);
-      return;
+    // The check for auth and db is now primarily a safeguard.
+    // The firebase.ts module, marked with "use client", handles initialization.
+    if (!auth || !db) {
+        setInitializationError("Firebase services failed to initialize. Please check your environment variables or contact support.");
+        setLoading(false);
+        return;
     }
-    setFirebaseAuthInitialized(true);
     
     const unsubscribe = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
-        if (!db) {
-          console.warn("AuthContext: Firestore is not available. Using basic profile for UID:", fbUser.uid);
-          setUser({ 
-            uid: fbUser.uid,
-            email: fbUser.email,
-            displayName: fbUser.displayName || fbUser.email?.split('@')[0] || "User",
-            photoURL: fbUser.photoURL,
-            role: "student", 
-            isEmailVerified: fbUser.emailVerified,
-          });
-          setLoading(false);
-          return;
-        }
-
         const userRef = doc(db, "users", fbUser.uid);
         try {
           const docSnap = await getDoc(userRef);
@@ -95,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } catch (error: any) {
           console.error("AuthContext: Error fetching user profile from Firestore:", error);
-           let profileFetchError = "Could not load your profile information.";
+          let profileFetchError = "Could not load your profile information.";
           if (error.code === 'permission-denied') {
             profileFetchError = "Failed to load profile due to permission issues. Please check Firestore rules or contact support.";
           }
@@ -115,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, []); // Empty dependency array ensures this runs once on mount.
+  }, []);
 
   if (initializationError) {
      return (
@@ -140,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, setUser, firebaseAuthInitialized }}>
+    <AuthContext.Provider value={{ user, loading, setUser }}>
       {children}
     </AuthContext.Provider>
   );

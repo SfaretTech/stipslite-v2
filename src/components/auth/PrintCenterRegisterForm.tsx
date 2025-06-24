@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react"; 
-import { db } from "@/lib/firebase"; 
+import { db } from "../../lib/firebase"; 
 import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
 import { Loader2 } from "lucide-react"; 
 
@@ -76,7 +76,7 @@ export function PrintCenterRegisterForm() {
         description: "Could not save Print Center details to the database. Please try again or contact support.",
         variant: "destructive",
       });
-      setIsLoading(false);
+      setIsLoading(false); 
     }
   };
 

@@ -152,6 +152,16 @@ export function TaskSubmissionForm() {
     }
     
     setIsLoading(true);
+    if (!db) {
+      toast({
+        title: "Database Error",
+        description: "Firestore service is not available. Please try again later.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
 
     let vaMessage = "";
     let taskData: any = {

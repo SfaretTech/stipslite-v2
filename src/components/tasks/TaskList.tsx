@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation"; 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase"; 
+import { db } from "../../lib/firebase"; 
 import { collection, query, where, orderBy, onSnapshot, Timestamp, FirebaseError } from "firebase/firestore"; // Added FirebaseError
 import { format } from "date-fns";
 

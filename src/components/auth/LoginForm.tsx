@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { auth } from "@/lib/firebase";
+import { auth } from "../../lib/firebase";
 import { signInWithEmailAndPassword, type FirebaseError } from "firebase/auth";
 import { Loader2 } from "lucide-react";
 

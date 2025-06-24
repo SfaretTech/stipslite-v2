@@ -1,8 +1,9 @@
 
+"use client"; // Ensures this module only runs on the client
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
-// Side-effect imports are not needed for modular v9+ SDK with getAuth/getFirestore
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,34 +14,16 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// This check ensures firebase is only initialized on the client side.
-let app: FirebaseApp | null = null;
-let auth: Auth | null = null;
-let db: Firestore | null = null;
+let app: FirebaseApp;
 
-if (typeof window !== 'undefined') {
-  if (getApps().length === 0) {
-    try {
-      app = initializeApp(firebaseConfig);
-    } catch (e) {
-      console.error("Failed to initialize Firebase App", e);
-    }
-  } else {
-    app = getApp();
-  }
-
-  if (app) {
-    try {
-      auth = getAuth(app);
-    } catch (e) {
-      console.error("Failed to initialize Firebase Auth", e);
-    }
-    try {
-      db = getFirestore(app);
-    } catch (e) {
-      console.error("Failed to initialize Firestore", e);
-    }
-  }
+// Check if Firebase has already been initialized
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
 }
+
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
 
 export { app, auth, db };

@@ -43,7 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { db } from "@/lib/firebase"; 
+import { db } from "../../../lib/firebase"; 
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 

@@ -11,7 +11,7 @@ import { ArrowLeft, Edit, MessageSquare, Paperclip, DollarSign, CheckCircle, Clo
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase"; 
+import { db } from "../../../../lib/firebase"; 
 import { doc, onSnapshot, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 
