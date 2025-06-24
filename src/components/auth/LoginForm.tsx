@@ -10,12 +10,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 
 export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
-  const { authInstance } = useAuth(); // We don't use it yet, but this is how we'd get it
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -24,19 +22,15 @@ export function LoginForm() {
     event.preventDefault();
     setIsLoading(true);
 
-    // In a real app, you would import `signInWithEmailAndPassword` from `firebase/auth`
-    // and use the `authInstance` from the context.
-    // e.g., await signInWithEmailAndPassword(authInstance, email, password);
-    console.log("Login attempt with:", { email, password });
+    // Simulate API call for login
+    console.log("Simulating login with:", { email, password });
     
-    // Simulate API call
     setTimeout(() => {
-      // For this simulation, we'll assume login is always successful.
-      // The onAuthStateChanged listener in AuthContext will handle the user state update.
       toast({
         title: "Login Successful (Simulated)",
         description: "Redirecting to your dashboard...",
       });
+      // This will rely on the mocked AuthContext to show the logged-in state
       router.push("/dashboard");
       setIsLoading(false);
     }, 1000);

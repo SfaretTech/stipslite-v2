@@ -10,12 +10,10 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 
 export function RegisterForm() {
   const router = useRouter();
   const { toast } = useToast();
-  const { authInstance } = useAuth(); // We don't use it yet, but this is how we'd get it
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -34,12 +32,9 @@ export function RegisterForm() {
     }
     setIsLoading(true);
 
-    // In a real app, you would import `createUserWithEmailAndPassword` from `firebase/auth`
-    // and use the `authInstance` from the context.
-    // e.g., const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
-    console.log("Registration attempt:", { firstName, lastName, email });
+    // Simulate registration API call
+    console.log("Simulating registration for:", { firstName, lastName, email });
 
-    // Simulate API call
     setTimeout(() => {
       toast({
         title: "Registration Submitted! (Simulated)",

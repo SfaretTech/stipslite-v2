@@ -3,8 +3,6 @@
 
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton"; // For loading state
 
 export default function DashboardLayout({
@@ -12,16 +10,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    // Note: Re-implement your auth protection logic here.
-    // Example:
-    // if (!loading && !user) {
-    //   router.replace("/auth/login");
-    // }
-  }, [user, loading, router]);
+  const { loading } = useAuth();
 
   if (loading) {
     // You can show a more sophisticated loading skeleton here
@@ -37,6 +26,7 @@ export default function DashboardLayout({
     );
   }
 
-  // Render children regardless of auth state for now, to allow re-implementation.
+  // The AuthProvider now handles the user state, so we can directly render the layout.
+  // The UI will update once the simulated auth check completes.
   return <AppLayout role="student">{children}</AppLayout>;
 }

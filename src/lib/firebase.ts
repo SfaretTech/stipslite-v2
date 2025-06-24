@@ -1,4 +1,3 @@
-// This file is deprecated.
-// The Firebase initialization logic has been moved directly into
-// src/context/AuthContext.tsx to resolve persistent build errors
-// related to module resolution in the Next.js App Router environment.
+// This file is intentionally left empty to resolve build errors.
+// Firebase initialization should be handled within a client-side component,
+// for example, inside a useEffect hook in `src/context/AuthContext.tsx`.

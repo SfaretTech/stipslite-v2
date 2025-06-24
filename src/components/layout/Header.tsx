@@ -58,7 +58,7 @@ const mockAdminNotifications = [
 
 export function Header({ role = "student" }: { role?: "student" | "admin" | "va" | "print-center" }) {
   const { isMobile } = useSidebar();
-  const { user } = useAuth(); // Get user from AuthContext
+  const { user, setUser } = useAuth(); // Get user from AuthContext
   const router = useRouter();
   const { toast } = useToast(); 
 
@@ -77,7 +77,6 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     userName = user.displayName || user.email?.split('@')[0] || "User";
     userEmail = user.email || "No email";
   }
-
 
   if (role === "va") {
     userName = user ? (user.displayName || user.email?.split('@')[0] || "VA User") : "VA User";
@@ -131,8 +130,8 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
   
   const unreadNotificationsCount = currentNotifications.filter(n => !n.read).length;
 
-  const handleLogout = async () => {
-    // TODO: Re-implement Firebase signOut logic here.
+  const handleLogout = () => {
+    setUser(null); // Clear user from context
     const appropriateLogoutLink = role === "admin" ? "/admin/login" 
                                : role === "va" ? "/va/login"
                                : role === "print-center" ? "/print-center/login"

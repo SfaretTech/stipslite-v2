@@ -15,8 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function UserProfileForm() {
   const { toast } = useToast();
-  // We get the auth instance from the context now, though it's not used in this simulated form
-  const { user, setUser: setAuthUser, authInstance, dbInstance } = useAuth(); 
+  const { user, setUser: setAuthUser, loading: authLoading } = useAuth(); 
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -24,21 +23,14 @@ export function UserProfileForm() {
   const [bio, setBio] = useState("");
   const [passportNumber, setPassportNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isProfileLoading, setIsProfileLoading] = useState(true);
-
 
   useEffect(() => {
     if (user) {
-      // In a real app, you'd fetch the full profile from Firestore using the dbInstance here.
-      // For now, using auth context data.
       setFirstName(user.firstName || "");
       setLastName(user.lastName || "");
       setPhoneNumber(user.phoneNumber || "");
       setBio(user.bio || "");
       setPassportNumber(user.passportNumber || "");
-      setIsProfileLoading(false);
-    } else {
-      setIsProfileLoading(false); 
     }
   }, [user]);
 
@@ -55,13 +47,11 @@ export function UserProfileForm() {
 
     setIsLoading(true);
 
-    // In a real app, you would use `dbInstance` here to save to Firestore.
-    // e.g., await setDoc(doc(dbInstance, "users", user.uid), { ... });
+    // Simulate saving data
     console.log("Simulating profile update with:", {
         firstName, lastName, phoneNumber, bio, passportNumber
     });
     
-    // Simulate API call
     setTimeout(() => {
         const updatedProfile: Partial<UserProfile> = {
             firstName: firstName.trim(),
@@ -72,6 +62,7 @@ export function UserProfileForm() {
             passportNumber: passportNumber.trim() || undefined,
         };
 
+        // Update the user in the auth context
         setAuthUser(prevUser => prevUser ? { ...prevUser, ...updatedProfile } : null);
         
         toast({
@@ -82,7 +73,7 @@ export function UserProfileForm() {
     }, 1000);
   };
   
-  if (isProfileLoading && !user) { 
+  if (authLoading) { 
      return (
         <Card className="w-full max-w-3xl mx-auto shadow-xl">
             <CardHeader>
@@ -113,7 +104,6 @@ export function UserProfileForm() {
         </Card>
      );
   }
-
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-xl">

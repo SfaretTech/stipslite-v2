@@ -9,12 +9,10 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 
 export function ForgotPasswordForm() {
   const router = useRouter();
   const { toast } = useToast();
-  const { authInstance } = useAuth(); // We don't use it yet, but this is how we'd get it
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,12 +20,9 @@ export function ForgotPasswordForm() {
     event.preventDefault();
     setIsLoading(true);
 
-    // In a real app, you would import `sendPasswordResetEmail` from `firebase/auth`
-    // and use the `authInstance` from context.
-    // await sendPasswordResetEmail(authInstance, email);
-    console.log("Password reset attempt for:", email);
+    // Simulate API call for password reset
+    console.log("Simulating password reset for:", email);
 
-    // Simulate API call
     setTimeout(() => {
       toast({
         title: "Password Reset Email Sent (Simulated)",
