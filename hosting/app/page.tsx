@@ -1,3 +1,1 @@
-export default function Page() {
-  return <h1>Hello, Next.js!</h1>;
-}
+// This file is intentionally left empty to prevent build conflicts.

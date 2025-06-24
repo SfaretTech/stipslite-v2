@@ -1,9 +1,9 @@
-// IMPORTANT: Side-effect imports to ensure Firebase services are registered.
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
+// Side-effect imports are not needed for modular v9+ SDK with getAuth/getFirestore
 
-// This object holds the configuration keys.
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -13,39 +13,34 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Check if all required keys are present and not placeholders
-const isConfigValid = 
-    firebaseConfig.apiKey &&
-    firebaseConfig.projectId &&
-    !firebaseConfig.apiKey.includes("placeholder") &&
-    !firebaseConfig.projectId.includes("placeholder");
+// This check ensures firebase is only initialized on the client side.
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
+let db: Firestore | null = null;
 
-
-let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
-
-// Initialize Firebase App and services if config is valid
-if (isConfigValid) {
-    if (!getApps().length) {
-        app = initializeApp(firebaseConfig);
-    } else {
-        app = getApp();
+if (typeof window !== 'undefined') {
+  if (getApps().length === 0) {
+    try {
+      app = initializeApp(firebaseConfig);
+    } catch (e) {
+      console.error("Failed to initialize Firebase App", e);
     }
-    auth = getAuth(app);
-    db = getFirestore(app);
-} else {
-    // This will only run on the client, as env vars are not defined on the server in this context
-    if (typeof window !== 'undefined') {
-        console.warn("Firebase config is missing or invalid. Firebase features will be disabled. Please check your .env file and restart the development server.");
+  } else {
+    app = getApp();
+  }
+
+  if (app) {
+    try {
+      auth = getAuth(app);
+    } catch (e) {
+      console.error("Failed to initialize Firebase Auth", e);
     }
-    // Set dummy objects to prevent crashes when services are used without being initialized.
-    // @ts-ignore
-    app = null;
-    // @ts-ignore
-    auth = null;
-    // @ts-ignore
-    db = null;
+    try {
+      db = getFirestore(app);
+    } catch (e) {
+      console.error("Failed to initialize Firestore", e);
+    }
+  }
 }
 
 export { app, auth, db };
