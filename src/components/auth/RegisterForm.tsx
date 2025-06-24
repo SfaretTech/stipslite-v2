@@ -9,14 +9,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { auth, db } from "../../lib/firebase";
-import { createUserWithEmailAndPassword, type FirebaseError, updateProfile } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export function RegisterForm() {
   const router = useRouter();
   const { toast } = useToast();
+  const { authInstance } = useAuth(); // We don't use it yet, but this is how we'd get it
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -33,71 +32,24 @@ export function RegisterForm() {
       });
       return;
     }
-    if (!firstName.trim() || !lastName.trim()) {
-      toast({
-        title: "Name Required",
-        description: "First and last name cannot be empty.",
-        variant: "destructive",
-      });
-      return;
-    }
     setIsLoading(true);
 
-    if (!auth || !db) {
+    // In a real app, you would import `createUserWithEmailAndPassword` from `firebase/auth`
+    // and use the `authInstance` from the context.
+    // e.g., const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
+    console.log("Registration attempt:", { firstName, lastName, email });
+
+    // Simulate API call
+    setTimeout(() => {
       toast({
-        title: "Initialization Error",
-        description: "Firebase services are not available. Please try again later.",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
-      const displayName = `${firstName.trim()} ${lastName.trim()}`;
-
-      await updateProfile(firebaseUser, { displayName });
-
-      const userDocRef = doc(db, "users", firebaseUser.uid);
-      await setDoc(userDocRef, {
-        uid: firebaseUser.uid,
-        email: firebaseUser.email,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        displayName: displayName,
-        role: "student", 
-        createdAt: serverTimestamp(),
-        lastLoginAt: serverTimestamp(),
-        isEmailVerified: firebaseUser.emailVerified,
-      });
-      
-      toast({
-        title: "Registration Successful!",
-        description: "Your account has been created. Please login.",
+        title: "Registration Submitted! (Simulated)",
+        description: "Your account application is pending admin approval. You will be notified via email once approved.",
         variant: "default",
+        duration: 7000,
       });
-      router.push("/auth/login"); 
-    } catch (error) {
-      const firebaseError = error as FirebaseError;
-      console.error("Registration error:", firebaseError);
-      let errorMessage = "An unknown error occurred during registration.";
-      if (firebaseError.code === "auth/email-already-in-use") {
-        errorMessage = "This email address is already in use.";
-      } else if (firebaseError.code === "auth/invalid-email") {
-        errorMessage = "Please enter a valid email address.";
-      } else if (firebaseError.code === "auth/weak-password") {
-        errorMessage = "Password should be at least 6 characters.";
-      }
-      toast({
-        title: "Registration Failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
+      router.push("/auth/login");
       setIsLoading(false);
-    }
+    }, 1500);
   };
 
   return (

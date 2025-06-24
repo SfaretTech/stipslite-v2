@@ -18,9 +18,7 @@ import { AiSearchDialog } from "@/components/ai/AiSearchDialog";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area"; 
 import { cn } from "@/lib/utils"; 
-import { useAuth } from "@/context/AuthContext"; // Import useAuth
-import { auth } from "../../lib/firebase";
-import { signOut } from "firebase/auth";
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
@@ -70,7 +68,6 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
   let notificationsLink = "/dashboard/notifications";
   let subscriptionSettingsLink = "/dashboard/subscription";
   let supportLink = "/dashboard/support";
-  let logoutLink = "/auth/login";
   let referralsLink = "/dashboard/referrals";
   let currentNotifications = mockStudentNotifications;
   let notificationsLinkText = "Notifications";
@@ -89,7 +86,6 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     notificationsLink = "/va/notifications";
     subscriptionSettingsLink = "/va/subscription"; 
     supportLink = "/va/support";
-    logoutLink = "/va/login";
     referralsLink = "/va/referrals";
     currentNotifications = mockVaNotifications;
     NotificationsLinkIconComponent = Bell;
@@ -100,7 +96,6 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     notificationsLink = "/admin/notifications"; 
     subscriptionSettingsLink = ""; 
     supportLink = "/admin/dashboard"; 
-    logoutLink = "/admin/login"; 
     referralsLink = "/admin/settings"; 
     currentNotifications = mockAdminNotifications; 
     notificationsLinkText = "Activity Log";
@@ -112,7 +107,6 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
     notificationsLink = "/print-center/notifications"; 
     subscriptionSettingsLink = "/print-center/subscription"; 
     supportLink = "/print-center/support";
-    logoutLink = "/print-center/login";
     referralsLink = "/print-center/referrals";
     currentNotifications = mockPrintCenterNotifications;
     NotificationsLinkIconComponent = Bell;
@@ -122,12 +116,11 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
        notificationsLink = "/dashboard/notifications";
        subscriptionSettingsLink = "/dashboard/subscription";
        supportLink = "/dashboard/support";
-       logoutLink = "/auth/login";
        referralsLink = "/dashboard/referrals";
        currentNotifications = mockStudentNotifications;
        NotificationsLinkIconComponent = Bell;
      } else {
-        
+        // Default guest links
         profileLink = "/auth/login";
         notificationsLink = "/auth/login";
         subscriptionSettingsLink = "/auth/login";
@@ -139,31 +132,13 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
   const unreadNotificationsCount = currentNotifications.filter(n => !n.read).length;
 
   const handleLogout = async () => {
-    if (!auth) {
-      toast({
-        title: "Logout Failed",
-        description: "Authentication service is not available.",
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      await signOut(auth);
-      
-      const appropriateLogoutLink = role === "admin" ? "/admin/login" 
-                                 : role === "va" ? "/va/login"
-                                 : role === "print-center" ? "/print-center/login"
-                                 : "/auth/login";
-      router.push(appropriateLogoutLink);
-      toast({ title: "Logged Out", description: "You have been successfully logged out." });
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast({
-        title: "Logout Error",
-        description: "An error occurred while trying to log out. Please try again.",
-        variant: "destructive",
-      });
-    }
+    // TODO: Re-implement Firebase signOut logic here.
+    const appropriateLogoutLink = role === "admin" ? "/admin/login" 
+                               : role === "va" ? "/va/login"
+                               : role === "print-center" ? "/print-center/login"
+                               : "/auth/login";
+    router.push(appropriateLogoutLink);
+    toast({ title: "Logged Out", description: "You have been successfully logged out." });
   };
 
 

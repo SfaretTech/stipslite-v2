@@ -10,8 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react"; 
-import { db } from "../../lib/firebase"; 
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
 import { Loader2 } from "lucide-react"; 
 
 export function PrintCenterRegisterForm() {
@@ -23,61 +21,22 @@ export function PrintCenterRegisterForm() {
     event.preventDefault();
     setIsLoading(true);
 
-    toast({
-      title: "Shop Registration Submitted",
-      description: "Your Print Center account application is pending admin approval. You will be notified via email once approved.",
-      variant: "default",
-      duration: 3000, 
-    });
-
-    const simulatedUid = `PC_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    // TODO: Re-implement Firebase account creation and Firestore logic here.
     const formData = new FormData(event.currentTarget);
     const shopName = formData.get("pc-shopName") as string;
-    const email = formData.get("pc-email") as string;
-    const address = formData.get("pc-address") as string;
-    const phone = formData.get("pc-phone") as string;
-    const servicesInput = formData.get("pc-services") as string;
-    const services = servicesInput ? servicesInput.split(',').map(s => s.trim()).filter(s => s) : [];
+    console.log("Print Center Registration attempt:", { shopName });
 
-    if (!db) {
-      toast({
-        title: "Database Error",
-        description: "Firestore service is not available. Please try again or contact support.",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const userDocRef = doc(db, "users", simulatedUid);
-      await setDoc(userDocRef, {
-        uid: simulatedUid,
-        email: email,
-        displayName: shopName.trim(), 
-        shopName: shopName.trim(),
-        address: address.trim(),
-        phone: phone.trim(),
-        role: "print-center",
-        services: services,
-        createdAt: serverTimestamp(),
-        lastLoginAt: serverTimestamp(),
-        isEmailVerified: false, 
-      });
-      toast({
-        title: "Print Center Data Saved",
-        description: "Your Print Center details have also been saved to our database.",
-      });
-      router.push("/print-center/login");
-    } catch (firestoreError) {
-      console.error("Error saving Print Center to Firestore:", firestoreError);
-      toast({
-        title: "Database Error",
-        description: "Could not save Print Center details to the database. Please try again or contact support.",
-        variant: "destructive",
-      });
-      setIsLoading(false); 
-    }
+    // Simulate API call
+    setTimeout(() => {
+        toast({
+          title: "Shop Registration Submitted (Simulated)",
+          description: "Your Print Center account application is pending admin approval. You will be notified via email once approved.",
+          variant: "default",
+          duration: 7000, 
+        });
+        router.push("/print-center/login");
+        setIsLoading(false);
+    }, 1500);
   };
 
   return (

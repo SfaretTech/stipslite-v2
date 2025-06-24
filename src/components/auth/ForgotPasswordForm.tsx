@@ -8,13 +8,13 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { auth } from "../../lib/firebase";
-import { sendPasswordResetEmail, type FirebaseError } from "firebase/auth";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export function ForgotPasswordForm() {
   const router = useRouter();
   const { toast } = useToast();
+  const { authInstance } = useAuth(); // We don't use it yet, but this is how we'd get it
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,40 +22,20 @@ export function ForgotPasswordForm() {
     event.preventDefault();
     setIsLoading(true);
 
-    if (!auth) {
-      toast({
-        title: "Authentication Error",
-        description: "Firebase Auth service is not available. Please try again later.",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
+    // In a real app, you would import `sendPasswordResetEmail` from `firebase/auth`
+    // and use the `authInstance` from context.
+    // await sendPasswordResetEmail(authInstance, email);
+    console.log("Password reset attempt for:", email);
 
-    try {
-      await sendPasswordResetEmail(auth, email);
+    // Simulate API call
+    setTimeout(() => {
       toast({
-        title: "Password Reset Email Sent",
+        title: "Password Reset Email Sent (Simulated)",
         description: "If an account exists for this email, you will receive password reset instructions shortly.",
       });
       router.push("/auth/login");
-    } catch (error) {
-      const firebaseError = error as FirebaseError;
-      console.error("Forgot password error:", firebaseError);
-      let errorMessage = "An unknown error occurred.";
-      if (firebaseError.code === "auth/user-not-found") {
-        errorMessage = "No user found with this email address.";
-      } else if (firebaseError.code === "auth/invalid-email") {
-        errorMessage = "Please enter a valid email address.";
-      }
-      toast({
-        title: "Error Sending Reset Email",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
       setIsLoading(false);
-    }
+    }, 1000);
   };
 
   return (

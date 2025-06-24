@@ -11,13 +11,12 @@ import { UploadCloud, Save, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, type UserProfile } from "@/context/AuthContext"; 
 import { useState, useEffect } from "react";
-import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore"; 
-import { db } from "../../lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function UserProfileForm() {
   const { toast } = useToast();
-  const { user, setUser: setAuthUser } = useAuth(); 
+  // We get the auth instance from the context now, though it's not used in this simulated form
+  const { user, setUser: setAuthUser, authInstance, dbInstance } = useAuth(); 
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -30,6 +29,8 @@ export function UserProfileForm() {
 
   useEffect(() => {
     if (user) {
+      // In a real app, you'd fetch the full profile from Firestore using the dbInstance here.
+      // For now, using auth context data.
       setFirstName(user.firstName || "");
       setLastName(user.lastName || "");
       setPhoneNumber(user.phoneNumber || "");
@@ -54,54 +55,31 @@ export function UserProfileForm() {
 
     setIsLoading(true);
 
-    if (!db) {
-      toast({
-        title: "Database Error",
-        description: "Firestore service is not available. Please try again later.",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
+    // In a real app, you would use `dbInstance` here to save to Firestore.
+    // e.g., await setDoc(doc(dbInstance, "users", user.uid), { ... });
+    console.log("Simulating profile update with:", {
+        firstName, lastName, phoneNumber, bio, passportNumber
+    });
+    
+    // Simulate API call
+    setTimeout(() => {
+        const updatedProfile: Partial<UserProfile> = {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            displayName: `${firstName.trim()} ${lastName.trim()}`,
+            phoneNumber: phoneNumber.trim() || undefined,
+            bio: bio.trim() || undefined,
+            passportNumber: passportNumber.trim() || undefined,
+        };
 
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      const displayName = `${firstName.trim()} ${lastName.trim()}`;
-      
-      const profileDataToSave: Partial<UserProfile> = {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        displayName: displayName,
-        phoneNumber: phoneNumber.trim() || null, 
-        bio: bio.trim() || null,
-        passportNumber: passportNumber.trim() || null,
-      };
-
-      const docSnap = await getDoc(userDocRef);
-      if (!docSnap.exists()) {
-        profileDataToSave.createdAt = serverTimestamp();
-        profileDataToSave.email = user.email; 
-        profileDataToSave.role = user.role || "student"; 
-      }
-      
-      await setDoc(userDocRef, profileDataToSave, { merge: true });
-
-      setAuthUser(prevUser => prevUser ? { ...prevUser, ...profileDataToSave } : null);
-
-      toast({
-        title: "Profile Updated!",
-        description: "Your personal details have been saved successfully to Firestore.",
-      });
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast({
-        title: "Update Failed",
-        description: "Could not save profile changes. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+        setAuthUser(prevUser => prevUser ? { ...prevUser, ...updatedProfile } : null);
+        
+        toast({
+            title: "Profile Updated! (Simulated)",
+            description: "Your personal details have been saved.",
+        });
+        setIsLoading(false);
+    }, 1000);
   };
   
   if (isProfileLoading && !user) { 

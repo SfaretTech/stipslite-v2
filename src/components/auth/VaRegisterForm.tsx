@@ -9,8 +9,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react"; 
-import { db } from "../../lib/firebase"; 
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
 import { Loader2 } from "lucide-react"; 
 
 export function VaRegisterForm() {
@@ -22,60 +20,22 @@ export function VaRegisterForm() {
     event.preventDefault();
     setIsLoading(true);
 
-    toast({
-      title: "VA Registration Submitted",
-      description: "Your VA account application is pending admin approval. You will be notified via email once approved.",
-      variant: "default",
-      duration: 3000, 
-    });
-
-    const simulatedUid = `VA_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    // TODO: Re-implement Firebase account creation and Firestore logic here.
     const formData = new FormData(event.currentTarget);
     const firstName = formData.get("vaFirstName") as string;
-    const lastName = formData.get("vaLastName") as string;
-    const email = formData.get("vaEmail") as string;
-    const skillsInput = formData.get("vaSkills") as string;
-    const skills = skillsInput ? skillsInput.split(',').map(s => s.trim()).filter(s => s) : [];
-    const displayName = `${firstName.trim()} ${lastName.trim()}`;
+    console.log("VA Registration attempt:", { name: firstName });
 
-    if (!db) {
-      toast({
-        title: "Database Error",
-        description: "Firestore service is not available. Please try again or contact support.",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const userDocRef = doc(db, "users", simulatedUid);
-      await setDoc(userDocRef, {
-        uid: simulatedUid,
-        email: email,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        displayName: displayName,
-        role: "va",
-        skills: skills,
-        createdAt: serverTimestamp(),
-        lastLoginAt: serverTimestamp(), 
-        isEmailVerified: false, 
-      });
-      toast({
-        title: "VA Registration Data Saved",
-        description: "Your VA details have also been saved to our database.",
-      });
-      router.push("/va/login");
-    } catch (firestoreError) {
-      console.error("Error saving VA to Firestore:", firestoreError);
-      toast({
-        title: "Database Error",
-        description: "Could not save VA details to the database. Please try again or contact support.",
-        variant: "destructive",
-      });
-      setIsLoading(false); 
-    }
+    // Simulate API call
+    setTimeout(() => {
+        toast({
+            title: "VA Registration Submitted (Simulated)",
+            description: "Your VA account application is pending admin approval. You will be notified via email once approved.",
+            variant: "default",
+            duration: 7000, 
+        });
+        router.push("/va/login");
+        setIsLoading(false);
+    }, 1500);
   };
 
   return (

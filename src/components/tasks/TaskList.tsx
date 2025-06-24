@@ -13,9 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation"; 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "../../lib/firebase"; 
-import { collection, query, where, orderBy, onSnapshot, Timestamp, FirebaseError } from "firebase/firestore"; // Added FirebaseError
-import { format } from "date-fns";
 
 type StudentTaskStatus = 
   | "Pending Approval" 
@@ -36,6 +33,14 @@ interface TaskListItem {
   estimatedCost?: string;
   deadline?: string; 
 }
+
+const mockTasks: TaskListItem[] = [
+    { id: "TSK001", title: "Literature Review on AI Ethics", type: "Research", pages: 15, submittedDate: "2024-07-25", status: "Pending Approval", deadline: "2024-08-10" },
+    { id: "TSK002", title: "Business Plan for a Startup", type: "Business", pages: 30, submittedDate: "2024-07-24", status: "Approved - Payment Due", estimatedCost: "₦250.00", deadline: "2024-08-15" },
+    { id: "TSK003", title: "Data Analysis Project", type: "Data Analysis", pages: 10, submittedDate: "2024-07-23", status: "In Progress", estimatedCost: "₦150.00", deadline: "2024-08-05" },
+    { id: "TSK004", title: "Presentation Slides Design", type: "Design", pages: 20, submittedDate: "2024-07-22", status: "Completed", estimatedCost: "₦100.00" },
+];
+
 
 const studentStatusColors: Record<StudentTaskStatus, string> = {
   "Pending Approval": "bg-yellow-100 text-yellow-700 border-yellow-300",
@@ -62,80 +67,21 @@ export function TaskList() {
   const { toast } = useToast();
   const router = useRouter();
   const { user } = useAuth();
-  const [tasks, setTasks] = useState<TaskListItem[]>([]);
+  const [tasks, setTasks] = useState<TaskListItem[]>(mockTasks);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null); 
 
   useEffect(() => {
+    // TODO: Re-implement Firestore data fetching logic here.
+    // For now, we just use the mock data.
     if (!user) {
-      setIsLoading(false);
       setError("You must be logged in to view tasks.");
-      return;
+    } else {
+        setError(null);
+        setTasks(mockTasks);
     }
-
-    if (!db) {
-      setError("Database service is not available. Cannot fetch tasks.");
-      toast({ title: "Error", description: "Database service not available.", variant: "destructive" });
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    const q = query(
-      collection(db, "tasks"), 
-      where("studentUid", "==", user.uid),
-      orderBy("createdAt", "desc")
-    );
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const fetchedTasks: TaskListItem[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        let formattedSubmittedDate = 'N/A';
-        if (data.submissionDate) {
-            try {
-                formattedSubmittedDate = format(new Date(data.submissionDate), "yyyy-MM-dd");
-            } catch (e) {
-                 console.warn("Error formatting submissionDate:", e);
-                formattedSubmittedDate = typeof data.submissionDate === 'string' ? data.submissionDate : 'Invalid Date';
-            }
-        } else if (data.createdAt && data.createdAt.toDate) { 
-             try {
-                formattedSubmittedDate = format(data.createdAt.toDate(), "yyyy-MM-dd");
-            } catch (e) {
-                 console.warn("Error formatting createdAt as submissionDate:", e);
-            }
-        }
-
-        fetchedTasks.push({
-          id: doc.id,
-          title: data.taskTitle,
-          type: data.taskType,
-          pages: data.pages,
-          submittedDate: formattedSubmittedDate,
-          status: data.status as StudentTaskStatus, 
-          estimatedCost: data.estimatedCost || (data.adminSetPriceNGN ? `₦${parseFloat(data.adminSetPriceNGN).toFixed(2)}` : undefined),
-          deadline: data.deadline ? format(new Date(data.deadline), "yyyy-MM-dd") : undefined,
-        });
-      });
-      setTasks(fetchedTasks);
-      setIsLoading(false);
-    }, (err: FirebaseError | any) => { 
-      console.error("Error fetching tasks:", err);
-      let description = "Could not fetch tasks. Please try again later.";
-      if (err.code === 'permission-denied') {
-        description = "Failed to fetch tasks due to Firestore permission issues. Please check your security rules in the Firebase console.";
-      } else if (err.code === 'failed-precondition' && err.message?.toLowerCase().includes('index')) {
-        description = "The query for fetching tasks requires a Firestore index that hasn't been created yet. Please check the Firebase console for a link to create the required index, or see the error details in your browser console for the link. It usually looks like 'https://console.firebase.google.com/project/.../firestore/indexes?create_composite=...'";
-      }
-      setError(description);
-      toast({ title: "Error Loading Tasks", description: description, variant: "destructive", duration: 10000 });
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, toast]);
+    setIsLoading(false);
+  }, [user]);
 
 
   const handleProceedToPayment = (taskId: string, taskTitle: string, amount?: string) => {

@@ -11,8 +11,6 @@ import { ArrowLeft, Edit, MessageSquare, Paperclip, DollarSign, CheckCircle, Clo
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { db } from "../../../../lib/firebase"; 
-import { doc, onSnapshot, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 
 type TaskStatusStudent = 
@@ -39,6 +37,31 @@ interface TaskDetail {
   studentComments?: { user: string; text: string; timestamp: string }[]; 
   paymentStatus?: "Unpaid" | "Paid by Student" | "VA Payout Pending" | "VA Paid" | "Refunded";
 }
+
+const mockTaskData: Record<string, TaskDetail> = {
+    "TSK001": {
+        id: "TSK001",
+        title: "Literature Review on AI Ethics",
+        taskType: "Research",
+        pages: 15,
+        submissionDate: "2024-07-25 10:00 AM",
+        status: "Pending Approval",
+        taskDescription: "A detailed literature review on the ethical implications of AI in modern society. Focus on bias in algorithms and data privacy.",
+        attachments: [{ name: "guidelines.pdf", url: "#" }],
+        paymentStatus: "Unpaid"
+    },
+    "TSK002": {
+        id: "TSK002",
+        title: "Business Plan for a Startup",
+        taskType: "Business",
+        pages: 30,
+        submissionDate: "2024-07-24 11:30 AM",
+        status: "Approved - Payment Due",
+        taskDescription: "Develop a comprehensive business plan for a new tech startup in the fintech space.",
+        estimatedCost: "₦250.00",
+        paymentStatus: "Unpaid"
+    }
+};
 
 
 const studentStatusColors: Record<TaskStatusStudent, string> = {
@@ -74,143 +97,63 @@ export default function TaskDetailPage() {
   const [error, setError] = useState<string | null>(null); 
 
   useEffect(() => {
-    if (!taskId) {
-      setIsLoading(false);
-      setError("Task ID is missing.");
-      toast({ title: "Error", description: "Task ID is missing.", variant: "destructive" });
-      return;
-    }
-
     setIsLoading(true);
-    setError(null);
-    if (!db) {
-        setError("Database service is not available.");
-        toast({ title: "Error", description: "Database service not available.", variant: "destructive" });
-        setIsLoading(false);
-        return;
-    }
-
-    const taskRef = doc(db, "tasks", taskId);
-    const unsubscribe = onSnapshot(taskRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        let formattedSubmissionDate = 'N/A';
-        if (data.submissionDate) {
-            try {
-                formattedSubmissionDate = format(new Date(data.submissionDate), "PPP p");
-            } catch (e) {
-                 formattedSubmissionDate = typeof data.submissionDate === 'string' ? data.submissionDate : 'Invalid Date';
-            }
-        } else if (data.createdAt && typeof data.createdAt.toDate === 'function') {
-             try {
-                formattedSubmissionDate = format(data.createdAt.toDate(), "PPP p");
-            } catch (e) {}
-        }
-        setTask({
-          id: docSnap.id,
-          title: data.taskTitle,
-          taskType: data.taskType,
-          pages: data.pages,
-          submissionDate: formattedSubmissionDate,
-          status: data.status as TaskStatusStudent,
-          taskDescription: data.taskDescription,
-          attachments: data.attachments || [],
-          estimatedCost: data.estimatedCost || (data.adminSetPriceNGN ? `₦${parseFloat(data.adminSetPriceNGN).toFixed(2)}` : null),
-          vaName: data.assignedVaName || null,
-          deadline: data.deadline ? format(new Date(data.deadline), "PPP") : null,
-          studentComments: data.studentComments || [], 
-          paymentStatus: data.paymentStatus,
-        });
+    // TODO: Re-implement Firestore onSnapshot logic here
+    setTimeout(() => {
+      // @ts-ignore
+      const fetchedTask = mockTaskData[taskId];
+      if (fetchedTask) {
+        setTask(fetchedTask);
       } else {
         setError("Task not found.");
-        toast({ title: "Not Found", description: "Task not found.", variant: "destructive" });
-        setTask(null);
       }
       setIsLoading(false);
-    }, (err) => {
-      console.error("Error fetching task details:", err);
-      setError("Could not fetch task details. Please try again later.");
-      toast({ title: "Error", description: "Could not fetch task details.", variant: "destructive" });
-      setIsLoading(false);
-    });
+    }, 500);
+  }, [taskId]);
 
-    return () => unsubscribe();
-  }, [taskId, toast]);
-
-  const updateTaskStatusInFirestore = async (newStatus: TaskStatusStudent, updates: Record<string, any> = {}) => {
+  const updateTaskStatus = (newStatus: TaskStatusStudent) => {
     if (!task) return;
     setIsUpdating(true);
-    if (!db) {
-      toast({ title: "Database Error", description: "Firestore service is not available for update.", variant: "destructive" });
-      setIsUpdating(false);
-      return;
-    }
-    try {
-      const taskRef = doc(db, "tasks", task.id);
-      await updateDoc(taskRef, {
-        status: newStatus,
-        ...updates,
-        updatedAt: serverTimestamp(),
-      });
+    // TODO: Re-implement Firestore updateDoc logic here
+    console.log(`Simulating update for task ${task.id}: new status is ${newStatus}`);
+    setTimeout(() => {
+      // @ts-ignore
+      setTask(prev => prev ? {...prev, status: newStatus} : null);
       toast({
-        title: "Task Updated",
+        title: "Task Updated (Simulated)",
         description: `Task status changed to "${newStatus}".`,
       });
-    } catch (error) {
-      console.error("Error updating task status:", error);
-      toast({ title: "Update Failed", description: "Could not update task status.", variant: "destructive" });
-    } finally {
       setIsUpdating(false);
-    }
+    }, 1000);
   };
 
   const handleAcceptQuote = () => {
-    if (!task || task.status !== "VA Quote Received - Action Needed") return;
-    updateTaskStatusInFirestore("Approved - Payment Due");
-    toast({
-      title: "VA Quote Accepted!",
-      description: `You have accepted the quote of ${task.estimatedCost}. Please proceed with payment. VA ${task.vaName} will be notified.`,
-      duration: 7000,
-    });
+    updateTaskStatus("Approved - Payment Due");
   };
-
+  
   const handleRejectQuote = () => {
-    if (!task || task.status !== "VA Quote Received - Action Needed") return;
-    updateTaskStatusInFirestore("Quote Rejected");
-    toast({
-      title: "VA Quote Rejected",
-      description: `You have rejected the quote from VA ${task.vaName}. The VA will be notified. You may need to discuss further or the task might be reassigned.`,
-      variant: "destructive",
-      duration: 7000,
-    });
+    updateTaskStatus("Quote Rejected");
   };
 
-  const handleProceedToPayment = async () => {
-    if (!task || task.status !== "Approved - Payment Due") return;
+  const handleProceedToPayment = () => {
+    if (!task) return;
     setIsUpdating(true);
     toast({
       title: "Initiating Flutterwave Payment...",
       description: `Preparing payment for task: ${task.title} (Amount: ${task.estimatedCost}). Please wait.`,
     });
 
-    setTimeout(async () => {
-      const paymentSuccessful = true; 
-
-      if (paymentSuccessful) {
-        await updateTaskStatusInFirestore("In Progress", { paymentStatus: "Paid by Student" });
-        toast({
-          title: "Payment Successful (Simulated via Flutterwave)",
-          description: `Payment for ${task.title} processed. Task is now In Progress.`,
-        });
-      } else {
-        toast({
-          title: "Payment Failed (Simulated)",
-          description: `Payment for ${task.title} could not be processed. Please try again or contact support.`,
-          variant: "destructive",
-        });
-        setIsUpdating(false); 
-      }
-    }, 2500); 
+    setTimeout(() => {
+      // Simulate successful payment
+      updateTaskStatus("In Progress");
+      // @ts-ignore
+      setTask(prev => prev ? {...prev, paymentStatus: 'Paid by Student'} : null);
+      toast({
+        title: "Payment Successful (Simulated via Flutterwave)",
+        description: `Payment for ${task.title} processed. Task is now In Progress.`,
+      });
+      setIsUpdating(false);
+    }, 2500);
   };
 
 
@@ -269,7 +212,7 @@ export default function TaskDetailPage() {
     <div className="space-y-8">
       <PageHeader 
         title={`Task Details: ${task.title}`}
-        description={`Viewing information for task ID: ${task.id.substring(0,8)}...`}
+        description={`Viewing information for task ID: ${task.id}`}
         icon={Edit}
         actions={
             <Button asChild variant="outline">

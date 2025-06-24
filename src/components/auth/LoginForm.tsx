@@ -9,13 +9,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { auth } from "../../lib/firebase";
-import { signInWithEmailAndPassword, type FirebaseError } from "firebase/auth";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
+  const { authInstance } = useAuth(); // We don't use it yet, but this is how we'd get it
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -24,40 +24,22 @@ export function LoginForm() {
     event.preventDefault();
     setIsLoading(true);
 
-    if (!auth) {
+    // In a real app, you would import `signInWithEmailAndPassword` from `firebase/auth`
+    // and use the `authInstance` from the context.
+    // e.g., await signInWithEmailAndPassword(authInstance, email, password);
+    console.log("Login attempt with:", { email, password });
+    
+    // Simulate API call
+    setTimeout(() => {
+      // For this simulation, we'll assume login is always successful.
+      // The onAuthStateChanged listener in AuthContext will handle the user state update.
       toast({
-        title: "Authentication Error",
-        description: "Firebase Auth service is not available. Please try again later.",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toast({
-        title: "Login Successful",
+        title: "Login Successful (Simulated)",
         description: "Redirecting to your dashboard...",
       });
       router.push("/dashboard");
-    } catch (error) {
-      const firebaseError = error as FirebaseError;
-      console.error("Login error:", firebaseError);
-      let errorMessage = "An unknown error occurred during login.";
-      if (firebaseError.code === "auth/user-not-found" || firebaseError.code === "auth/wrong-password" || firebaseError.code === "auth/invalid-credential") {
-        errorMessage = "Invalid email or password. Please try again.";
-      } else if (firebaseError.code === "auth/invalid-email") {
-        errorMessage = "Please enter a valid email address.";
-      }
-      toast({
-        title: "Login Failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
       setIsLoading(false);
-    }
+    }, 1000);
   };
 
   return (

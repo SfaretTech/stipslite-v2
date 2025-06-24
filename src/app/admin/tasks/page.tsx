@@ -43,8 +43,6 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { db } from "../../../lib/firebase"; 
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 
 type AdminTaskStatus =
@@ -82,9 +80,15 @@ interface AdminTask {
   vaSubmissionAttachments?: { name: string; url: string }[];
   deadline?: string | null; 
   completionDate?: string | null; 
-  createdAt?: Timestamp; 
-  updatedAt?: Timestamp; 
 }
+
+const initialMockTasks: AdminTask[] = [
+    { id: "TSK001", title: "Literature Review on AI Ethics", studentName: "John Doe", studentId: "STD001", submittedDate: "2024-07-25", type: "Research", pages: 15, description: "A detailed literature review on the ethical implications of AI in modern society.", attachments: [{name: "guidelines.pdf", url: "#"}], status: "Pending Admin Review", adminSetPriceNGN: null, paymentStatus: "Unpaid", assignedVaId: null, assignedVaName: null, deadline: "2024-08-10" },
+    { id: "TSK002", title: "Business Plan for a Startup", studentName: "Alice Smith", studentId: "STD002", submittedDate: "2024-07-24", type: "Business", pages: 30, description: "Develop a comprehensive business plan for a new tech startup.", attachments: [], status: "Pending VA Assignment", adminSetPriceNGN: 250, paymentStatus: "Paid by Student", assignedVaId: null, assignedVaName: null, deadline: "2024-08-15" },
+    { id: "TSK003", title: "Data Analysis Project", studentName: "Bob Johnson", studentId: "STD003", submittedDate: "2024-07-23", type: "Data Analysis", pages: 10, description: "Analyze the provided dataset using Python and generate a report.", attachments: [{name:"dataset.csv", url:"#"}], status: "In Progress with VA", adminSetPriceNGN: 150, paymentStatus: "Paid by Student", assignedVaId: "VA001", assignedVaName: "Aisha Bello", deadline: "2024-08-05" },
+    { id: "TSK004", title: "Presentation Slides Design", studentName: "Emily White", studentId: "STD004", submittedDate: "2024-07-22", type: "Design", pages: 20, description: "Create 20 visually appealing slides for a marketing presentation.", attachments: [], status: "Completed", adminSetPriceNGN: 100, paymentStatus: "VA Paid", assignedVaId: "VA002", assignedVaName: "Chinedu Okoro", completionDate: "2024-07-25" },
+];
+
 
 const adminTaskStatusColors: Record<AdminTaskStatus, string> = {
   "Pending Admin Review": "bg-yellow-100 text-yellow-700 border-yellow-300",
@@ -109,8 +113,8 @@ const mockVAs = [
 
 
 export default function AdminTasksPage() {
-  const [allTasks, setAllTasks] = useState<AdminTask[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [allTasks, setAllTasks] = useState<AdminTask[]>(initialMockTasks);
+  const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null); 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<AdminTaskStatus | "all">("all");
@@ -130,72 +134,6 @@ export default function AdminTasksPage() {
   const [isSubmittingAction, setIsSubmittingAction] = useState(false); 
 
   const { toast } = useToast();
-
-  useEffect(() => {
-    setIsLoading(true);
-    setFetchError(null);
-    if (!db) {
-        setFetchError("Database service is not available.");
-        toast({ title: "Error", description: "Database service not available.", variant: "destructive" });
-        setIsLoading(false);
-        return;
-    }
-    const q = query(collection(db, "tasks"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const fetchedTasks: AdminTask[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        let formattedSubmittedDate = 'N/A';
-        if (data.submissionDate) {
-             try {
-                formattedSubmittedDate = format(new Date(data.submissionDate), "yyyy-MM-dd HH:mm");
-            } catch (e) {
-                 formattedSubmittedDate = typeof data.submissionDate === 'string' ? data.submissionDate : 'Invalid Date';
-            }
-        } else if (data.createdAt && data.createdAt.toDate) {
-            try {
-                formattedSubmittedDate = format(data.createdAt.toDate(), "yyyy-MM-dd HH:mm");
-            } catch (e) {}
-        }
-        
-        fetchedTasks.push({
-          id: doc.id,
-          title: data.taskTitle,
-          studentName: data.studentName,
-          studentId: data.studentUid,
-          submittedDate: formattedSubmittedDate,
-          type: data.taskType,
-          pages: data.pages,
-          description: data.taskDescription,
-          attachments: data.attachments || [],
-          status: data.status as AdminTaskStatus,
-          adminSetPriceNGN: data.adminSetPriceNGN || null,
-          paymentStatus: data.paymentStatus,
-          assignedVaId: data.assignedVaId || null,
-          assignedVaName: data.assignedVaName || null,
-          adminNotes: data.adminNotes,
-          vaRejectionReason: data.vaRejectionReason,
-          vaSubmissionDate: data.vaSubmissionDate ? format(new Date(data.vaSubmissionDate), "yyyy-MM-dd HH:mm") : null,
-          vaSubmissionNotes: data.vaSubmissionNotes,
-          vaSubmissionAttachments: data.vaSubmissionAttachments || [],
-          deadline: data.deadline ? format(new Date(data.deadline), "yyyy-MM-dd") : null,
-          completionDate: data.completionDate ? format(new Date(data.completionDate), "yyyy-MM-dd") : null,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
-        });
-      });
-      setAllTasks(fetchedTasks);
-      setIsLoading(false);
-    }, (error) => {
-      console.error("Error fetching tasks:", error);
-      setFetchError("Failed to load tasks. Please check your connection or try again later.");
-      toast({ title: "Error", description: "Could not fetch tasks.", variant: "destructive" });
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [toast]);
-
 
   const filteredTasks = useMemo(() => {
     return allTasks.filter(task => {
@@ -218,23 +156,11 @@ export default function AdminTasksPage() {
     dialogSetter(true);
   };
 
-  const updateTaskInFirestore = async (taskId: string, updates: Partial<AdminTask>): Promise<boolean> => { 
-    if (!db) {
-      toast({ title: "Database Error", description: "Firestore service is not available for update.", variant: "destructive" });
-      return false;
-    }
-    const taskRef = doc(db, "tasks", taskId);
-    setIsSubmittingAction(true);
-    try {
-      await updateDoc(taskRef, { ...updates, updatedAt: serverTimestamp() });
-      setIsSubmittingAction(false);
-      return true;
-    } catch (error) {
-      console.error("Error updating task in Firestore:", error);
-      toast({ title: "Update Failed", description: "Could not update task in Firestore.", variant: "destructive"});
-      setIsSubmittingAction(false);
-      return false;
-    }
+  const handleUpdateTask = (taskId: string, updates: Partial<AdminTask>) => {
+    // TODO: Re-implement Firestore update logic here
+    console.log(`Simulating update for task ${taskId} with:`, updates);
+    setAllTasks(prev => prev.map(task => task.id === taskId ? { ...task, ...updates } : task));
+    return true;
   };
 
   const handleApproveTask = async () => {
@@ -247,7 +173,7 @@ export default function AdminTasksPage() {
        toast({ title: "Invalid Price", description: "Please enter a valid positive price.", variant: "destructive" });
        return;
     }
-    const success = await updateTaskInFirestore(selectedTask.id, { status: "Pending VA Assignment", adminSetPriceNGN: price, adminNotes: adminNotesInput });
+    const success = handleUpdateTask(selectedTask.id, { status: "Pending VA Assignment", adminSetPriceNGN: price, adminNotes: adminNotesInput });
     if (success) {
         toast({ title: "Task Approved", description: `${selectedTask.title} approved with price ₦${price}. Ready for VA assignment.` });
         setIsReviewPriceOpen(false);
@@ -260,7 +186,7 @@ export default function AdminTasksPage() {
         toast({ title: "Rejection Note Required", description: "Please provide a reason/note for rejecting the task.", variant: "destructive" });
         return;
     }
-    const success = await updateTaskInFirestore(selectedTask.id, { status: "Rejected by Admin", adminNotes: adminNotesInput });
+    const success = handleUpdateTask(selectedTask.id, { status: "Rejected by Admin", adminNotes: adminNotesInput });
     if (success) {
         toast({ title: "Task Rejected", description: `${selectedTask.title} has been rejected.`, variant: "destructive" });
         setIsReviewPriceOpen(false);
@@ -273,7 +199,7 @@ export default function AdminTasksPage() {
       return;
     }
     const va = mockVAs.find(v => v.id === selectedVaForAssignment);
-    const success = await updateTaskInFirestore(selectedTask.id, { status: "Pending VA Acceptance", assignedVaId: va?.id || null, assignedVaName: va?.name || null });
+    const success = handleUpdateTask(selectedTask.id, { status: "Pending VA Acceptance", assignedVaId: va?.id || null, assignedVaName: va?.name || null });
     if (success) {
         toast({ title: "VA Assigned", description: `${va?.name} assigned to ${selectedTask.title}. Task is now Pending VA Acceptance.` });
         setIsAssignVaOpen(false);
@@ -283,7 +209,7 @@ export default function AdminTasksPage() {
   
   const handleConfirmPayment = async () => {
     if (!selectedTask) return;
-    const success = await updateTaskInFirestore(selectedTask.id, { status: "In Progress with VA", paymentStatus: "Paid by Student" });
+    const success = handleUpdateTask(selectedTask.id, { status: "In Progress with VA", paymentStatus: "Paid by Student" });
     if (success) {
         toast({ title: "Payment Confirmed", description: `Payment for ${selectedTask.title} confirmed. VA can start work.` });
         setIsConfirmPaymentOpen(false);
@@ -292,7 +218,7 @@ export default function AdminTasksPage() {
 
   const handleApproveVaWork = async () => {
     if (!selectedTask) return;
-    const success = await updateTaskInFirestore(selectedTask.id, { status: "Completed", paymentStatus: "VA Payout Pending", adminNotes: adminReviewNotesInput, completionDate: new Date().toISOString() });
+    const success = handleUpdateTask(selectedTask.id, { status: "Completed", paymentStatus: "VA Payout Pending", adminNotes: adminReviewNotesInput, completionDate: new Date().toISOString() });
     if (success) {
         toast({ title: "VA Work Approved", description: `${selectedTask.title} marked as completed. VA payout is now pending.` });
         setIsReviewVaWorkOpen(false);
@@ -304,7 +230,7 @@ export default function AdminTasksPage() {
         toast({title: "Revision Notes Required", description: "Please provide notes for the VA revision.", variant: "destructive"});
         return;
     }
-    const success = await updateTaskInFirestore(selectedTask.id, { status: "Revision Requested (to VA)", adminNotes: adminReviewNotesInput });
+    const success = handleUpdateTask(selectedTask.id, { status: "Revision Requested (to VA)", adminNotes: adminReviewNotesInput });
     if (success) {
         toast({ title: "Revision Requested", description: `Revision requested from VA for ${selectedTask.title}. Notes: ${adminReviewNotesInput}` });
         setIsReviewVaWorkOpen(false);
@@ -313,7 +239,7 @@ export default function AdminTasksPage() {
   
   const handleCancelTask = async () => {
       if(!selectedTask) return;
-      const success = await updateTaskInFirestore(selectedTask.id, { status: "Cancelled" });
+      const success = handleUpdateTask(selectedTask.id, { status: "Cancelled" });
       if (success) {
         toast({title: "Task Cancelled", description: `Task ${selectedTask.title} has been cancelled.`, variant: "destructive"});
         setIsCancelTaskOpen(false);
@@ -559,166 +485,6 @@ export default function AdminTasksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <Dialog open={isReviewPriceOpen} onOpenChange={setIsReviewPriceOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Review & Price Task: {selectedTask?.title}</DialogTitle>
-            <DialogDescription>Set the price for this task and approve or reject it.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="text-sm"><strong className="text-muted-foreground">Student:</strong> {selectedTask?.studentName}</div>
-            <div className="text-sm"><strong className="text-muted-foreground">Description:</strong> {selectedTask?.description}</div>
-            <div className="space-y-1.5">
-              <Label htmlFor="adminPrice">Set Price (NGN)</Label>
-              <div className="relative">
-                <span className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground font-semibold">₦</span>
-                <Input id="adminPrice" type="number" placeholder="e.g., 100.00" value={adminPriceInput} onChange={(e) => setAdminPriceInput(e.target.value)} className="pl-8" disabled={isSubmittingAction}/>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="adminNotesPricing">Admin Notes (Optional for approval, Required for rejection)</Label>
-              <Textarea id="adminNotesPricing" placeholder="Notes for VA or internal records..." value={adminNotesInput} onChange={(e) => setAdminNotesInput(e.target.value)} rows={2} disabled={isSubmittingAction}/>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="destructive" onClick={handleRejectTask} disabled={(!adminNotesInput.trim() && selectedTask?.status === "Pending Admin Review") || isSubmittingAction}>
-              {isSubmittingAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Reject Task
-            </Button>
-            <Button onClick={handleApproveTask} className="bg-green-600 hover:bg-green-700 text-white" disabled={!adminPriceInput.trim() || isSubmittingAction}>
-              {isSubmittingAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Approve & Set Price
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-       <Dialog open={isAssignVaOpen} onOpenChange={setIsAssignVaOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-                {selectedTask?.status === "Rejected by VA" ? "Re-assign VA to Task: " : "Assign VA to Task: "} 
-                {selectedTask?.title}
-            </DialogTitle>
-            <DialogDescription>
-                Select a Virtual Assistant for this task. 
-                {selectedTask?.status === "Rejected by VA" && ` Previous VA: ${selectedTask.assignedVaName} rejected (Reason: ${selectedTask.vaRejectionReason || 'N/A'}).`}
-                Price set: ₦{selectedTask?.adminSetPriceNGN?.toFixed(2)}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="assignVaSelect">Select VA</Label>
-              <Select onValueChange={setSelectedVaForAssignment} value={selectedVaForAssignment} disabled={isSubmittingAction}>
-                <SelectTrigger id="assignVaSelect">
-                  <SelectValue placeholder="Choose a VA" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockVAs.map(va => (
-                    <SelectItem key={va.id} value={va.id} disabled={va.id === selectedTask?.assignedVaId && selectedTask?.status === "Rejected by VA"}>
-                        {va.name} {va.id === selectedTask?.assignedVaId && selectedTask?.status === "Rejected by VA" && "(Previously Rejected)"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAssignVaOpen(false)} disabled={isSubmittingAction}>Cancel</Button>
-            <Button onClick={handleAssignVa} disabled={!selectedVaForAssignment || isSubmittingAction}>
-                {isSubmittingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (selectedTask?.status === "Rejected by VA" ? <RefreshCw className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />)}
-                {selectedTask?.status === "Rejected by VA" ? "Re-assign Selected VA" : "Assign Selected VA"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isConfirmPaymentOpen} onOpenChange={setIsConfirmPaymentOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Confirm Student Payment for {selectedTask?.title}</DialogTitle>
-                    <DialogDescription>
-                        Task ID: {selectedTask?.id} | Price: ₦{selectedTask?.adminSetPriceNGN?.toFixed(2)} | Assigned VA: {selectedTask?.assignedVaName}
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                    <div className="text-sm text-muted-foreground">
-                        Has the student successfully paid the amount of ₦{selectedTask?.adminSetPriceNGN?.toFixed(2)} for this task?
-                        Confirming payment will change the task status to "In Progress with VA" and notify the VA.
-                    </div>
-                     <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-700 flex items-center">
-                        <AlertTriangle className="h-5 w-5 mr-2 shrink-0" />
-                        Ensure payment is verified before confirming. This action is usually irreversible.
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsConfirmPaymentOpen(false)} disabled={isSubmittingAction}>Cancel</Button>
-                    <Button onClick={handleConfirmPayment} className="bg-green-600 hover:bg-green-700 text-white" disabled={isSubmittingAction}>
-                       {isSubmittingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Check className="mr-2 h-4 w-4"/>} Yes, Payment Confirmed
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-
-
-      <Dialog open={isReviewVaWorkOpen} onOpenChange={setIsReviewVaWorkOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Review VA Submission for: {selectedTask?.title}</DialogTitle>
-            <DialogDescription>VA: {selectedTask?.assignedVaName} | Submitted: {selectedTask?.vaSubmissionDate}</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
-            <div className="space-y-1.5">
-              <Label className="font-medium">VA Submission Notes:</Label>
-              <div className="text-sm bg-muted/30 p-2 rounded">{selectedTask?.vaSubmissionNotes || "No notes provided by VA."}</div>
-            </div>
-             {selectedTask?.vaSubmissionAttachments && selectedTask.vaSubmissionAttachments.length > 0 && (
-                <div className="space-y-1.5">
-                <Label className="font-medium">VA Attachments:</Label>
-                <ul className="list-disc pl-5 text-sm space-y-1">
-                    {selectedTask.vaSubmissionAttachments.map(att => (
-                    <li key={att.name}>
-                        <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline flex items-center">
-                         <Paperclip className="h-4 w-4 mr-1.5 shrink-0"/>{att.name}
-                        </a>
-                    </li>
-                    ))}
-                </ul>
-                </div>
-            )}
-            <div className="space-y-1.5 pt-3 border-t">
-              <Label htmlFor="adminReviewNotes">Admin Review Notes / Feedback (Required for Revision)</Label>
-              <Textarea id="adminReviewNotes" placeholder="Notes for student or internal record..." value={adminReviewNotesInput} onChange={(e) => setAdminReviewNotesInput(e.target.value)} rows={3} disabled={isSubmittingAction}/>
-            </div>
-          </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={handleRequestRevisionFromVA} disabled={!adminReviewNotesInput.trim() || isSubmittingAction}>
-              {isSubmittingAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Request Revision from VA
-            </Button>
-            <Button onClick={handleApproveVaWork} className="bg-green-600 hover:bg-green-700 text-white" disabled={isSubmittingAction}>
-              {isSubmittingAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Approve & Complete Task
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      <AlertDialog open={isCancelTaskOpen} onOpenChange={setIsCancelTaskOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Cancel Task</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel task: <strong>{selectedTask?.title}</strong> (ID: {selectedTask?.id})?
-              This action may notify the student and VA (if assigned). It might not be reversible depending on the task stage.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsCancelTaskOpen(false)} disabled={isSubmittingAction}>Keep Task</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancelTask} className="bg-destructive hover:bg-destructive/90" disabled={isSubmittingAction}>
-                {isSubmittingAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Proceed to Cancel
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
     </div>
   );
 }

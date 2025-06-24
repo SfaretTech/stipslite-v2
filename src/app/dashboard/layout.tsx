@@ -16,9 +16,11 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/auth/login");
-    }
+    // Note: Re-implement your auth protection logic here.
+    // Example:
+    // if (!loading && !user) {
+    //   router.replace("/auth/login");
+    // }
   }, [user, loading, router]);
 
   if (loading) {
@@ -35,10 +37,6 @@ export default function DashboardLayout({
     );
   }
 
-  if (!user) {
-    // This helps prevent flashing content before redirect
-    return null; 
-  }
-
+  // Render children regardless of auth state for now, to allow re-implementation.
   return <AppLayout role="student">{children}</AppLayout>;
 }
