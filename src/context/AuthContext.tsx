@@ -3,8 +3,8 @@
 
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { createContext, useContext, useEffect, useState } from "react";
-// Firebase-specific types are removed to avoid build errors.
-// They should be re-introduced when Firebase is integrated correctly.
+// Firebase-specific types are removed to resolve build errors.
+// They can be re-introduced when Firebase is integrated correctly.
 
 export interface UserProfile {
   uid: string;
@@ -24,13 +24,11 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   setUser: Dispatch<SetStateAction<UserProfile | null>>;
-  // The Firebase instances have been removed to resolve the build error.
-  // Re-implement initialization here when ready.
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// A mock user for demonstration purposes without a live Firebase connection.
+// A mock user for demonstration purposes.
 const mockUser: UserProfile = {
     uid: "mock-user-123",
     email: "user@stipslite.com",
@@ -47,13 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // This effect simulates an authentication check.
-    // In a real app, this is where you would initialize Firebase
-    // using dynamic imports and set up the onAuthStateChanged listener.
     const simulateAuthCheck = () => {
-      // To test the logged-out state, set the user to null.
-      // To test the logged-in state, set it to mockUser.
       setTimeout(() => {
-        setUser(mockUser); // Change to null to simulate logged out
+        // To test the logged-out state, set the user to null.
+        // To test the logged-in state, set it to mockUser.
+        setUser(mockUser); 
         setLoading(false);
       }, 500);
     };
