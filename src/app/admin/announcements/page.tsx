@@ -198,20 +198,24 @@ export default function AdminAnnouncementsPage() {
       
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{announcementToView?.title || "Announcement Details"}</DialogTitle>
-            <DialogDescription>
-              Sent on: {isClient && announcementToView?.dateSent ? format(new Date(announcementToView.dateSent), "PPP") : announcementToView?.dateSent || 'N/A'} | To: {announcementToView?.targets.join(', ')}
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="max-h-[60vh] my-4">
-            <div className="whitespace-pre-wrap p-2 bg-muted/30 rounded-md text-sm">
-              {announcementToView?.message}
-            </div>
-          </ScrollArea>
-          <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
-          </DialogFooter>
+          {announcementToView && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{announcementToView.title}</DialogTitle>
+                <DialogDescription>
+                  Sent on: {isClient ? format(new Date(announcementToView.dateSent), "PPP") : announcementToView.dateSent} | To: {announcementToView.targets.join(', ')}
+                </DialogDescription>
+              </DialogHeader>
+              <ScrollArea className="max-h-[60vh] my-4">
+                <div className="whitespace-pre-wrap p-2 bg-muted/30 rounded-md text-sm">
+                  {announcementToView.message}
+                </div>
+              </ScrollArea>
+              <DialogFooter>
+                <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -275,9 +279,7 @@ export default function AdminAnnouncementsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Delete Announcement</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete the announcement: <strong>{announcementToDelete?.title}</strong>? This action cannot be undone.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Are you sure you want to delete the announcement: <strong>{announcementToDelete?.title}</strong>? This action cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setAnnouncementToDelete(null)}>Cancel</AlertDialogCancel>
