@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -74,6 +74,11 @@ export default function AdminAnnouncementsPage() {
   const [selectedTargets, setSelectedTargets] = useState<TargetAudience[]>([]);
 
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleTargetChange = (targetId: TargetAudience, checked: boolean) => {
     setSelectedTargets(prev => 
@@ -196,7 +201,7 @@ export default function AdminAnnouncementsPage() {
           <DialogHeader>
             <DialogTitle>{announcementToView?.title || "Announcement Details"}</DialogTitle>
             <DialogDescription>
-              Sent on: {announcementToView?.dateSent ? format(new Date(announcementToView.dateSent), "PPP") : 'N/A'} | To: {announcementToView?.targets.join(', ')}
+              Sent on: {isClient && announcementToView?.dateSent ? format(new Date(announcementToView.dateSent), "PPP") : announcementToView?.dateSent || 'N/A'} | To: {announcementToView?.targets.join(', ')}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] my-4">
@@ -239,7 +244,7 @@ export default function AdminAnnouncementsPage() {
                         <TableCell className="space-x-1">
                             {ann.targets.map(target => <Badge key={target} variant="secondary">{target.charAt(0).toUpperCase() + target.slice(1)}</Badge>)}
                         </TableCell>
-                        <TableCell>{format(new Date(ann.dateSent), "PPP")}</TableCell>
+                        <TableCell>{isClient ? format(new Date(ann.dateSent), "PPP") : ann.dateSent}</TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -284,4 +289,3 @@ export default function AdminAnnouncementsPage() {
     </div>
   );
 }
-
