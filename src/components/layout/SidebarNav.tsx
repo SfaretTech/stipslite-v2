@@ -102,7 +102,6 @@ const adminNavItems = [
     ],
   },
    { href: "/admin/manage-admins", label: "Manage Admins", icon: UserCog }, 
-   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
    { href: "/admin/support", label: "Support Center", icon: LifeBuoy },
    { href: "/admin/notifications", label: "Activity Log", icon: Activity },
    { href: "/admin/settings", label: "Platform Settings", icon: Settings },

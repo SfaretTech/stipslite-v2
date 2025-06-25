@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Mock notifications for the dropdown - ideally fetch this or share from a context
 const mockStudentNotifications = [
-  { id: "N001", title: "Task 'Research Paper Q1' Approved", timestamp: "2 hours ago", read: false, link: "/dashboard/tasks/TSK001", icon: CheckCircle },
+  { id: "N001", title: "Task 'Research Paper Q1' Approved", description: "Your task has been approved. Payment of ₦25.00 is now due.", timestamp: "2 hours ago", read: false, link: "/dashboard/tasks/TSK001", icon: CheckCircle },
   { id: "N002", title: "New Referral: Jane Doe", timestamp: "1 day ago", read: false, link: "/dashboard/referrals", icon: UsersIcon },
   { id: "N003", title: "Subscription Renewal Soon", timestamp: "3 days ago", read: true, link: "/dashboard/subscription", icon: CreditCard },
   { id: "N004", title: "Payment Received", timestamp: "5 days ago", read: true, link: "/dashboard/tasks/TSK00X", icon: DollarIcon },
@@ -52,7 +52,6 @@ const mockAdminNotifications = [
     { id: "AN002", title: "Task 'TSK105' Submitted by 'John D.'", timestamp: "1 hour ago", read: false, link: "/admin/tasks", icon: Briefcase },
     { id: "AN003", title: "Support Ticket #STK034 Opened", timestamp: "3 hours ago", read: false, link: "/admin/dashboard", icon: LifeBuoy }, 
     { id: "AN004", title: "Platform Update Deployed Successfully", timestamp: "1 day ago", read: true, link: "/admin/settings", icon: Settings },
-    { id: "AN005_SENT_ANNOUNCEMENT", title: "Announcement 'Holiday Hours' Sent", description: "Sent to Students, VAs, Print Centers.", timestamp: "20 mins ago", read: false, link: "/admin/announcements", icon: Megaphone },
 ];
 
 
@@ -212,7 +211,7 @@ export function Header({ role = "student" }: { role?: "student" | "admin" | "va"
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-9 w-9">
-                <AvatarImage src={user?.photoURL || "https://placehold.co/100x100.png"} alt="User Avatar" data-ai-hint="person avatar" />
+                <AvatarImage src={user?.photoURL || "https://placehold.co/100x100.png"} alt={user?.displayName || "User"} data-ai-hint="person avatar" />
                 <AvatarFallback>{userName.substring(0,1).toUpperCase()}{userName.split(' ')[1]?.substring(0,1).toUpperCase() || userName.substring(1,2).toUpperCase()}</AvatarFallback>
               </Avatar>
             </Button>
