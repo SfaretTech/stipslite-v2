@@ -132,7 +132,7 @@ export default function AdminPaymentManagementPage() {
 
   const { toast } = useToast();
 
-  const openActionDialog = (request: WithdrawalRequest, action: "approve" | "mark_paid" | "reject") => {
+  const openActionDialog = (request: WithdrawalRequest, action: "approve" | "mark_paid" | "reject" | null) => {
     setSelectedRequest(request);
     setCurrentAction(action);
     setAdminNotesInput(request.adminNotes || "");
@@ -326,7 +326,7 @@ export default function AdminPaymentManagementPage() {
               {!currentAction && "View Withdrawal Details"}
             </DialogTitle>
             <DialogDescription>
-                Request ID: {selectedRequest?.id} | User: {selectedRequest?.userName} ({selectedRequest?.userRole}) | Amount: ₦{selectedRequest?.amount.toFixed(2)}
+                Request ID: {selectedRequest?.id} | User: {selectedRequest?.userName} ({selectedRequest?.userRole}) | Amount: ₦{selectedRequest?.amount?.toFixed(2) ?? 'N/A'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">

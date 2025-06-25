@@ -203,7 +203,10 @@ export default function AdminAnnouncementsPage() {
               <DialogHeader>
                 <DialogTitle>{announcementToView.title}</DialogTitle>
                 <DialogDescription>
-                  Sent on: {isClient ? format(new Date(announcementToView.dateSent), "PPP") : announcementToView.dateSent} | To: {announcementToView.targets.join(', ')}
+                  {announcementToView
+                    ? `Sent on: ${isClient ? format(new Date(announcementToView.dateSent), "PPP") : announcementToView.dateSent} | To: ${announcementToView.targets.join(', ')}`
+                    : 'Loading details...'
+                  }
                 </DialogDescription>
               </DialogHeader>
               <ScrollArea className="max-h-[60vh] my-4">
