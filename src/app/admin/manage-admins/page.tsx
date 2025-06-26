@@ -42,6 +42,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+
 
 type AdminRole = 'General Admin' | 'Full Admin' | 'Support Admin' | 'Content Admin';
 type AdminStatus = 'Active' | 'Inactive';
@@ -216,81 +218,85 @@ export default function ManageAdminsPage() {
       </Dialog>
       
       {/* Edit Admin Dialog (Placeholder/Basic) */}
-      {selectedAdmin && (
-        <Dialog open={isEditAdminDialogOpen} onOpenChange={setIsEditAdminDialogOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Edit Admin: {selectedAdmin.name}</DialogTitle>
-                    <DialogDescription>Modify admin details. (This is a simplified version).</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="editAdminName">Full Name</Label>
-                        <Input id="editAdminName" defaultValue={selectedAdmin.name} />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label htmlFor="editAdminEmail">Email Address</Label>
-                        <Input id="editAdminEmail" type="email" defaultValue={selectedAdmin.email} readOnly={selectedAdmin.role === "General Admin"} />
-                    </div>
-                     <div className="space-y-1.5">
-                        <Label htmlFor="editAdminRole">Admin Role</Label>
-                        <Select defaultValue={selectedAdmin.role} disabled={selectedAdmin.role === "General Admin"}>
-                            <SelectTrigger id="editAdminRole"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                {selectedAdmin.role === "General Admin" ? <SelectItem value="General Admin">General Admin</SelectItem> : availableRoles.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                    <Button onClick={() => {setIsEditAdminDialogOpen(false); toast({title:"Changes Saved (Simulated)"})}}>Save Changes</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-      )}
+      <Dialog open={isEditAdminDialogOpen} onOpenChange={setIsEditAdminDialogOpen}>
+          <DialogContent>
+            {selectedAdmin && (
+              <>
+                  <DialogHeader>
+                      <DialogTitle>Edit Admin: {selectedAdmin.name}</DialogTitle>
+                      <DialogDescription>Modify admin details. (This is a simplified version).</DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                      <div className="space-y-1.5">
+                          <Label htmlFor="editAdminName">Full Name</Label>
+                          <Input id="editAdminName" defaultValue={selectedAdmin.name} />
+                      </div>
+                      <div className="space-y-1.5">
+                          <Label htmlFor="editAdminEmail">Email Address</Label>
+                          <Input id="editAdminEmail" type="email" defaultValue={selectedAdmin.email} readOnly={selectedAdmin.role === "General Admin"} />
+                      </div>
+                      <div className="space-y-1.5">
+                          <Label htmlFor="editAdminRole">Admin Role</Label>
+                          <Select defaultValue={selectedAdmin.role} disabled={selectedAdmin.role === "General Admin"}>
+                              <SelectTrigger id="editAdminRole"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                  {selectedAdmin.role === "General Admin" ? <SelectItem value="General Admin">General Admin</SelectItem> : availableRoles.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                  </div>
+                  <DialogFooter>
+                      <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                      <Button onClick={() => {setIsEditAdminDialogOpen(false); toast({title:"Changes Saved (Simulated)"})}}>Save Changes</Button>
+                  </DialogFooter>
+              </>
+            )}
+          </DialogContent>
+      </Dialog>
 
       {/* Configure Permissions Dialog */}
-      {selectedAdmin && selectedAdmin.role !== "General Admin" && (
-        <Dialog open={isPermissionsDialogOpen} onOpenChange={setIsPermissionsDialogOpen}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Configure Permissions for {selectedAdmin.name}</DialogTitle>
-                    <DialogDescription>
-                        Manage granular feature access for {selectedAdmin.name} ({selectedAdmin.role}).
-                        These settings complement their assigned role.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-3 py-4 max-h-[60vh] overflow-y-auto pr-2">
-                    {mockFeatures.map(feature => {
-                        const Icon = feature.icon;
-                        return (
-                            <div key={feature.id} className="flex items-center justify-between p-3 border rounded-md">
-                                <Label htmlFor={`perm-${feature.id}`} className="text-sm flex items-center">
-                                    {Icon && <Icon className="h-4 w-4 mr-2 text-muted-foreground" />}
-                                    {feature.label}
-                                </Label>
-                                <Switch 
-                                    id={`perm-${feature.id}`}
-                                    checked={selectedAdmin.featureAccess[feature.id] || selectedAdmin.featureAccess.all || false}
-                                    onCheckedChange={(checked) => {
-                                        setSelectedAdmin(prev => prev ? {
-                                            ...prev, 
-                                            featureAccess: {...prev.featureAccess, all: false, [feature.id]: checked}
-                                        } : null);
-                                    }}
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                    <Button onClick={() => handleSavePermissions(selectedAdmin.id, selectedAdmin.featureAccess)}>Save Permissions</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-      )}
+      <Dialog open={isPermissionsDialogOpen} onOpenChange={setIsPermissionsDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            {selectedAdmin && selectedAdmin.role !== "General Admin" && (
+              <>
+                  <DialogHeader>
+                      <DialogTitle>Configure Permissions for {selectedAdmin.name}</DialogTitle>
+                      <DialogDescription>
+                          Manage granular feature access for {selectedAdmin.name} ({selectedAdmin.role}).
+                          These settings complement their assigned role.
+                      </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-3 py-4 max-h-[60vh] overflow-y-auto pr-2">
+                      {mockFeatures.map(feature => {
+                          const Icon = feature.icon;
+                          return (
+                              <div key={feature.id} className="flex items-center justify-between p-3 border rounded-md">
+                                  <Label htmlFor={`perm-${feature.id}`} className="text-sm flex items-center">
+                                      {Icon && <Icon className="h-4 w-4 mr-2 text-muted-foreground" />}
+                                      {feature.label}
+                                  </Label>
+                                  <Switch 
+                                      id={`perm-${feature.id}`}
+                                      checked={selectedAdmin.featureAccess[feature.id] || selectedAdmin.featureAccess.all || false}
+                                      onCheckedChange={(checked) => {
+                                          setSelectedAdmin(prev => prev ? {
+                                              ...prev, 
+                                              featureAccess: {...prev.featureAccess, all: false, [feature.id]: checked}
+                                          } : null);
+                                      }}
+                                  />
+                              </div>
+                          );
+                      })}
+                  </div>
+                  <DialogFooter>
+                      <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                      <Button onClick={() => handleSavePermissions(selectedAdmin.id, selectedAdmin.featureAccess)}>Save Permissions</Button>
+                  </DialogFooter>
+              </>
+            )}
+          </DialogContent>
+      </Dialog>
 
 
       <Card className="shadow-xl">
@@ -389,20 +395,23 @@ export default function ManageAdminsPage() {
 
       <AlertDialog open={!!adminToDelete} onOpenChange={() => setAdminToDelete(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Delete Administrator</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete admin: <strong>{adminToDelete?.name}</strong> ({adminToDelete?.email})? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setAdminToDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteAdmin} className="bg-destructive hover:bg-destructive/90">Delete Admin</AlertDialogAction>
-          </AlertDialogFooter>
+          {adminToDelete && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirm Delete Administrator</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete admin: <strong>{adminToDelete.name}</strong> ({adminToDelete.email})? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setAdminToDelete(null)}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteAdmin} className="bg-destructive hover:bg-destructive/90">Delete Admin</AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
         </AlertDialogContent>
       </AlertDialog>
 
     </div>
   );
 }
-

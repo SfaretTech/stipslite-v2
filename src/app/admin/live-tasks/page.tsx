@@ -289,19 +289,23 @@ export default function AdminLiveTasksPage() {
 
       <AlertDialog open={!!taskToWithdraw} onOpenChange={() => setTaskToWithdraw(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Withdraw Task</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to withdraw task: <strong>{taskToWithdraw?.title}</strong> (ID: {taskToWithdraw?.id}) from the live pool? 
-              It will be returned to "Pending Admin Review" status.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleWithdrawTask} className="bg-orange-600 hover:bg-orange-700 text-white">
-              Yes, Withdraw Task
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          {taskToWithdraw && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirm Withdraw Task</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to withdraw task: <strong>{taskToWithdraw.title}</strong> (ID: {taskToWithdraw.id}) from the live pool? 
+                  It will be returned to "Pending Admin Review" status.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleWithdrawTask} className="bg-orange-600 hover:bg-orange-700 text-white">
+                  Yes, Withdraw Task
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
         </AlertDialogContent>
       </AlertDialog>
 

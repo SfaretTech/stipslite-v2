@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { Suspense, useState, useMemo } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 type ApprovalStatus = 'Pending' | 'Approved' | 'Rejected';
@@ -166,24 +167,58 @@ function AdminApprovalsPageComponent() {
       
       <AlertDialog open={!!(selectedRequest && action)} onOpenChange={() => {setSelectedRequest(null); setAction(null)}}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm {action === 'approve' ? 'Approval' : 'Rejection'}</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to {action} the application for <strong>{selectedRequest?.name}</strong> ({selectedRequest?.role})? This action will notify the user.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmAction} className={action === 'reject' ? 'bg-destructive hover:bg-destructive/90' : ''}>
-              Yes, {action}
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          {selectedRequest && action && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirm {action === 'approve' ? 'Approval' : 'Rejection'}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to {action} the application for <strong>{selectedRequest.name}</strong> ({selectedRequest.role})? This action will notify the user.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmAction} className={action === 'reject' ? 'bg-destructive hover:bg-destructive/90' : ''}>
+                  Yes, {action}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
         </AlertDialogContent>
       </AlertDialog>
     </div>
   );
 }
 
+// Skeleton component for fallback
+function ApprovalsPageSkeleton() {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-8 w-8" />
+          <div>
+             <Skeleton className="h-8 w-64" />
+             <Skeleton className="h-4 w-80 mt-1" />
+          </div>
+        </div>
+        <Card>
+            <CardHeader>
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-4 w-64" />
+            </CardHeader>
+            <CardContent className="space-y-2">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+            </CardContent>
+        </Card>
+      </div>
+    );
+}
+
 export default function ApprovalsPage() {
-  return <AdminApprovalsPageComponent />;
+  return (
+    <Suspense fallback={<ApprovalsPageSkeleton />}>
+        <AdminApprovalsPageComponent />
+    </Suspense>
+  );
 }

@@ -87,8 +87,8 @@ const ClientSideTime: React.FC<{ date: Date | string | undefined }> = ({ date })
   if (timeString === null) {
     // Initial render (SSR and first client render before useEffect completes)
     if (date) {
-      const d = typeof date === 'string' ? parseISO(date) : date;
       try {
+        const d = typeof date === 'string' ? parseISO(date) : date;
         return <>{format(d, 'PPP')}</>; // Render only the date part
       } catch {
         return <>Invalid Date</>;
@@ -318,19 +318,20 @@ export default function AdminPaymentManagementPage() {
 
       <Dialog open={isActionDialogOpen} onOpenChange={setIsActionDialogOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {currentAction === "approve" && "Approve Withdrawal Request"}
-              {currentAction === "mark_paid" && "Mark Withdrawal as Paid"}
-              {currentAction === "reject" && "Reject/Fail Withdrawal Request"}
-              {!currentAction && "View Withdrawal Details"}
-            </DialogTitle>
-            <DialogDescription>
-                Request ID: {selectedRequest?.id} | User: {selectedRequest?.userName} ({selectedRequest?.userRole}) | Amount: ₦{selectedRequest?.amount?.toFixed(2) ?? 'N/A'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {selectedRequest && (
+          {selectedRequest && (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  {currentAction === "approve" && "Approve Withdrawal Request"}
+                  {currentAction === "mark_paid" && "Mark Withdrawal as Paid"}
+                  {currentAction === "reject" && "Reject/Fail Withdrawal Request"}
+                  {!currentAction && "View Withdrawal Details"}
+                </DialogTitle>
+                <DialogDescription>
+                  Request ID: {selectedRequest.id} | User: {selectedRequest.userName} ({selectedRequest.userRole}) | Amount: ₦{selectedRequest.amount.toFixed(2)}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
                 <div className="text-sm space-y-1 p-3 bg-muted/50 rounded-md">
                     <p><strong>User:</strong> {selectedRequest.userName} ({selectedRequest.userId} - {selectedRequest.userRole})</p>
                     <p><strong>Amount:</strong> ₦{selectedRequest.amount.toFixed(2)} ({selectedRequest.type})</p>
@@ -341,60 +342,61 @@ export default function AdminPaymentManagementPage() {
                     {selectedRequest.transactionId && <p><strong>Transaction ID:</strong> {selectedRequest.transactionId}</p>}
                     {selectedRequest.processedDate && <div><strong>Processed/Updated:</strong> <ClientSideTime date={selectedRequest.processedDate} /></div>}
                 </div>
-            )}
-            {(currentAction === "mark_paid" || currentAction === "reject" || (!currentAction && selectedRequest?.adminNotes)) && (
-              <div className="space-y-1.5">
-                <Label htmlFor="adminNotes">
-                    {currentAction === "mark_paid" && "Payment Transaction ID"}
-                    {currentAction === "reject" && "Reason for Rejection/Failure"}
-                    {!currentAction && selectedRequest?.adminNotes && "Admin Notes"}
-                </Label>
-                {currentAction === "mark_paid" ? (
-                     <Input 
-                        id="transactionId" 
-                        placeholder="Enter payment transaction ID" 
-                        value={transactionIdInput}
-                        onChange={(e) => setTransactionIdInput(e.target.value)}
-                        disabled={!currentAction} 
-                    />
-                ) : (
-                    <Textarea
-                        id="adminNotes"
-                        placeholder={currentAction === "reject" ? "Provide a clear reason..." : "Internal notes..."}
-                        value={adminNotesInput}
-                        onChange={(e) => setAdminNotesInput(e.target.value)}
-                        rows={3}
-                        disabled={!currentAction && !selectedRequest?.adminNotes}
-                        readOnly={!currentAction && !!selectedRequest?.adminNotes}
-                    />
+                {(currentAction === "mark_paid" || currentAction === "reject" || (!currentAction && selectedRequest?.adminNotes)) && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="adminNotes">
+                        {currentAction === "mark_paid" && "Payment Transaction ID"}
+                        {currentAction === "reject" && "Reason for Rejection/Failure"}
+                        {!currentAction && selectedRequest?.adminNotes && "Admin Notes"}
+                    </Label>
+                    {currentAction === "mark_paid" ? (
+                        <Input 
+                            id="transactionId" 
+                            placeholder="Enter payment transaction ID" 
+                            value={transactionIdInput}
+                            onChange={(e) => setTransactionIdInput(e.target.value)}
+                            disabled={!currentAction} 
+                        />
+                    ) : (
+                        <Textarea
+                            id="adminNotes"
+                            placeholder={currentAction === "reject" ? "Provide a clear reason..." : "Internal notes..."}
+                            value={adminNotesInput}
+                            onChange={(e) => setAdminNotesInput(e.target.value)}
+                            rows={3}
+                            disabled={!currentAction && !selectedRequest?.adminNotes}
+                            readOnly={!currentAction && !!selectedRequest?.adminNotes}
+                        />
+                    )}
+                  </div>
+                )}
+                {currentAction === 'approve' && (
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 flex items-start">
+                        <AlertTriangle className="h-5 w-5 mr-2 mt-0.5 shrink-0"/>
+                        <p className="text-sm">Approving this request will make it eligible for payment processing. Ensure details are correct.</p>
+                    </div>
+                )}
+                {currentAction === 'mark_paid' && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 flex items-start">
+                        <AlertTriangle className="h-5 w-5 mr-2 mt-0.5 shrink-0"/>
+                        <p className="text-sm">Marking as paid finalizes this transaction. Ensure payment has been successfully disbursed.</p>
+                    </div>
                 )}
               </div>
-            )}
-             {currentAction === 'approve' && (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 flex items-start">
-                    <AlertTriangle className="h-5 w-5 mr-2 mt-0.5 shrink-0"/>
-                    <p className="text-sm">Approving this request will make it eligible for payment processing. Ensure details are correct.</p>
-                </div>
-            )}
-             {currentAction === 'mark_paid' && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 flex items-start">
-                    <AlertTriangle className="h-5 w-5 mr-2 mt-0.5 shrink-0"/>
-                    <p className="text-sm">Marking as paid finalizes this transaction. Ensure payment has been successfully disbursed.</p>
-                </div>
-            )}
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            {currentAction && (
-              <Button onClick={handleConfirmAction}>
-                {currentAction === "approve" && "Confirm Approval"}
-                {currentAction === "mark_paid" && "Confirm Payment Sent"}
-                {currentAction === "reject" && "Confirm Rejection/Failure"}
-              </Button>
-            )}
-          </DialogFooter>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                {currentAction && (
+                  <Button onClick={handleConfirmAction}>
+                    {currentAction === "approve" && "Confirm Approval"}
+                    {currentAction === "mark_paid" && "Confirm Payment Sent"}
+                    {currentAction === "reject" && "Confirm Rejection/Failure"}
+                  </Button>
+                )}
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

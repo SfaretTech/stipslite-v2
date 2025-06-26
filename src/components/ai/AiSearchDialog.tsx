@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useTransition, useRef, useEffect } from "react";
+import { useState, useTransition, useRef, useEffect, useId } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,7 +41,7 @@ export function AiSearchDialog() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const descriptionId = "ai-dialog-description";
+  const descriptionId = useId();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -124,7 +124,7 @@ export function AiSearchDialog() {
             <Sparkles className="h-6 w-6 mr-2 text-primary" />
             AZUMA AI
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription id={descriptionId}>
             Ask questions and get informative responses from AZUMA AI.
           </DialogDescription>
         </DialogHeader>
