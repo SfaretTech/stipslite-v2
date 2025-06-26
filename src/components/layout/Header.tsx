@@ -57,7 +57,7 @@ const mockAdminNotifications = [
 
 export function Header({ role = "student" }: { role?: "student" | "admin" | "va" | "print-center" }) {
   const { isMobile } = useSidebar();
-  const { user, setUser } = useAuth(); // Get user from AuthContext
+  const { user, setUser } = useAuth(); // Get user from context
   const router = useRouter();
   const { toast } = useToast(); 
 
