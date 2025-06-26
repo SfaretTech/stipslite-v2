@@ -41,6 +41,7 @@ export function AiSearchDialog() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const descriptionId = "ai-dialog-description";
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -117,7 +118,7 @@ export function AiSearchDialog() {
           <span className="sr-only">AZUMA AI Chat</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col p-0" aria-describedby={descriptionId}>
         <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle className="flex items-center">
             <Sparkles className="h-6 w-6 mr-2 text-primary" />
