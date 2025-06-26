@@ -189,36 +189,8 @@ function AdminApprovalsPageComponent() {
   );
 }
 
-// Skeleton component for fallback
-function ApprovalsPageSkeleton() {
-    return (
-      <div className="space-y-8">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-8 w-8" />
-          <div>
-             <Skeleton className="h-8 w-64" />
-             <Skeleton className="h-4 w-80 mt-1" />
-          </div>
-        </div>
-        <Card>
-            <CardHeader>
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-4 w-64" />
-            </CardHeader>
-            <CardContent className="space-y-2">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-            </CardContent>
-        </Card>
-      </div>
-    );
-}
-
 export default function ApprovalsPage() {
   return (
-    <Suspense fallback={<ApprovalsPageSkeleton />}>
-        <AdminApprovalsPageComponent />
-    </Suspense>
+    <AdminApprovalsPageComponent />
   );
 }
