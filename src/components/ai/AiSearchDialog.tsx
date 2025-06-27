@@ -110,7 +110,7 @@ export function AiSearchDialog() {
     }
   }
 
-  return (
+return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="icon" className="rounded-full">
@@ -210,4 +210,3 @@ export function AiSearchDialog() {
     </Dialog>
   );
 }
-

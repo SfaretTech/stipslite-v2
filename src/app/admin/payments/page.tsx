@@ -86,16 +86,7 @@ const ClientSideTime: React.FC<{ date: Date | string | undefined }> = ({ date })
 
   if (timeString === null) {
     // Initial render (SSR and first client render before useEffect completes)
-    if (date) {
-      try {
-        const d = typeof date === 'string' ? parseISO(date) : date;
-        return <>{format(d, 'PPP')}</>; // Render only the date part
-      } catch {
-        return <>Invalid Date</>;
-      }
-    }
     return <>N/A</>; // Placeholder if no date
-  }
 
   return <>{timeString}</>; // Render full date and time string after client-side effect
 };
