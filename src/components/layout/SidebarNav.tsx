@@ -21,9 +21,7 @@ import {
   Star,
   Lock,
   Briefcase, 
-  CalendarCheck, 
   DollarSign, 
-  Signal, 
   Target, 
   ListChecks,
   Banknote, 
@@ -32,11 +30,10 @@ import {
   Gift,
   Activity,
   UserCog, 
-  ShieldOff, 
-  Megaphone,
   Landmark,
   ChevronDown,
   LifeBuoy,
+  Signal,
 } from "lucide-react";
 import {
   SidebarMenu,
@@ -49,7 +46,6 @@ import {
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 
 
@@ -82,39 +78,37 @@ const accountNavItemsStudent = [
 ];
 
 const adminNavItems = [
-   { href: "/admin/dashboard", label: "Admin Dashboard", icon: LayoutDashboard },
+   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
    { href: "/admin/approvals", label: "Account Approvals", icon: ShieldCheck },
+   { href: "/admin/tasks", label: "Manage Tasks", icon: ClipboardList },
+   { href: "/admin/live-tasks", label: "Live Tasks", icon: Signal },
+   { href: "/admin/users", label: "User Management", icon: BookUser },
    {
-    label: "Task Management",
-    icon: ClipboardList,
-    subItems: [
-      { href: "/admin/tasks", label: "Manage All Tasks", icon: ListChecks },
-      { href: "/admin/live-tasks", label: "Live Tasks", icon: Signal },
-    ],
-  },
-   { href: "/admin/users", label: "Manage Users", icon: BookUser },
-   {
-    label: "Payment Management",
+    label: "Payments",
     icon: Banknote,
     subItems: [
       { href: "/admin/payments", label: "Withdrawal Requests", icon: DollarSign },
-      { href: "/admin/user-payout-settings", label: "User Payout Details", icon: Landmark },
     ],
   },
    { href: "/admin/manage-admins", label: "Manage Admins", icon: UserCog }, 
    { href: "/admin/support", label: "Support Center", icon: LifeBuoy },
-   { href: "/admin/notifications", label: "Activity Log", icon: Activity },
    { href: "/admin/settings", label: "Platform Settings", icon: Settings },
 ];
 
 const vaNavItemsBase = [
   { href: "/va/dashboard", label: "VA Dashboard", icon: LayoutDashboard },
-  { href: "/va/live-tasks", label: "Live Tasks", icon: Signal },
-  { href: "/va/my-tasks", label: "My Tasks", icon: ListChecks },
+  {
+    label: "Tasks",
+    icon: ClipboardList,
+    subItems: [
+      { href: "/va/live-tasks", label: "Live Tasks", icon: Signal },
+      { href: "/va/my-tasks", label: "My Tasks Queue", icon: ListChecks },
+    ],
+  },
   { 
     href: "/va/subscription", 
     activeHref: "/va/business-tasks", 
-    label: "Business Service Tasks", 
+    label: "Business Tasks", 
     icon: Target,
     status: "locked" as "locked" | "active",
   },
@@ -223,7 +217,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
 
     setVaNavItems(prevItems => 
         prevItems.map(item => 
-            item.label === "Business Service Tasks" ? { ...item, status: isVaProPlanCurrentlyActive ? "active" : "locked" } : item
+            item.label === "Business Tasks" ? { ...item, status: isVaProPlanCurrentlyActive ? "active" : "locked" } : item
         )
     );
 
@@ -245,7 +239,7 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
   return (
     <SidebarMenu className="flex-1">
       {navItemsToRender.map((item) => {
-        const isDynamicStatusItem = item.label === "VA Plus" || item.label === "Business Service Tasks";
+        const isDynamicStatusItem = item.label === "VA Plus" || item.label === "Business Tasks";
         // @ts-ignore
         const isItemLocked = isDynamicStatusItem && item.status === "locked";
         // @ts-ignore
@@ -385,4 +379,3 @@ export function SidebarNav({ role = "student" }: { role?: "student" | "admin" | 
     </SidebarMenu>
   );
 }
-    

@@ -11,12 +11,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     const isAuthPage = pathname === '/admin/login';
 
     if (isAuthPage) {
-        // For admin auth page, render children directly.
-        // This page (e.g., /admin/login/page.tsx) should use AuthLayout internally.
         return <>{children}</>;
     }
 
-    // For all other admin pages (e.g., /admin/dashboard), use AppLayout
     return <AppLayout role="admin" defaultOpen={true}>{children}</AppLayout>;
 }
 
