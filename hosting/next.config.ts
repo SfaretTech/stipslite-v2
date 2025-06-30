@@ -1,2 +1,2 @@
-// This file is intentionally left empty to resolve build conflicts.
-// All configuration has been moved to the root next.config.js.
+// This file is intentionally left blank. 
+// Configuration is handled in the root next.config.js to prevent build conflicts.

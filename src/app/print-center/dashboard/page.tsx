@@ -1,12 +1,32 @@
+"use client";
 
+import { Suspense } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Printer, LayoutDashboard, ListChecks, DollarSign, UserCircle, Settings, MessageSquare, ArrowRight, Banknote, FileText } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Printer,
+  LayoutDashboard,
+  ListChecks,
+  DollarSign,
+  UserCircle,
+  Settings,
+  MessageSquare,
+  ArrowRight,
+  Banknote,
+  FileText,
+} from "lucide-react";
 import Link from "next/link";
 
-export default function PrintCenterDashboardPage() {
+function PrintCenterDashboardContent() {
   return (
     <div className="space-y-8">
       <PageHeader
@@ -52,24 +72,53 @@ export default function PrintCenterDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {[
-              { icon: ListChecks, text: "New print job 'Math101_Assignment.pdf' received from Student A.", time: "15 minutes ago", link: "/print-center/jobs/JOB001" },
-              { icon: DollarSign, text: "Payment confirmed for job 'ENG_Thesis_Ch1.docx'.", time: "1 hour ago", link: "/print-center/jobs/JOB002" },
-              { icon: FileText, text: "Job 'Presentation_Slides.pptx' marked ready for pickup.", time: "3 hours ago", link: "/print-center/jobs/JOB003" },
-              { icon: Settings, text: "Reminder: Update your shop holiday hours.", time: "1 day ago", link: "/print-center/profile" },
+              {
+                icon: ListChecks,
+                text: "New print job 'Math101_Assignment.pdf' received from Student A.",
+                time: "15 minutes ago",
+                link: "/print-center/jobs/JOB001",
+              },
+              {
+                icon: DollarSign,
+                text: "Payment confirmed for job 'ENG_Thesis_Ch1.docx'.",
+                time: "1 hour ago",
+                link: "/print-center/jobs/JOB002",
+              },
+              {
+                icon: FileText,
+                text: "Job 'Presentation_Slides.pptx' marked ready for pickup.",
+                time: "3 hours ago",
+                link: "/print-center/jobs/JOB003",
+              },
+              {
+                icon: Settings,
+                text: "Reminder: Update your shop holiday hours.",
+                time: "1 day ago",
+                link: "/print-center/profile",
+              },
             ].map((activity, index) => (
-              <div key={index} className="flex items-start space-x-3 p-3 rounded-md hover:bg-muted/50 transition-colors">
-                <activity.icon className={`h-5 w-5 mt-1 text-primary`} />
+              <div
+                key={index}
+                className="flex items-start space-x-3 p-3 rounded-md hover:bg-muted/50 transition-colors"
+              >
+                <activity.icon className="h-5 w-5 mt-1 text-primary" />
                 <div>
                   <p className="text-sm font-medium">{activity.text}</p>
                   <p className="text-xs text-muted-foreground">{activity.time}</p>
-                  {activity.link && <Link href={activity.link} className="text-xs text-accent hover:underline">View Details</Link>}
+                  {activity.link && (
+                    <Link href={activity.link} className="text-xs text-accent hover:underline">
+                      View Details
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}
           </CardContent>
           <CardFooter>
             <Button variant="outline" asChild>
-              <Link href="/print-center/jobs?filter=new">View All New Jobs <ArrowRight className="ml-2 h-4 w-4"/></Link>
+              <Link href="/print-center/jobs?filter=new">
+                View All New Jobs <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
           </CardFooter>
         </Card>
@@ -79,21 +128,40 @@ export default function PrintCenterDashboardPage() {
             <CardTitle className="font-headline">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button className="w-full justify-start bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
-              <Link href="/print-center/jobs"><ListChecks className="mr-2 h-4 w-4" /> Manage Print Jobs</Link>
+            <Button
+              className="w-full justify-start bg-accent hover:bg-accent/90 text-accent-foreground"
+              asChild
+            >
+              <Link href="/print-center/jobs">
+                <ListChecks className="mr-2 h-4 w-4" /> Manage Print Jobs
+              </Link>
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
-              <Link href="/print-center/profile"><UserCircle className="mr-2 h-4 w-4" /> Update Shop Profile</Link>
+              <Link href="/print-center/profile">
+                <UserCircle className="mr-2 h-4 w-4" /> Update Shop Profile
+              </Link>
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
-              <Link href="/print-center/earnings"><Banknote className="mr-2 h-4 w-4" /> Manage Earnings</Link>
+              <Link href="/print-center/earnings">
+                <Banknote className="mr-2 h-4 w-4" /> Manage Earnings
+              </Link>
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
-              <Link href="/print-center/support"><MessageSquare className="mr-2 h-4 w-4" /> Contact Support</Link>
+              <Link href="/print-center/support">
+                <MessageSquare className="mr-2 h-4 w-4" /> Contact Support
+              </Link>
             </Button>
           </CardContent>
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function PrintCenterDashboardPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-center">Loading Dashboard...</div>}>
+      <PrintCenterDashboardContent />
+    </Suspense>
   );
 }
